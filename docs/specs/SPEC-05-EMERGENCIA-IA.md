@@ -41,52 +41,58 @@ Implementar la capacidad más innovadora y crítica de **Sumayni**: la gobernanz
 ### 2.4. Algoritmo de Detección de Crisis por Consenso
 * Si se registran 3 reportes con `urgencia: 'ALTA_CRITICA'` en la misma manzana en menos de 10 minutos, la Edge Function envía una notificación push de pre-alerta a los dirigentes para activar el Modo Emergencia en 1 toque.
 
+### 2.5. Servicio de Notificaciones Push Móviles (Expo Push API)
+* Implementado en Supabase Edge Function (`supabase/functions/send-push-alert/index.ts`):
+  * Consulta los `push_token` de los perfiles afectados en `profiles`:
+    * En caso de **Alerta SOS**: envía notificación prioritaria inmediata a los teléfonos de los dirigentes y padrinos asignados en `care_assignments`.
+    * En caso de **Modo Emergencia**: envía notificación masiva a todos los vecinos registrados en ese sector geográfico.
+  * Realiza el despacho mediante llamada POST a `https://exp.host/--/api/v2/push/send` con canal de alta prioridad y sonido de alarma.
+
 ---
 
 ## 3. Pipeline de Inteligencia Artificial: Audio a Ficha (Gemini Flash)
 
-Implementación en Supabase Edge Function (`supabase/functions/process-voice-post/index.ts`):
+Implementación en Supabase Edge Function (`supabase/functions/process-voice-post/index.ts`) usando el SDK oficial `@google/genai`:
 
 ```typescript
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenAI, Type } from '@google/genai';
 
-const genAI = new GoogleGenerativeAI(Deno.env.get('GEMINI_API_KEY')!);
+const ai = new GoogleGenAI({ apiKey: Deno.env.get('GEMINI_API_KEY')! });
 
 export async function processVoiceToPost(audioBase64: string, mimeType: string) {
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
-    generationConfig: {
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.0-flash',
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { inlineData: { data: audioBase64, mimeType } },
+          { text: 'Extrae la intención de ayuda o servicio vecinal de esta nota de voz para la app barrial Sumayni.' },
+        ],
+      },
+    ],
+    config: {
       responseMimeType: 'application/json',
       responseSchema: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
           tipo: { 
-            type: SchemaType.STRING, 
+            type: Type.STRING, 
             enum: ['SOLICITUD_AYUDA', 'OFERTA_SERVICIO', 'EMERGENCIA'] 
           },
-          categoria: { type: SchemaType.STRING },
+          categoria: { type: Type.STRING },
           urgencia: { 
-            type: SchemaType.STRING, 
+            type: Type.STRING, 
             enum: ['BAJA', 'MEDIA', 'ALTA_CRITICA'] 
           },
-          resumen: { type: SchemaType.STRING },
+          resumen: { type: Type.STRING },
         },
         required: ['tipo', 'categoria', 'urgencia', 'resumen'],
       },
     },
   });
 
-  const result = await model.generateContent([
-    {
-      inlineData: {
-        data: audioBase64,
-        mimeType: mimeType,
-      },
-    },
-    'Extrae la intención de ayuda o servicio vecinal de esta nota de voz para la app barrial Sumayni.',
-  ]);
-
-  return JSON.parse(result.response.text());
+  return JSON.parse(response.text!);
 }
 ```
 
@@ -94,10 +100,9 @@ export async function processVoiceToPost(audioBase64: string, mimeType: string) 
 
 ## 4. Webhook de WhatsApp Cloud API (`supabase/functions/whatsapp-webhook/index.ts`)
 
-Conexión directa serverless sin herramientas intermedias:
+Conexión directa serverless para gestión de Onboarding, Difusión Automática Directa y Notas de Voz:
 
 ```typescript
-// Flujo simplificado del Webhook
 Deno.serve(async (req) => {
   // 1. Verificación inicial de Meta (GET)
   if (req.method === 'GET') {
@@ -119,18 +124,30 @@ Deno.serve(async (req) => {
 
     const fromPhone = message.from;
 
-    // Caso A: Nota de voz recibida
+    // Caso A: Onboarding y Admisión para vecinos sin la app
+    const isRegistered = await checkNeighborRegistered(fromPhone);
+    if (!isRegistered) {
+      if (message.type === 'location') {
+        const { latitude, longitude } = message.location;
+        await createJoinRequestFromWhatsApp(fromPhone, latitude, longitude);
+        await sendWhatsAppText(fromPhone, '📍 Ubicación recibida. Tu solicitud fue enviada al dirigente de tu cuadra para aprobación.');
+        return new Response('EVENT_RECEIVED', { status: 200 });
+      }
+      if (message.type === 'text') {
+        await sendWhatsAppText(fromPhone, '¡Hola! Soy Sumayni. Para conectarte con tu barrio, por favor envíame tu nombre completo y comparte tu ubicación con el botón 📎 de WhatsApp.');
+        return new Response('EVENT_RECEIVED', { status: 200 });
+      }
+    }
+
+    // Caso B: Nota de voz recibida (Publicación asistida por IA)
     if (message.type === 'audio') {
       const audioId = message.audio.id;
-      // Descargar audio desde Meta Media API y procesar con Gemini Flash
       const parsedPost = await processVoiceFromMeta(audioId);
-      // Guardar en solidary_posts con flag is_from_whatsapp = true
-      await insertSolidaryPost(parsedPost, fromPhone);
-      // Responder confirmación por WhatsApp
+      await insertSolidaryPostFromWhatsApp(parsedPost, fromPhone);
       await sendWhatsAppText(fromPhone, `✅ Tu requerimiento fue publicado en Sumayni: "${parsedPost.resumen}". Tus vecinos te contactarán.`);
     }
 
-    // Caso B: Consulta por texto ("gasfitero", "botiquin")
+    // Caso C: Consulta por texto ("gasfitero", "botiquin")
     if (message.type === 'text') {
       const query = message.text.body.toLowerCase();
       const results = await searchNearbyKeyword(query, fromPhone);
@@ -142,6 +159,18 @@ Deno.serve(async (req) => {
 
   return new Response('Not Found', { status: 404 });
 });
+
+// Función de Difusión Automática Directa (Broadcast de Emergencia sin intervención humana)
+export async function broadcastEmergencyAlert(groupId: string, eventType: string, description: string) {
+  const verifiedPhones = await getVerifiedWhatsAppPhonesByGroup(groupId);
+  for (const phone of verifiedPhones) {
+    await sendWhatsAppTemplate(phone, 'alerta_emergencia_comunitaria', {
+      tipo: eventType,
+      detalle: description,
+    });
+  }
+}
+```
 ```
 
 ---

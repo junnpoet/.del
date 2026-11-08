@@ -134,26 +134,33 @@ Se descartan arquitecturas obsoletas de 2 pasos (Whisper $\rightarrow$ LLM). Se 
 
 ---
 
-## 4. Pipeline de Integración con WhatsApp
+## 4. Pipeline de Integración con WhatsApp (Contacto Único)
 
-Para evitar servidores intermediarios o túneles frágiles (como n8n local), la integración corre serverless:
+Para evitar servidores intermediarios o túneles frágiles (como n8n local), la integración corre serverless mediante **Supabase Edge Functions** conectadas a la **WhatsApp Cloud API**:
 
 ```
 [ Vecino en WhatsApp ] 
-        │ Envía audio o mensaje al bot
+        │ Envía mensaje, audio o ubicación al bot
         ▼
 [ Meta WhatsApp Cloud API ]
         │ Webhook POST a HTTPS público
         ▼
 [ Supabase Edge Function: `whatsapp-webhook` ]
-        ├── 1. Valida token de verificación de Meta
-        ├── 2. Si es comando de texto ("botiquin", "gasfitero"):
-        │      Consulta Postgres y responde con tarjeta y enlace wa.me
-        └── 3. Si es nota de voz:
-               Descarga binario multimedia con token de Meta
-               Invoca Gemini Flash API (Audio-to-JSON)
-               Inserta publicación en Supabase
-               Envía confirmación al vecino por WhatsApp
+        ├── 1. Valida token de verificación de Meta (Handshake inicial)
+        ├── 2. Flujo de Onboarding / Admisión:
+        │      Si el remitente no está registrado, solicita nombre y ubicación
+        │      Inserta en `group_join_requests` (`is_from_whatsapp = true`)
+        │      Alerta al dirigente en la app móvil para aprobación en 1 tap
+        ├── 3. Si es comando de consulta ("botiquin", "gasfitero"):
+        │      Consulta PostGIS y responde con tarjeta de contacto y enlace wa.me
+        ├── 4. Si es nota de voz:
+        │      Descarga binario multimedia con token de Meta
+        │      Invoca Gemini Flash API (Audio-to-JSON con @google/genai)
+        │      Inserta publicación en `solidary_posts`
+        │      Envía confirmación automática al vecino por WhatsApp
+        └── 5. Difusión Automática de Emergencia (Broadcast):
+               Disparada por webhook interno de Supabase al activarse `emergency_events`
+               Envía alerta push directa al chat personal de cada vecino registrado
 ```
 
 ---
