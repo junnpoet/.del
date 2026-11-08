@@ -265,24 +265,27 @@ Toda publicación en la aplicación móvil está diseñada para completarse en u
 
 ## 8. Arquitectura Técnica y Resiliencia Offline-First
 
-Dado que durante un sismo o desastre las redes celulares sufren cortes o congestión severa, la arquitectura técnica garantiza operatividad sin conexión:
+Dado que durante un sismo o desastre las redes celulares sufren cortes o congestión severa, la arquitectura técnica garantiza operatividad sin conexión combinando **Expo (React Native)**, **TanStack Query v5** y **Supabase**:
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│                   REACT NATIVE APP                     │
+│               EXPO (REACT NATIVE) + UI                 │
 ├────────────────────────────┬───────────────────────────┤
-│     Caché Local Persistente│   Patrón Outbox           │
-│     (SQLite / WatermelonDB)│   (Bandeja de Sincronía)  │
+│     Caché en Disco Persiste│   Patrón Outbox           │
+│     (AsyncStorage / MMKV)  │   (TanStack Query Offline)│
 ├────────────────────────────┼───────────────────────────┤
-│ • Directorio de auxilio    │ • Encola reportes y SOS   │
-│ • Contactos de brigadistas │   creados sin red         │
+│ • Directorio de auxilio    │ • Encola mutaciones y SOS │
+│ • Contactos de brigadistas │   creados sin internet    │
 │ • Datos del grupo vecinal  │ • Reintento y sincronía   │
 │ • Mapas vectoriales caché  │   automática al reconectar│
 └────────────────────────────┴───────────────────────────┘
 ```
 
-* **Almacenamiento Local Robusto:** Directorios de teléfonos de emergencia, brigadistas, botiquines y los últimos datos del grupo vecinal residen en la base de datos local del móvil. La app nunca muestra pantallas en blanco por falta de internet.
-* **Patrón Outbox:** Todo reporte emitido sin conexión se guarda localmente con marca de tiempo. Apenas el dispositivo detecta conexión a datos móviles o Wi-Fi, la cola se vacía hacia el servidor central.
+* **Frontend Móvil Ágil:** Desarrollado sobre **Expo SDK** con **NativeWind v4** (Tailwind CSS) y **Expo Router**, asegurando hot reload y despliegue inmediato en teléfonos físicos de prueba.
+* **Caché Local Persistente:** Motorizado por **TanStack Query v5** junto a `createAsyncStoragePersister`. El directorio de emergencia, botiquines y contactos se conservan en disco para consulta instantánea fuera de línea.
+* **Patrón Outbox Garantizado:** Las mutaciones críticas (reportes SOS, publicaciones comunitarias) operan en `networkMode: 'offlineFirst'`. Quedan encoladas localmente y se transmiten a Supabase en cuanto se restablece la conexión.
+* **Backend Geoespacial y Tiempo Real:** **Supabase (PostgreSQL + PostGIS)** para cálculo de proximidad (`ST_DWithin`) y canales WebSocket en tiempo real para activar la mutación al Modo Emergencia.
+* **Procesamiento de Voz y WhatsApp:** **Google Gemini Flash** (análisis directo de audio a JSON) y **WhatsApp Cloud API** conectado a Edge Functions serverless, eliminando puntos de fallo externos.
 
 ---
 
@@ -290,9 +293,9 @@ Dado que durante un sismo o desastre las redes celulares sufren cortes o congest
 
 | Bloque Temporal | Foco de Desarrollo | Entregable Funcional Demostrable |
 | :--- | :--- | :--- |
-| **Horas 00 - 10** | **Fundaciones & UI Base** | Proyecto en React Native, base de datos local SQLite, configuración del tema accesible (Español/Quechua), onboarding y navegación de 2 capas. |
-| **Horas 10 - 20** | **Capa Pública, Favoritos y Visto Bueno** | Directorio de oficios por radio desde el hogar, filtros, favoritos, chat directo, reporte de abusos y flujo de Visto Bueno en 1 tap. |
-| **Horas 20 - 30** | **Capa Privada y Modo Accesible** | Muro Solidario con chips, vista de mapa para Padrinos Vecinales y pantalla simplificada para adultos mayores con botón SOS de 2s. |
-| **Horas 30 - 38** | **Gobernanza y Modo Emergencia** | Control "Slide to Activate", mutación visual instantánea al Tablero de Ayuda Humanitaria y detección por consenso. |
-| **Horas 38 - 44** | **WhatsApp Bridge e IA de Voz** | Webhook de WhatsApp con procesamiento de audios vía Gemini API, tablón de noticias zonales y deep links `wa.me` bidireccionales. |
-| **Horas 44 - 48** | **Pruebas de Resiliencia y Pitch** | Validación de flujo offline (modo avión), ensayo de demo en vivo y preparación del pitch para el jurado. |
+| **Horas 00 - 10** | **Fundaciones & UI Base** | Inicialización con Expo, NativeWind v4, esquema en Supabase (PostGIS), TanStack Query offline persister y navegación base. |
+| **Horas 10 - 20** | **Capa Pública, Favoritos y Visto Bueno** | Directorio por geocercas (`ST_DWithin`), selector de radio desde residencia fija, favoritos y flujo de Visto Bueno en 1 tap. |
+| **Horas 20 - 30** | **Capa Privada y Modo Accesible** | Muro Solidario con chips, vista de mapa para Padrinos Vecinales (RLS) y UI adaptativa para adultos mayores con botón SOS de 2s. |
+| **Horas 30 - 38** | **Gobernanza y Modo Emergencia** | Control "Slide to Activate", mutación visual vía Supabase Realtime al Tablero de Ayuda Humanitaria y consenso de crisis. |
+| **Horas 38 - 44** | **WhatsApp Bridge e IA de Voz** | Edge Function de WhatsApp con audio-to-JSON vía Gemini Flash, noticias zonales y enlaces `wa.me` bidireccionales. |
+| **Horas 44 - 48** | **Pruebas de Resiliencia y Pitch** | Validación de modo avión (offline y outbox sync), ensayo de demo integral (WhatsApp $\rightarrow$ App) y pitch deck. |
