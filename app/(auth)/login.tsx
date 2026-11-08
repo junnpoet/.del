@@ -46,16 +46,27 @@ export default function LoginScreen() {
       >
         <ScrollView contentContainerClassName="p-6 justify-center flex-grow">
           <View className="mb-8 items-center">
-            <Text className="text-4xl font-extrabold text-primary">
-              Sumayni
-            </Text>
-            <Text className="text-sm text-neutral-textMuted mt-1">
+            <View className="bg-primary-pastel px-6 py-2.5 rounded-3xl border-2 border-primary-light/60 mb-2">
+              <Text
+                className="text-primary-dark"
+                style={{ fontFamily: 'Nunito_900Black', fontSize: 38 }}
+              >
+                Sumayni
+              </Text>
+            </View>
+            <Text
+              className="text-neutral-textMuted mt-1 text-center"
+              style={{ fontFamily: 'Nunito_700Bold', fontSize: 17 }}
+            >
               Bienestar y reciprocidad comunitaria
             </Text>
           </View>
 
-          <Card className="p-5 mb-6">
-            <Text className="text-xl font-bold text-neutral-textMain mb-4">
+          <Card className="p-6 mb-6">
+            <Text
+              className="text-neutral-textMain mb-4"
+              style={{ fontFamily: 'Nunito_900Black', fontSize: 24 }}
+            >
               Iniciar Sesión
             </Text>
 
@@ -77,14 +88,20 @@ export default function LoginScreen() {
           </Card>
 
           <View className="items-center">
-            <Text className="text-sm text-neutral-textMuted mb-2">
+            <Text
+              className="text-neutral-textMuted mb-3"
+              style={{ fontFamily: 'Nunito_700Bold', fontSize: 16 }}
+            >
               ¿Aún no has registrado tu hogar?
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/(auth)/register')}
-              className="min-h-[48px] items-center justify-center px-4"
+              className="min-h-[54px] items-center justify-center px-6 bg-earth-pastel border-2 border-earth-light rounded-2xl"
             >
-              <Text className="text-sm font-bold text-primary">
+              <Text
+                className="text-earth-dark"
+                style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 17 }}
+              >
                 Crear cuenta y geolocalizar domicilio
               </Text>
             </TouchableOpacity>

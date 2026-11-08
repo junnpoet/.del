@@ -30,9 +30,12 @@ export const Input: React.FC<InputProps> = ({
     : 'border-neutral-border focus:border-primary';
 
   return (
-    <View className="mb-4 w-full">
-      <View className="flex-row items-center justify-between mb-1.5">
-        <Text className="text-sm font-semibold text-neutral-textMain">
+    <View className="mb-5 w-full">
+      <View className="flex-row items-center justify-between mb-2">
+        <Text
+          className="text-neutral-textMain"
+          style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 17 }}
+        >
           {label}
         </Text>
         {onVoiceInput && (
@@ -40,19 +43,22 @@ export const Input: React.FC<InputProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Dictar por voz"
             onPress={onVoiceInput}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            className={`min-h-[36px] px-2 flex-row items-center rounded-md ${
-              isVoiceRecording ? 'bg-emergency-alert' : 'bg-primary/10'
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            className={`min-h-[42px] px-3.5 flex-row items-center rounded-xl border ${
+              isVoiceRecording
+                ? 'bg-emergency-alert border-emergency-alert'
+                : 'bg-primary-pastel border-primary-light/50'
             }`}
           >
             <Mic
-              size={16}
-              color={isVoiceRecording ? '#FFFFFF' : '#2D6A4F'}
+              size={18}
+              color={isVoiceRecording ? '#FFFFFF' : '#1B4332'}
             />
             <Text
-              className={`text-xs ml-1 font-medium ${
-                isVoiceRecording ? 'text-white' : 'text-primary'
+              className={`ml-1.5 ${
+                isVoiceRecording ? 'text-white' : 'text-primary-dark'
               }`}
+              style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 15 }}
             >
               {isVoiceRecording ? 'Grabando...' : 'Voz'}
             </Text>
@@ -61,21 +67,28 @@ export const Input: React.FC<InputProps> = ({
       </View>
 
       <View
-        className={`flex-row items-center bg-neutral-surface border rounded-xl px-3 min-h-[48px] ${borderColor}`}
+        className={`flex-row items-center bg-neutral-surface border-2 rounded-2xl px-4 min-h-[56px] ${borderColor}`}
       >
         <TextInput
-          placeholderTextColor="#9CA3AF"
-          className={`flex-1 text-base text-neutral-textMain py-3 ${className}`}
+          placeholderTextColor="#8C857B"
+          className={`flex-1 text-neutral-textMain py-3.5 ${className}`}
+          style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 17 }}
           {...props}
         />
       </View>
 
       {error ? (
-        <Text className="text-xs text-emergency-alert mt-1 font-medium">
+        <Text
+          className="text-emergency-alert mt-1.5"
+          style={{ fontFamily: 'Nunito_700Bold', fontSize: 15 }}
+        >
           {error}
         </Text>
       ) : helperText ? (
-        <Text className="text-xs text-neutral-textMuted mt-1">
+        <Text
+          className="text-neutral-textMuted mt-1.5"
+          style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 15 }}
+        >
           {helperText}
         </Text>
       ) : null}

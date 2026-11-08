@@ -69,7 +69,7 @@ export default function CommunityScreen() {
   const filters = ['TODOS', 'PRESTAMO', 'DONACION', 'TRUEQUE', 'VOLUNTARIADO', 'AYUDA'];
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-background">
+    <View className="flex-1 bg-neutral-background">
       <Header
         title="Muro Solidario"
         subtitle="Junta Vecinal Sector 4 · Apoyo mutuo"
@@ -77,21 +77,31 @@ export default function CommunityScreen() {
 
       <View className="p-4 flex-1">
         {/* Toggle [ Muro Feed | Mapa Barrial ] */}
-        <View className="flex-row bg-neutral-surface p-1 rounded-2xl border border-neutral-border mb-3">
+        <View className="flex-row bg-neutral-mutedBg p-1.5 rounded-2xl border-2 border-neutral-border mb-4">
           <TouchableOpacity
             onPress={() => setActiveTab('feed')}
-            className={`flex-1 flex-row items-center justify-center py-2.5 rounded-xl ${
-              activeTab === 'feed' ? 'bg-primary' : 'bg-transparent'
+            className={`flex-1 flex-row items-center justify-center min-h-[50px] rounded-xl ${
+              activeTab === 'feed'
+                ? 'bg-primary shadow-sm'
+                : 'bg-transparent'
             }`}
           >
             <LayoutGrid
-              size={18}
-              color={activeTab === 'feed' ? '#FFFFFF' : '#6B7280'}
+              size={22}
+              color={activeTab === 'feed' ? '#FFFFFF' : '#5C564F'}
+              strokeWidth={2.5}
             />
             <Text
-              className={`text-xs font-bold ml-1.5 ${
-                activeTab === 'feed' ? 'text-white' : 'text-neutral-textMuted'
+              className={`ml-2 ${
+                activeTab === 'feed' ? 'text-white' : 'text-neutral-textMain'
               }`}
+              style={{
+                fontFamily:
+                  activeTab === 'feed'
+                    ? 'Nunito_800ExtraBold'
+                    : 'Nunito_700Bold',
+                fontSize: 17,
+              }}
             >
               Muro Feed
             </Text>
@@ -99,18 +109,28 @@ export default function CommunityScreen() {
 
           <TouchableOpacity
             onPress={() => setActiveTab('map')}
-            className={`flex-1 flex-row items-center justify-center py-2.5 rounded-xl ${
-              activeTab === 'map' ? 'bg-primary' : 'bg-transparent'
+            className={`flex-1 flex-row items-center justify-center min-h-[50px] rounded-xl ${
+              activeTab === 'map'
+                ? 'bg-primary shadow-sm'
+                : 'bg-transparent'
             }`}
           >
             <Map
-              size={18}
-              color={activeTab === 'map' ? '#FFFFFF' : '#6B7280'}
+              size={22}
+              color={activeTab === 'map' ? '#FFFFFF' : '#5C564F'}
+              strokeWidth={2.5}
             />
             <Text
-              className={`text-xs font-bold ml-1.5 ${
-                activeTab === 'map' ? 'text-white' : 'text-neutral-textMuted'
+              className={`ml-2 ${
+                activeTab === 'map' ? 'text-white' : 'text-neutral-textMain'
               }`}
+              style={{
+                fontFamily:
+                  activeTab === 'map'
+                    ? 'Nunito_800ExtraBold'
+                    : 'Nunito_700Bold',
+                fontSize: 17,
+              }}
             >
               Mapa Barrial
             </Text>
@@ -118,7 +138,7 @@ export default function CommunityScreen() {
         </View>
 
         {/* Filter Chips */}
-        <View className="mb-2">
+        <View className="mb-3">
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {filters.map((f) => (
               <Chip
@@ -132,37 +152,41 @@ export default function CommunityScreen() {
         </View>
 
         {activeTab === 'feed' ? (
-          <ScrollView contentContainerClassName="pb-24 pt-2">
+          <ScrollView contentContainerClassName="pb-32 pt-2">
             {DEMO_POSTS.map((post) => (
-              <Card key={post.id} className="mb-3 p-4">
-                <View className="flex-row items-center justify-between mb-2">
-                  <View className="flex-row items-center">
+              <Card key={post.id} className="mb-4 p-5">
+                <View className="flex-row items-center justify-between mb-3 flex-wrap gap-2">
+                  <View className="flex-row items-center flex-wrap gap-2">
                     <View
-                      className={`px-2 py-0.5 rounded-full ${
+                      className={`px-3.5 py-1.5 rounded-xl border ${
                         post.type === 'AYUDA'
-                          ? 'bg-emergency-alert/15'
+                          ? 'bg-emergency-pastel border-emergency-alert/40'
                           : post.type === 'PRESTAMO'
-                          ? 'bg-primary/15'
-                          : 'bg-earth/20'
+                          ? 'bg-primary-pastel border-primary-light/60'
+                          : 'bg-earth-pastel border-earth-light'
                       }`}
                     >
                       <Text
-                        className={`text-[11px] font-bold ${
+                        className={
                           post.type === 'AYUDA'
                             ? 'text-emergency-alert'
                             : post.type === 'PRESTAMO'
-                            ? 'text-primary'
+                            ? 'text-primary-dark'
                             : 'text-earth-dark'
-                        }`}
+                        }
+                        style={{ fontFamily: 'Nunito_900Black', fontSize: 14 }}
                       >
                         {post.type}
                       </Text>
                     </View>
 
                     {post.isFromVoice && (
-                      <View className="flex-row items-center ml-2 bg-neutral-border px-1.5 py-0.5 rounded">
-                        <Sparkles size={11} color="#2D6A4F" />
-                        <Text className="text-[10px] text-primary font-medium ml-1">
+                      <View className="flex-row items-center bg-sun-pastel px-3 py-1.5 rounded-xl border border-sun/40">
+                        <Sparkles size={15} color="#7C4D12" />
+                        <Text
+                          className="text-sun-dark ml-1"
+                          style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 14 }}
+                        >
                           Voz IA
                         </Text>
                       </View>
@@ -170,46 +194,71 @@ export default function CommunityScreen() {
                   </View>
 
                   <View className="flex-row items-center">
-                    <Clock size={12} color="#9CA3AF" />
-                    <Text className="text-xs text-neutral-textMuted ml-1">
+                    <Clock size={16} color="#5C564F" />
+                    <Text
+                      className="text-neutral-textMuted ml-1.5"
+                      style={{ fontFamily: 'Nunito_700Bold', fontSize: 14 }}
+                    >
                       {post.timeAgo}
                     </Text>
                   </View>
                 </View>
 
-                <Text className="text-base font-bold text-neutral-textMain mb-1">
+                <Text
+                  className="text-neutral-textMain mb-1 leading-7"
+                  style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 20 }}
+                >
                   {post.title}
                 </Text>
-                <Text className="text-xs font-semibold text-neutral-textMuted mb-2">
+                <Text
+                  className="text-neutral-textMuted mb-2.5"
+                  style={{ fontFamily: 'Nunito_700Bold', fontSize: 15 }}
+                >
                   Por {post.author}
                 </Text>
-                <Text className="text-sm text-neutral-textMain leading-5 mb-3">
+                <Text
+                  className="text-neutral-textMain leading-6 mb-4"
+                  style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 16 }}
+                >
                   {post.description}
                 </Text>
 
-                <View className="pt-2 border-t border-neutral-border flex-row justify-between items-center">
-                  <TouchableOpacity className="min-h-[40px] px-3 bg-primary/10 rounded-lg justify-center">
-                    <Text className="text-xs font-bold text-primary">
+                <View className="pt-3 border-t-2 border-neutral-mutedBg flex-row justify-between items-center">
+                  <TouchableOpacity className="min-h-[48px] px-5 bg-primary-pastel border border-primary-light/60 rounded-2xl justify-center">
+                    <Text
+                      className="text-primary-dark"
+                      style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 16 }}
+                    >
                       Responder / Ayudar
                     </Text>
                   </TouchableOpacity>
-                  <Share2 size={18} color="#9CA3AF" />
+                  <TouchableOpacity className="w-12 h-12 rounded-2xl bg-neutral-mutedBg items-center justify-center">
+                    <Share2 size={22} color="#5C564F" />
+                  </TouchableOpacity>
                 </View>
               </Card>
             ))}
           </ScrollView>
         ) : (
-          <View className="flex-1 bg-neutral-surface border border-neutral-border rounded-2xl items-center justify-center p-6">
-            <Map size={48} color="#2D6A4F" />
-            <Text className="text-base font-bold text-neutral-textMain mt-3 text-center">
+          <View className="flex-1 bg-neutral-surface border-2 border-neutral-border rounded-3xl items-center justify-center p-6 mb-24">
+            <View className="w-20 h-20 rounded-full bg-primary-pastel items-center justify-center mb-4">
+              <Map size={42} color="#1B4332" strokeWidth={2.5} />
+            </View>
+            <Text
+              className="text-neutral-textMain text-center"
+              style={{ fontFamily: 'Nunito_900Black', fontSize: 22 }}
+            >
               Mapa Barrial de Solidaridad
             </Text>
-            <Text className="text-xs text-neutral-textMuted text-center mt-1 px-4">
+            <Text
+              className="text-neutral-textMuted text-center mt-2 px-3 leading-6"
+              style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 16 }}
+            >
               Geolocalización protegida de pedidos y préstamos vecinales en radio de 500m.
             </Text>
           </View>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

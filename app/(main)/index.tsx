@@ -88,53 +88,73 @@ export default function PublicServicesScreen() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-background">
+    <View className="flex-1 bg-neutral-background">
       <Header
         title="Directorio de Oficios"
         subtitle="Tu barrio a pie · Radio desde tu hogar"
         rightAction={
           <TouchableOpacity
             onPress={() => router.push('/emergency-board')}
-            className="flex-row items-center bg-emergency-alert/15 px-3 py-1.5 rounded-full border border-emergency-alert/30"
+            className="flex-row items-center bg-emergency-pastel px-4 py-2.5 rounded-2xl border-2 border-emergency-alert/40 min-h-[46px]"
           >
-            <AlertTriangle size={16} color="#D90429" />
-            <Text className="text-xs font-bold text-emergency-alert ml-1">
+            <AlertTriangle size={20} color="#E03131" strokeWidth={2.5} />
+            <Text
+              className="text-emergency-alert ml-1.5"
+              style={{ fontFamily: 'Nunito_900Black', fontSize: 15 }}
+            >
               SOS
             </Text>
           </TouchableOpacity>
         }
       />
 
-      <ScrollView contentContainerClassName="p-4 pb-28">
+      <ScrollView contentContainerClassName="p-4 pb-32">
         {/* Walkable Radius Selector */}
-        <View className="mb-4 bg-neutral-surface p-3 rounded-2xl border border-neutral-border">
-          <View className="flex-row items-center justify-between mb-2">
-            <View className="flex-row items-center">
-              <MapPin size={18} color="#2D6A4F" />
-              <Text className="text-xs font-bold text-neutral-textMain ml-1">
-                Radio caminable desde tu domicilio:
+        <View className="mb-5 bg-primary-pastel/70 p-4 rounded-3xl border-2 border-primary-light/60">
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center flex-1 mr-2">
+              <View className="w-9 h-9 rounded-xl bg-primary items-center justify-center mr-2.5">
+                <MapPin size={20} color="#FFFFFF" strokeWidth={2.5} />
+              </View>
+              <Text
+                className="text-primary-dark flex-1"
+                style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 16 }}
+              >
+                Radio caminable desde tu hogar:
               </Text>
             </View>
-            <Text className="text-xs font-bold text-primary">
-              {selectedRadius}
-            </Text>
+            <View className="bg-primary px-3 py-1 rounded-xl">
+              <Text
+                className="text-white"
+                style={{ fontFamily: 'Nunito_900Black', fontSize: 16 }}
+              >
+                {selectedRadius}
+              </Text>
+            </View>
           </View>
 
-          <View className="flex-row space-x-2">
+          <View className="flex-row gap-2.5">
             {(['300m', '500m', '1km'] as const).map((r) => (
               <TouchableOpacity
                 key={r}
                 onPress={() => setSelectedRadius(r)}
-                className={`flex-1 min-h-[44px] items-center justify-center rounded-xl border ${
+                className={`flex-1 min-h-[52px] items-center justify-center rounded-2xl border-2 ${
                   selectedRadius === r
-                    ? 'bg-primary border-primary'
-                    : 'bg-neutral-background border-neutral-border'
+                    ? 'bg-primary border-primary-dark shadow-sm'
+                    : 'bg-neutral-surface border-primary-light/50'
                 }`}
               >
                 <Text
-                  className={`text-xs font-bold ${
-                    selectedRadius === r ? 'text-white' : 'text-neutral-textMain'
-                  }`}
+                  className={
+                    selectedRadius === r ? 'text-white' : 'text-primary-dark'
+                  }
+                  style={{
+                    fontFamily:
+                      selectedRadius === r
+                        ? 'Nunito_900Black'
+                        : 'Nunito_700Bold',
+                    fontSize: 17,
+                  }}
                 >
                   {r}
                 </Text>
@@ -144,7 +164,7 @@ export default function PublicServicesScreen() {
         </View>
 
         {/* Categories Chips */}
-        <View className="mb-3">
+        <View className="mb-4">
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {categories.map((cat) => (
               <Chip
@@ -158,42 +178,60 @@ export default function PublicServicesScreen() {
         </View>
 
         {/* Services List */}
-        <Text className="text-sm font-bold text-neutral-textMain mb-3 uppercase tracking-wide">
+        <Text
+          className="text-neutral-textMain mb-3.5 px-1"
+          style={{ fontFamily: 'Nunito_900Black', fontSize: 18 }}
+        >
           Vecinos Prestadores en tu Sector ({filteredServices.length})
         </Text>
 
         {filteredServices.map((service) => (
-          <Card key={service.id} className="mb-3 p-4">
-            <View className="flex-row justify-between items-start">
-              <View className="flex-1 mr-2">
-                <Text className="text-base font-bold text-neutral-textMain mb-1">
+          <Card key={service.id} className="mb-4 p-5">
+            <View className="flex-row justify-between items-start mb-2">
+              <View className="flex-1 mr-3">
+                <Text
+                  className="text-neutral-textMain mb-1 leading-7"
+                  style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 20 }}
+                >
                   {service.title}
                 </Text>
-                <Text className="text-sm text-neutral-textMuted mb-2">
+                <Text
+                  className="text-neutral-textMuted"
+                  style={{ fontFamily: 'Nunito_700Bold', fontSize: 16 }}
+                >
                   Por {service.provider}
                 </Text>
               </View>
 
-              <View className="bg-primary/10 px-2.5 py-1 rounded-full flex-row items-center">
-                <Star size={14} color="#2D6A4F" fill="#2D6A4F" />
-                <Text className="text-xs font-bold text-primary ml-1">
+              <View className="bg-sun-pastel px-3.5 py-1.5 rounded-2xl border border-sun/40 flex-row items-center">
+                <Star size={18} color="#B45309" fill="#F59E0B" />
+                <Text
+                  className="text-sun-dark ml-1.5"
+                  style={{ fontFamily: 'Nunito_900Black', fontSize: 16 }}
+                >
                   {service.rating.toFixed(1)}
                 </Text>
               </View>
             </View>
 
-            <View className="flex-row items-center justify-between pt-2 border-t border-neutral-border">
-              <View className="flex-row items-center">
-                <MapPin size={14} color="#6B7280" />
-                <Text className="text-xs text-neutral-textMuted ml-1">
+            <View className="flex-row items-center justify-between pt-3 mt-1 border-t-2 border-neutral-mutedBg flex-wrap gap-2">
+              <View className="flex-row items-center bg-neutral-mutedBg px-3 py-1.5 rounded-xl">
+                <MapPin size={18} color="#2D6A4F" strokeWidth={2.5} />
+                <Text
+                  className="text-neutral-textMain ml-1.5"
+                  style={{ fontFamily: 'Nunito_700Bold', fontSize: 15 }}
+                >
                   {service.distance}
                 </Text>
               </View>
 
               {service.hasNeighborhoodSeal && (
-                <View className="flex-row items-center bg-earth/20 px-2 py-0.5 rounded-md">
-                  <ShieldCheck size={14} color="#7F5539" />
-                  <Text className="text-[11px] font-semibold text-earth-dark ml-1">
+                <View className="flex-row items-center bg-earth-pastel px-3 py-1.5 rounded-xl border border-earth-light">
+                  <ShieldCheck size={18} color="#6D3B1E" strokeWidth={2.5} />
+                  <Text
+                    className="text-earth-dark ml-1.5"
+                    style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 14 }}
+                  >
                     Visto Bueno Barrial
                   </Text>
                 </View>
@@ -202,6 +240,6 @@ export default function PublicServicesScreen() {
           </Card>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

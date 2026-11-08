@@ -2,9 +2,17 @@ import '../src/global.css';
 import React from 'react';
 import { Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import {
+  useFonts,
+  Nunito_400Regular,
+  Nunito_600SemiBold,
+  Nunito_700Bold,
+  Nunito_800ExtraBold,
+  Nunito_900Black,
+} from '@expo-google-fonts/nunito';
 import { queryClient, asyncStoragePersister } from '../src/services/queryClient';
 import { QuickPublishFAB } from '../src/components/ui/QuickPublishFAB';
 
@@ -36,6 +44,22 @@ function RootContent() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_800ExtraBold,
+    Nunito_900Black,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View className="flex-1 items-center justify-center bg-[#FAF6F0]">
+        <ActivityIndicator size="large" color="#2D6A4F" />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <PersistQueryClientProvider

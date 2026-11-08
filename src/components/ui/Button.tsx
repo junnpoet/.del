@@ -31,26 +31,29 @@ export const Button: React.FC<ButtonProps> = ({
   const isAccessible = size === 'accessible';
 
   const baseContainerStyles =
-    'flex-row items-center justify-center rounded-xl px-4';
-  const sizeStyles = isAccessible ? 'min-h-[64px] py-4' : 'min-h-[48px] py-3';
+    'flex-row items-center justify-center rounded-2xl px-6';
+  const sizeStyles = isAccessible ? 'min-h-[70px] py-4' : 'min-h-[58px] py-3.5';
 
-  let variantStyles = 'bg-primary active:bg-primary-dark';
-  let textStyles = 'text-white font-semibold';
+  let variantStyles = 'bg-primary border-2 border-primary-dark/20';
+  let textStyles = 'text-white';
+  let spinnerColor = '#FFFFFF';
 
   if (variant === 'secondary') {
-    variantStyles = 'bg-earth active:bg-earth-dark';
-    textStyles = 'text-white font-semibold';
+    variantStyles = 'bg-earth-pastel border-2 border-earth';
+    textStyles = 'text-earth-dark';
+    spinnerColor = '#6D3B1E';
   } else if (variant === 'outline') {
-    variantStyles =
-      'bg-transparent border-2 border-primary active:bg-primary/10';
-    textStyles = 'text-primary font-semibold';
+    variantStyles = 'bg-primary-pastel/70 border-2 border-primary';
+    textStyles = 'text-primary-dark';
+    spinnerColor = '#1B4332';
   } else if (variant === 'emergency') {
-    variantStyles = 'bg-emergency-alert active:opacity-90';
-    textStyles = 'text-white font-bold tracking-wide';
+    variantStyles = 'bg-emergency-alert border-2 border-white/20';
+    textStyles = 'text-white tracking-wide';
+    spinnerColor = '#FFFFFF';
   }
 
   const disabledStyles = disabled || isLoading ? 'opacity-50' : '';
-  const fontSize = isAccessible ? 'text-xl' : 'text-base';
+  const fontSize = isAccessible ? 22 : 19;
 
   return (
     <TouchableOpacity
@@ -62,14 +65,17 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {isLoading ? (
-        <ActivityIndicator
-          color={variant === 'outline' ? '#2D6A4F' : '#FFFFFF'}
-          size="small"
-        />
+        <ActivityIndicator color={spinnerColor} size="small" />
       ) : (
         <View className="flex-row items-center justify-center">
-          {icon && <View className="mr-2">{icon}</View>}
-          <Text className={`${fontSize} ${textStyles} text-center`}>
+          {icon && <View className="mr-2.5">{icon}</View>}
+          <Text
+            className={`${textStyles} text-center`}
+            style={{
+              fontFamily: 'Nunito_800ExtraBold',
+              fontSize,
+            }}
+          >
             {title}
           </Text>
         </View>

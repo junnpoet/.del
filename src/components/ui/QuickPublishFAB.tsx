@@ -160,7 +160,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       {/* Floating Action Button */}
       <View
         className="absolute right-5 z-50 items-center justify-center shadow-lg"
-        style={{ bottom: 68 + Math.max(insets.bottom, 10) }}
+        style={{ bottom: 76 + Math.max(insets.bottom, 12) }}
         pointerEvents="box-none"
       >
         <TouchableOpacity
@@ -168,9 +168,9 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
           accessibilityLabel="Publicación rápida en 3 clics"
           onPress={handleOpenMenu}
           activeOpacity={0.85}
-          className="w-14 h-14 rounded-full bg-primary items-center justify-center border-2 border-white shadow-md shadow-black/20"
+          className="w-16 h-16 rounded-full bg-primary items-center justify-center border-4 border-primary-pastel shadow-lg shadow-black/25"
         >
-          <Plus size={28} color="#FFFFFF" strokeWidth={2.5} />
+          <Plus size={32} color="#FFFFFF" strokeWidth={3} />
         </TouchableOpacity>
       </View>
 
@@ -183,47 +183,62 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       >
         <View className="flex-1 bg-black/60 justify-end">
           <View
-            className="bg-neutral-surface rounded-t-3xl px-5 pt-5 border-t border-neutral-border max-h-[90%]"
-            style={{ paddingBottom: Math.max(insets.bottom + 16, 24) }}
+            className="bg-neutral-surface rounded-t-3xl px-5 pt-6 border-t-2 border-neutral-border max-h-[92%]"
+            style={{ paddingBottom: Math.max(insets.bottom + 20, 28) }}
           >
             {/* Modal Header */}
-            <View className="flex-row items-center justify-between pb-3 border-b border-neutral-border">
-              <View>
-                <Text className="text-xl font-bold text-neutral-textMain">
+            <View className="flex-row items-center justify-between pb-4 border-b-2 border-neutral-border">
+              <View className="flex-1 pr-2">
+                <Text
+                  className="text-neutral-textMain"
+                  style={{ fontFamily: 'Nunito_900Black', fontSize: 24 }}
+                >
                   Publicación Rápida
                 </Text>
-                <Text className="text-xs text-neutral-textMuted">
-                  Embudo Vecinal en 3 toques
+                <Text
+                  className="text-neutral-textMuted mt-0.5"
+                  style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 15 }}
+                >
+                  Embudo vecinal en 3 toques simples
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={handleClose}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                className="min-h-[48px] min-w-[48px] items-center justify-center -mr-2"
+                className="min-h-[48px] min-w-[48px] rounded-2xl bg-neutral-mutedBg items-center justify-center"
               >
-                <X size={24} color="#6B7280" />
+                <X size={26} color="#5C564F" strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
 
             {/* Step 1: Select Type */}
             {!selectedType ? (
-              <View className="py-4">
-                <Text className="text-base font-semibold text-neutral-textMain mb-3">
+              <View className="py-5">
+                <Text
+                  className="text-neutral-textMain mb-4"
+                  style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 19 }}
+                >
                   Paso 1: ¿Qué deseas comunicar al barrio?
                 </Text>
 
                 <TouchableOpacity
                   onPress={() => setSelectedType('SERVICIO')}
-                  className="flex-row items-center p-4 bg-primary/10 border border-primary/30 rounded-2xl mb-3 min-h-[56px]"
+                  className="flex-row items-center p-5 bg-primary-pastel border-2 border-primary-light/60 rounded-3xl mb-3.5 min-h-[76px]"
                 >
-                  <View className="w-10 h-10 rounded-full bg-primary items-center justify-center mr-3">
-                    <Wrench size={20} color="#FFFFFF" />
+                  <View className="w-14 h-14 rounded-2xl bg-primary items-center justify-center mr-4">
+                    <Wrench size={26} color="#FFFFFF" strokeWidth={2.5} />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-base font-bold text-primary-dark">
+                    <Text
+                      className="text-primary-dark"
+                      style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 19 }}
+                    >
                       Ofrecer un Servicio
                     </Text>
-                    <Text className="text-xs text-neutral-textMuted">
+                    <Text
+                      className="text-primary-dark/80 mt-0.5"
+                      style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 15 }}
+                    >
                       Gasfitería, electricidad, costura, talleres
                     </Text>
                   </View>
@@ -231,16 +246,22 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
 
                 <TouchableOpacity
                   onPress={() => setSelectedType('AYUDA')}
-                  className="flex-row items-center p-4 bg-emergency-alert/10 border border-emergency-alert/30 rounded-2xl mb-3 min-h-[56px]"
+                  className="flex-row items-center p-5 bg-emergency-pastel border-2 border-emergency-alert/40 rounded-3xl mb-3.5 min-h-[76px]"
                 >
-                  <View className="w-10 h-10 rounded-full bg-emergency-alert items-center justify-center mr-3">
-                    <HelpCircle size={20} color="#FFFFFF" />
+                  <View className="w-14 h-14 rounded-2xl bg-emergency-alert items-center justify-center mr-4">
+                    <HelpCircle size={26} color="#FFFFFF" strokeWidth={2.5} />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-base font-bold text-emergency-alert">
+                    <Text
+                      className="text-emergency-alert"
+                      style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 19 }}
+                    >
                       Pedir Ayuda / Necesidad
                     </Text>
-                    <Text className="text-xs text-neutral-textMuted">
+                    <Text
+                      className="text-neutral-textMain/80 mt-0.5"
+                      style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 15 }}
+                    >
                       Medicinas urgentes, acompañamiento, soporte
                     </Text>
                   </View>
@@ -248,16 +269,22 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
 
                 <TouchableOpacity
                   onPress={() => setSelectedType('SOLIDARIO')}
-                  className="flex-row items-center p-4 bg-earth/15 border border-earth/40 rounded-2xl mb-3 min-h-[56px]"
+                  className="flex-row items-center p-5 bg-earth-pastel border-2 border-earth-light rounded-3xl mb-2 min-h-[76px]"
                 >
-                  <View className="w-10 h-10 rounded-full bg-earth items-center justify-center mr-3">
-                    <HeartHandshake size={20} color="#FFFFFF" />
+                  <View className="w-14 h-14 rounded-2xl bg-earth items-center justify-center mr-4">
+                    <HeartHandshake size={26} color="#FFFFFF" strokeWidth={2.5} />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-base font-bold text-earth-dark">
+                    <Text
+                      className="text-earth-dark"
+                      style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 19 }}
+                    >
                       Aporte Solidario / Donación
                     </Text>
-                    <Text className="text-xs text-neutral-textMuted">
+                    <Text
+                      className="text-earth-dark/85 mt-0.5"
+                      style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 15 }}
+                    >
                       Préstamo de herramientas, trueque, voluntariado
                     </Text>
                   </View>
@@ -265,9 +292,12 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
               </View>
             ) : (
               /* Step 2 & 3: Category and Detail / Audio */
-              <View className="py-3">
-                <View className="flex-row items-center justify-between mb-3">
-                  <Text className="text-sm font-bold text-primary">
+              <View className="py-4">
+                <View className="flex-row items-center justify-between mb-4 bg-primary-pastel/60 px-4 py-2.5 rounded-2xl border border-primary-light/40">
+                  <Text
+                    className="text-primary-dark"
+                    style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 17 }}
+                  >
                     {selectedType === 'SERVICIO'
                       ? '🛠️ OFRECER SERVICIO'
                       : selectedType === 'AYUDA'
@@ -276,19 +306,25 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                   </Text>
                   <TouchableOpacity
                     onPress={() => setSelectedType(null)}
-                    className="min-h-[36px] justify-center px-2"
+                    className="min-h-[40px] justify-center px-3 bg-neutral-surface rounded-xl border border-neutral-border"
                   >
-                    <Text className="text-xs font-semibold text-primary underline">
+                    <Text
+                      className="text-primary-dark"
+                      style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 15 }}
+                    >
                       Cambiar
                     </Text>
                   </TouchableOpacity>
                 </View>
 
                 {/* Paso 2: Categorías rápidas */}
-                <Text className="text-xs font-semibold text-neutral-textMuted uppercase mb-2">
-                  Paso 2: Categoría
+                <Text
+                  className="text-neutral-textMain mb-2.5"
+                  style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 17 }}
+                >
+                  Paso 2: Elige una categoría
                 </Text>
-                <View className="flex-row flex-wrap mb-3">
+                <View className="flex-row flex-wrap mb-4">
                   {categoriesByType[selectedType].map((cat) => (
                     <Chip
                       key={cat}
@@ -300,39 +336,54 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                 </View>
 
                 {/* Paso 3: Detalle o Nota de voz */}
-                <Text className="text-xs font-semibold text-neutral-textMuted uppercase mb-2">
+                <Text
+                  className="text-neutral-textMain mb-2.5"
+                  style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 17 }}
+                >
                   Paso 3: Detalle o Nota de Voz
                 </Text>
 
                 {/* Voice recorder box */}
-                <View className="p-3 bg-neutral-background border border-neutral-border rounded-xl mb-3">
+                <View className="p-4 bg-primary-pastel/50 border-2 border-primary-light/50 rounded-2xl mb-4">
                   <View className="flex-row items-center justify-between">
-                    <View className="flex-1 mr-2">
-                      <Text className="text-xs font-semibold text-neutral-textMain">
+                    <View className="flex-1 mr-3">
+                      <Text
+                        className="text-primary-dark"
+                        style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 16 }}
+                      >
                         ¿Prefieres hablar? Graba un audio:
                       </Text>
-                      <Text className="text-[11px] text-neutral-textMuted">
-                        Nuestra IA estructurará el pedido automáticamente.
+                      <Text
+                        className="text-neutral-textMuted mt-0.5"
+                        style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 14 }}
+                      >
+                        Nuestra IA ordenará tu mensaje automáticamente.
                       </Text>
                     </View>
 
                     {isRecording ? (
                       <TouchableOpacity
                         onPress={stopRecording}
-                        className="bg-emergency-alert px-3 py-2 rounded-lg flex-row items-center min-h-[40px]"
+                        className="bg-emergency-alert px-4 py-3 rounded-2xl flex-row items-center min-h-[48px]"
                       >
-                        <Square size={16} color="#FFFFFF" />
-                        <Text className="text-xs font-bold text-white ml-1">
+                        <Square size={18} color="#FFFFFF" />
+                        <Text
+                          className="text-white ml-1.5"
+                          style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 16 }}
+                        >
                           Detener
                         </Text>
                       </TouchableOpacity>
                     ) : (
                       <TouchableOpacity
                         onPress={startRecording}
-                        className="bg-primary px-3 py-2 rounded-lg flex-row items-center min-h-[40px]"
+                        className="bg-primary px-4 py-3 rounded-2xl flex-row items-center min-h-[48px]"
                       >
-                        <Mic size={16} color="#FFFFFF" />
-                        <Text className="text-xs font-bold text-white ml-1">
+                        <Mic size={18} color="#FFFFFF" />
+                        <Text
+                          className="text-white ml-1.5"
+                          style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 16 }}
+                        >
                           Grabar
                         </Text>
                       </TouchableOpacity>
@@ -340,10 +391,13 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                   </View>
 
                   {recordedUri && !isRecording && (
-                    <View className="flex-row items-center mt-2 pt-2 border-t border-neutral-border">
-                      <Check size={16} color="#2D6A4F" />
-                      <Text className="text-xs text-primary font-medium ml-1">
-                        Audio grabado listo para procesar
+                    <View className="flex-row items-center mt-3 pt-2.5 border-t border-primary-light/40">
+                      <Check size={18} color="#1B4332" strokeWidth={3} />
+                      <Text
+                        className="text-primary-dark ml-1.5"
+                        style={{ fontFamily: 'Nunito_700Bold', fontSize: 15 }}
+                      >
+                        Audio grabado listo para enviar
                       </Text>
                     </View>
                   )}
@@ -363,7 +417,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                   variant={selectedType === 'AYUDA' ? 'emergency' : 'primary'}
                   onPress={handleSubmit}
                   isLoading={isSubmitting}
-                  className="mt-2"
+                  className="mt-1"
                 />
               </View>
             )}

@@ -1,55 +1,72 @@
 /**
  * Sumayni Design Tokens
- * Philosophy: Warm Andean earthen tones for everyday neighborly collaboration,
- * combined with high-contrast emergency signals and accessible touch targets (>= 48dp).
+ * Philosophy: Friendly, rounded, pastel-warm Andean palette with high-contrast
+ * typography (WCAG AAA) and generous touch targets (>= 52dp standard, >= 68dp accessible).
  */
 
 export const sumayniColors = {
-  // Modo Cotidiano (Cálido, Humano, Bienestar)
+  // Modo Cotidiano (Pasteles Cálidos + Contraste Profundo)
   primary: {
-    DEFAULT: '#2D6A4F', // Verde arcilla andino (equilibrio y comunidad)
-    light: '#40916C',
-    dark: '#1B4332',
+    DEFAULT: '#2D6A4F', // Verde arcilla profundo (botones y acentos de alto contraste)
+    light: '#52B788',   // Verde hoja suave
+    dark: '#1B4332',    // Verde bosque oscuro (texto sobre fondos pastel)
+    pastel: '#D8F3DC',  // Verde menta/salvia pastel (fondos amigables y píldoras)
+    soft: '#B7E4C7',    // Borde pastel verde
   },
   earth: {
-    DEFAULT: '#B08968', // Tono arcilla/terracota suave
-    light: '#DDB892',
-    dark: '#7F5539',
+    DEFAULT: '#C87D55', // Terracota cálido amigable
+    light: '#E6A17C',
+    dark: '#6D3B1E',    // Tierra oscura para alto contraste sobre pastel
+    pastel: '#FFE5D9',  // Durazno/terracota pastel (fondos de tarjetas y sellos)
+    soft: '#FCD5CE',    // Coral pastel suave
+  },
+  sun: {
+    DEFAULT: '#E09F3E', // Miel cálido
+    dark: '#7C4D12',    // Ámbar oscuro para texto
+    pastel: '#FEF3C7',  // Amarillo miel pastel
   },
   neutral: {
-    background: '#F8F9FA', // Blanco hueso (no fatiga la vista)
-    surface: '#FFFFFF',
-    card: '#FFFFFF',
-    border: '#E5E7EB',
-    textMain: '#1F2937', // Alto contraste (WCAG AAA)
-    textMuted: '#6B7280',
+    background: '#FAF6F0', // Crema avena pastel cálido (cero frío hospitalario)
+    surface: '#FFFDF9',    // Marfil suave
+    card: '#FFFFFF',       // Blanco limpio para tarjetas sobre crema
+    mutedBg: '#F3EDE2',    // Arena pastel para contenedores secundarios
+    border: '#E6DEC8',     // Borde arena cálido
+    textMain: '#1E293B',   // Pizarra profundo (alto contraste)
+    textMuted: '#57534E',  // Piedra cálido legible (nunca gris pálido)
   },
-  // Modo Emergencia (Alta Visibilidad y Señalética)
+  // Modo Emergencia (Alta Visibilidad + Fondos Pastel de Alerta)
   emergency: {
-    alert: '#D90429', // Rojo señalética urgente
-    warning: '#F77F00', // Naranja atención
-    safe: '#2B9348', // Verde zona segura
-    background: '#121212', // Fondo oscuro de contingencia
-    cardDark: '#1E1E1E',
+    alert: '#E03131',      // Rojo coral intenso de emergencia
+    pastel: '#FFE3E3',     // Rosa/coral pastel para avisos de ayuda
+    warning: '#F08C00',    // Naranja ámbar
+    safe: '#2F9E44',       // Verde zona segura
+    background: '#18181B', // Fondo nocturno de contingencia
+    cardDark: '#27272A',   // Tarjeta oscura
   },
 };
 
 export const touchTargets = {
-  min: 48, // Minimum standard touch target (48x48 dp)
-  accessible: 64, // Adaptive accessible mode for seniors (64x64 dp)
+  min: 54,        // Generous standard touch target (54x54 dp)
+  accessible: 68, // Adaptive accessible mode for seniors (68x68 dp)
 };
 
 export const typography = {
+  fonts: {
+    regular: 'Nunito_400Regular',
+    medium: 'Nunito_600SemiBold',
+    semibold: 'Nunito_700Bold',
+    bold: 'Nunito_800ExtraBold',
+    black: 'Nunito_900Black',
+  },
   fontSizes: {
-    xs: 12,
-    sm: 14,
-    base: 16,
-    lg: 18,
-    xl: 20,
-    '2xl': 24,
-    '3xl': 30,
-    accessibleBase: 20,
-    accessibleLg: 26,
-    accessibleXl: 34,
+    sm: 15,
+    base: 17,
+    lg: 19,
+    xl: 22,
+    '2xl': 26,
+    '3xl': 32,
+    accessibleBase: 22,
+    accessibleLg: 28,
+    accessibleXl: 36,
   },
 };

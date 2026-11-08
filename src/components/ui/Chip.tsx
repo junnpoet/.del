@@ -20,23 +20,29 @@ export const Chip: React.FC<ChipProps> = ({
   ...props
 }) => {
   const containerActive = isActive
-    ? 'bg-primary border-primary'
-    : 'bg-neutral-surface border-neutral-border';
+    ? 'bg-primary border-2 border-primary-dark'
+    : 'bg-neutral-mutedBg border-2 border-neutral-border';
 
-  const textActive = isActive
-    ? 'text-white font-semibold'
-    : 'text-neutral-textMain font-medium';
+  const textActive = isActive ? 'text-white' : 'text-neutral-textMain';
 
   return (
     <TouchableOpacity
       accessibilityRole="checkbox"
       accessibilityState={{ checked: isActive }}
-      activeOpacity={0.7}
-      className={`min-h-[48px] min-w-[48px] flex-row items-center justify-center rounded-full border px-4 py-2 mr-2 mb-2 ${containerActive} ${className}`}
+      activeOpacity={0.75}
+      className={`min-h-[50px] min-w-[56px] flex-row items-center justify-center rounded-full px-5 py-2.5 mr-2.5 mb-2.5 ${containerActive} ${className}`}
       {...props}
     >
-      {icon && <View className="mr-1.5">{icon}</View>}
-      <Text className={`text-sm ${textActive}`}>{label}</Text>
+      {icon && <View className="mr-2">{icon}</View>}
+      <Text
+        className={textActive}
+        style={{
+          fontFamily: isActive ? 'Nunito_800ExtraBold' : 'Nunito_700Bold',
+          fontSize: 16,
+        }}
+      >
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 };

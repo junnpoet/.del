@@ -33,23 +33,20 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const bgStyles = isEmergency
-    ? 'bg-emergency-background border-b border-emergency-alert/40'
-    : 'bg-neutral-surface border-b border-neutral-border';
+    ? 'bg-emergency-background border-b-2 border-emergency-alert/40'
+    : 'bg-neutral-surface border-b-2 border-neutral-border';
 
-  const titleStyles = isEmergency
-    ? 'text-white font-bold'
-    : 'text-neutral-textMain font-bold';
-
+  const titleStyles = isEmergency ? 'text-white' : 'text-neutral-textMain';
   const subtitleStyles = isEmergency
-    ? 'text-emergency-warning font-medium'
+    ? 'text-emergency-warning'
     : 'text-neutral-textMuted';
 
   return (
     <View
-      className={`px-4 pb-3 ${bgStyles}`}
-      style={{ paddingTop: Math.max(insets.top + 8, 16) }}
+      className={`px-5 pb-4 ${bgStyles}`}
+      style={{ paddingTop: Math.max(insets.top + 10, 18) }}
     >
-      <View className="flex-row items-center justify-between min-h-[48px]">
+      <View className="flex-row items-center justify-between min-h-[54px]">
         <View className="flex-row items-center flex-1">
           {showBack && (
             <TouchableOpacity
@@ -57,28 +54,39 @@ export const Header: React.FC<HeaderProps> = ({
               accessibilityLabel="Regresar"
               onPress={handleBack}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              className="min-h-[48px] min-w-[48px] items-center justify-center -ml-2 mr-2"
+              className={`h-12 w-12 rounded-2xl items-center justify-center mr-3 ${
+                isEmergency ? 'bg-white/15' : 'bg-primary-pastel'
+              }`}
             >
               <ChevronLeft
                 size={28}
-                color={isEmergency ? '#FFFFFF' : '#1F2937'}
+                strokeWidth={2.5}
+                color={isEmergency ? '#FFFFFF' : '#1B4332'}
               />
             </TouchableOpacity>
           )}
 
           <View className="flex-1">
-            <Text className={`text-xl ${titleStyles}`} numberOfLines={1}>
+            <Text
+              className={titleStyles}
+              style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 23 }}
+              numberOfLines={1}
+            >
               {title}
             </Text>
             {subtitle && (
-              <Text className={`text-xs ${subtitleStyles}`} numberOfLines={1}>
+              <Text
+                className={`mt-0.5 ${subtitleStyles}`}
+                style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 15 }}
+                numberOfLines={1}
+              >
                 {subtitle}
               </Text>
             )}
           </View>
         </View>
 
-        {rightAction && <View className="ml-2">{rightAction}</View>}
+        {rightAction && <View className="ml-3">{rightAction}</View>}
       </View>
     </View>
   );

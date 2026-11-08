@@ -13,18 +13,20 @@ export default function MainLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#2D6A4F',
-          tabBarInactiveTintColor: '#6B7280',
+          tabBarActiveTintColor: '#1B4332',
+          tabBarInactiveTintColor: '#7A7267',
           tabBarStyle: {
-            backgroundColor: '#FFFFFF',
-            borderTopColor: '#E5E7EB',
-            height: 58 + bottomPadding,
+            backgroundColor: '#FFFDF9',
+            borderTopColor: '#E6DEC8',
+            borderTopWidth: 2,
+            height: 68 + bottomPadding,
             paddingBottom: bottomPadding,
             paddingTop: 8,
           },
           tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '600',
+            fontFamily: 'Nunito_800ExtraBold',
+            fontSize: 14,
+            marginTop: 2,
           },
         }}
       >
@@ -33,7 +35,9 @@ export default function MainLayout() {
           options={{
             title: 'Oficios',
             tabBarLabel: 'Directorio',
-            tabBarIcon: ({ color, size }) => <Store size={size || 24} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <Store size={26} color={color} strokeWidth={focused ? 2.8 : 2.2} />
+            ),
           }}
         />
         <Tabs.Screen
@@ -41,7 +45,9 @@ export default function MainLayout() {
           options={{
             title: 'Comunidad',
             tabBarLabel: 'Muro Barrial',
-            tabBarIcon: ({ color, size }) => <Users size={size || 24} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <Users size={26} color={color} strokeWidth={focused ? 2.8 : 2.2} />
+            ),
           }}
         />
         <Tabs.Screen
@@ -49,7 +55,9 @@ export default function MainLayout() {
           options={{
             title: 'Mi Hogar',
             tabBarLabel: 'Mi Perfil',
-            tabBarIcon: ({ color, size }) => <User size={size || 24} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <User size={26} color={color} strokeWidth={focused ? 2.8 : 2.2} />
+            ),
           }}
         />
       </Tabs>
