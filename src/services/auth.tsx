@@ -23,7 +23,7 @@ export interface AuthProfile {
 }
 
 export interface SignUpInput {
-  email: string;
+  email?: string;
   password: string;
   fullName: string;
   phone: string;
@@ -37,10 +37,21 @@ interface AuthContextValue {
   session: Session | null;
   profile: AuthProfile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (phoneOrEmail: string, password: string) => Promise<void>;
   signUp: (input: SignUpInput) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+}
+
+export function phoneToAuthEmail(identifier: string): string {
+  const trimmed = identifier.trim();
+  if (trimmed.includes('@')) {
+    return trimmed.toLowerCase();
+  }
+  const digits = trimmed.replace(/\D/g, '');
+  const nationalDigits =
+    digits.length === 11 && digits.startsWith('51') ? digits.slice(2) : digits;
+  return `${nationalDigits}@sumayni.pe`;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -104,17 +115,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshProfile();
   }, [refreshProfile]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (phoneOrEmail: string, password: string) => {
+    const email = phoneToAuthEmail(phoneOrEmail);
     const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
+      email,
       password,
     });
     if (error) throw error;
   }, []);
 
   const signUp = useCallback(async (input: SignUpInput) => {
+    const email = input.email?.trim() || phoneToAuthEmail(input.phone);
     const { data, error } = await supabase.auth.signUp({
-      email: input.email.trim(),
+      email,
       password: input.password,
     });
     if (error) throw error;

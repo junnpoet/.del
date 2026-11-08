@@ -19,18 +19,18 @@ import { useAuth } from '../../src/services/auth';
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email.trim() || !password) {
-      Alert.alert('Atención', 'Ingresa tu correo y tu contraseña.');
+    if (!phone.trim() || !password) {
+      Alert.alert('Atención', 'Ingresa tu número de celular y tu contraseña.');
       return;
     }
     setIsLoading(true);
     try {
-      await signIn(email, password);
+      await signIn(phone, password);
       router.replace('/(main)');
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
@@ -38,8 +38,8 @@ export default function LoginScreen() {
       Alert.alert(
         'Error',
         invalid
-          ? 'Correo o contraseña incorrectos.'
-          : 'No se pudo iniciar sesión. Revisa tu conexión.'
+          ? 'Número de celular o contraseña incorrectos. Verifica que el usuario esté registrado en la base de datos.'
+          : 'No se pudo iniciar sesión. Revisa tu conexión a la red.'
       );
     } finally {
       setIsLoading(false);
@@ -76,13 +76,13 @@ export default function LoginScreen() {
             </Text>
 
             <Input
-              label="Correo electrónico"
-              placeholder="Ej: carmen@correo.com"
-              keyboardType="email-address"
+              label="Número de celular"
+              placeholder="Ej: 998877665"
+              keyboardType="phone-pad"
               autoCapitalize="none"
               autoCorrect={false}
-              value={email}
-              onChangeText={setEmail}
+              value={phone}
+              onChangeText={setPhone}
             />
             <Input
               label="Contraseña"

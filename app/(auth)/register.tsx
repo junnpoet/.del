@@ -107,8 +107,8 @@ export default function RegisterScreen() {
       Alert.alert('Faltan Datos', 'Por favor ingresa tus nombres y apellidos.');
       return;
     }
-    if (!email.trim() || !email.includes('@')) {
-      Alert.alert('Faltan Datos', 'Ingresa un correo electrónico válido.');
+    if (email.trim() && !email.includes('@')) {
+      Alert.alert('Faltan Datos', 'Ingresa un correo electrónico válido o déjalo en blanco.');
       return;
     }
     if (password.length < 6) {
@@ -193,8 +193,8 @@ export default function RegisterScreen() {
           />
 
           <Input
-            label="Correo electrónico"
-            placeholder="Ej: carmen@correo.com"
+            label="Correo electrónico (opcional)"
+            placeholder="Opcional: tu@correo.com"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
