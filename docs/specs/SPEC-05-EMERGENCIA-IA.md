@@ -177,9 +177,9 @@ export async function broadcastEmergencyAlert(groupId: string, eventType: string
 
 ## 5. Criterios de Aceptación (Checklist de Ronald)
 
-- [ ] Control "Slide to Activate" funciona con cuenta regresiva de 5 segundos cancelable.
-- [ ] La app muta inmediatamente al Tablero de Ayuda Humanitaria en dispositivos reales al cambiar el estado de la emergencia en Supabase.
-- [ ] Banner de contingencia aparece para usuarios en la Capa Pública con botón de incorporación express.
-- [ ] Edge Function de Gemini procesa un archivo de audio real y retorna el JSON estructurado en $< 2$ segundos.
-- [ ] Webhook de WhatsApp responde consultas de texto con fichas formateadas y enlaces directos `wa.me`.
-- [ ] Nota de voz enviada al número de prueba de WhatsApp se transcribe e inserta automáticamente en la app móvil.
+- [x] Control "Slide to Activate" funciona con cuenta regresiva de 5 segundos cancelable.
+- [x] La app muta inmediatamente al Tablero de Ayuda Humanitaria en dispositivos reales al cambiar el estado de la emergencia en Supabase.
+- [x] Banner de contingencia aparece para usuarios en la Capa Pública con botón de incorporación express.
+- [x] Edge Function de Gemini procesa un archivo de audio real y retorna el JSON estructurado en $< 2$ segundos.
+- [x] Webhook de WhatsApp responde consultas de texto con fichas formateadas y enlaces directos `wa.me`.
+- [x] Nota de voz enviada al número de prueba de WhatsApp se transcribe e inserta automáticamente en la app móvil.

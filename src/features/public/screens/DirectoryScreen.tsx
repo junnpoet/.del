@@ -16,6 +16,7 @@ import { Header } from '../../../components/ui/Header';
 import { Chip } from '../../../components/ui/Chip';
 import { useDirectory } from '../hooks/useDirectory';
 import { ServiceCard } from '../components/ServiceCard';
+import { EmergencyBanner } from '../../emergency/components/EmergencyBanner';
 
 const CATEGORIES = [
   'Todos',
@@ -152,6 +153,7 @@ export default function DirectoryScreen() {
   return (
     <View className="flex-1 bg-neutral-background">
       <Header title="Directorio barrial" subtitle="Oficios cerca de tu hogar" />
+      <EmergencyBanner />
       <View className="border-b border-neutral-border/60 bg-neutral-surface px-4 pb-2 pt-3">
         <View className="flex-row items-center rounded-2xl bg-neutral-mutedBg px-3 min-h-[44px]">
           <Search size={18} color="#6C727A" />
