@@ -38,6 +38,12 @@ function RootContent() {
             animation: 'fade',
           }}
         />
+        <Stack.Screen
+          name="chat/[id]"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
       {/* Quick 3-click Publish Floating Action Button only on main tab views */}
       {isMainTab && <QuickPublishFAB />}
