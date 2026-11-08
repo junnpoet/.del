@@ -1,4 +1,4 @@
-# Propuesta Integral de Arquitectura y Solución: Red Vecinal de Proximidad y Solidaridad
+# Propuesta Integral de Arquitectura y Solución: Sumayni — Red Vecinal de Proximidad y Solidaridad
 
 ## Resumen Ejecutivo
 
