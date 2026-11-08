@@ -1,0 +1,230 @@
+:root {
+    --color-brand-50: 239 246 255;
+    --color-brand-100: 219 234 254;
+    --color-brand-500: 59 130 246;
+    --color-brand-600: 37 99 235;
+    --color-brand-700: 29 78 216;
+    --color-brand-800: 30 64 175;
+    --color-emergency-500: 220 38 38;
+    --color-emergency-600: 185 28 28;
+    --color-emergency-700: 153 27 27;
+    --color-sumayni-orange-50: 255 247 237;
+    --color-sumayni-orange-100: 255 237 213;
+    --color-sumayni-orange-400: 251 146 60;
+    --color-sumayni-orange-500: 249 115 22;
+    --color-sumayni-orange-600: 234 88 12;
+    --color-sumayni-orange-700: 194 65 12;
+    --color-amber-200: 253 230 138;
+    --color-amber-300: 252 211 77;
+    --color-amber-400: 251 191 36;
+    --color-amber-500: 245 158 11;
+    --color-amber-600: 217 119 6;
+    --color-amber-700: 180 83 9;
+    --color-blue-50: 239 246 255;
+    --color-blue-200: 191 219 254;
+    --color-blue-400: 96 165 250;
+    --color-blue-500: 59 130 246;
+    --color-blue-600: 37 99 235;
+    --color-blue-700: 29 78 216;
+    --color-blue-800: 30 64 175;
+    --color-blue-900: 30 58 138;
+    --color-emerald-50: 236 253 245;
+    --color-emerald-100: 209 250 229;
+    --color-emerald-400: 52 211 153;
+    --color-emerald-500: 16 185 129;
+    --color-emerald-600: 5 150 105;
+    --color-emerald-700: 4 120 87;
+    --color-emerald-800: 6 95 70;
+    --color-orange-100: 255 237 213;
+    --color-orange-500: 249 115 22;
+    --color-orange-600: 234 88 12;
+    --color-orange-700: 194 65 12;
+    --color-purple-50: 239 246 255;
+    --color-purple-100: 219 234 254;
+    --color-purple-200: 191 219 254;
+    --color-purple-500: 59 130 246;
+    --color-purple-600: 37 99 235;
+    --color-purple-700: 29 78 216;
+    --color-purple-800: 30 64 175;
+    --color-red-50: 254 242 242;
+    --color-red-100: 254 226 226;
+    --color-red-200: 254 202 202;
+    --color-red-300: 252 165 165;
+    --color-red-400: 248 113 113;
+    --color-red-500: 239 68 68;
+    --color-red-600: 220 38 38;
+    --color-red-700: 185 28 28;
+    --color-red-900: 127 29 29;
+    --color-red-950: 69 10 10;
+    --color-slate-50: 248 250 252;
+    --color-slate-100: 241 245 249;
+    --color-slate-200: 226 232 240;
+    --color-slate-300: 203 213 225;
+    --color-slate-400: 148 163 184;
+    --color-slate-500: 100 116 139;
+    --color-slate-600: 71 85 105;
+    --color-slate-700: 51 65 85;
+    --color-slate-800: 30 41 59;
+    --color-slate-900: 15 23 42;
+    --color-slate-950: 2 6 23;
+    --color-yellow-300: 253 224 71;
+    --color-white: 255 255 255;
+    --color-black: 0 0 0;
+    --color-scrollbar-track: 0 0 0;
+    --color-mobile-shadow: 0 0 0;
+}
+
+#mainHeader.brand-header,
+#statusBar.brand-status-bar {
+    background-color: rgb(var(--color-brand-700));
+}
+
+#bottomNav.app-bottom-nav {
+    background-color: rgb(var(--color-white));
+    border-color: rgb(var(--color-slate-200));
+    color: rgb(var(--color-slate-500));
+}
+
+#bottomNav .nav-item:hover,
+#bottomNav .nav-item[aria-current="page"] {
+    color: rgb(var(--color-brand-600));
+}
+
+#mobileFrame.emergency-mode #mainHeader,
+#mobileFrame.emergency-mode #statusBar {
+    background-color: rgb(var(--color-red-700));
+}
+
+#mobileFrame.emergency-mode #bottomNav {
+    background-color: rgb(var(--color-slate-950));
+    border-color: rgb(var(--color-slate-800));
+    color: rgb(var(--color-white));
+}
+
+#mobileFrame.emergency-mode #bottomNav .nav-item,
+#mobileFrame.emergency-mode #bottomNav .nav-item:hover,
+#mobileFrame.emergency-mode #bottomNav .nav-item[aria-current="page"] {
+    color: rgb(var(--color-white));
+}
+
+.news-filter-chip {
+    background-color: rgb(var(--color-white));
+    color: rgb(var(--color-slate-600));
+}
+
+.news-filter-chip[aria-pressed="true"] {
+    background-color: rgb(var(--color-slate-900));
+    color: rgb(var(--color-white));
+}
+
+.news-filter-chip[aria-pressed="false"] {
+    border: 1px solid rgb(var(--color-slate-200));
+}
+
+.favor-filter-chip[aria-pressed="true"] {
+    background-color: rgb(var(--color-slate-900));
+    color: rgb(var(--color-white));
+}
+
+.favor-filter-chip[aria-pressed="false"] {
+    background-color: rgb(var(--color-white));
+    border: 1px solid rgb(var(--color-slate-200));
+    color: rgb(var(--color-slate-700));
+}
+
+.favor-filter-chip[aria-pressed="false"]:hover {
+    background-color: rgb(var(--color-slate-50));
+}
+
+.favor-filter-chip[aria-pressed="true"]:hover {
+    background-color: rgb(var(--color-slate-900));
+    color: rgb(var(--color-white));
+}
+
+.type-btn {
+    border: 1px solid rgb(var(--color-slate-200));
+    color: rgb(var(--color-slate-600));
+}
+
+.type-btn:hover,
+.type-btn.is-selected {
+    border-color: rgb(var(--color-brand-600));
+}
+
+.type-btn.is-selected {
+    background-color: rgb(var(--color-brand-50));
+}
+
+.type-request-icon {
+    color: rgb(var(--color-purple-600));
+}
+
+.type-offer-icon {
+    color: rgb(var(--color-blue-600));
+}
+
+.mobile-shadow {
+    box-shadow: 0 25px 50px -12px rgb(var(--color-mobile-shadow) / 0.35);
+}
+
+.dot-pattern {
+    background-image: radial-gradient(rgb(var(--color-slate-600)) 1px, transparent 1px);
+    background-size: 16px 16px;
+}
+
+.mobile-shadow {
+    box-shadow: 0 25px 50px -12px rgb(var(--color-mobile-shadow));
+}
+
+::-webkit-scrollbar-track {
+    background: rgb(var(--color-scrollbar-track) / 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-brand-500) / 0.3);
+    border-radius: 4px;
+}
+
+body[data-page="servicios"] ::-webkit-scrollbar-thumb,
+body[data-page="favores"] ::-webkit-scrollbar-thumb,
+body[data-page="mapa"] ::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-sumayni-orange-600) / 0.4);
+}
+
+.emergency-mode ::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-emergency-500) / 0.5);
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgb(var(--color-emergency-500) / 0.7);
+    }
+
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgb(var(--color-emergency-500) / 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgb(var(--color-emergency-500) / 0);
+    }
+}
+
+@keyframes sos-pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgb(var(--color-emergency-500) / 0.7);
+    }
+
+    70% {
+        transform: scale(1.08);
+        box-shadow: 0 0 0 10px rgb(var(--color-emergency-500) / 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgb(var(--color-emergency-500) / 0);
+    }
+}

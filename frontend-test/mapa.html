@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sumayni - Mapa y recursos</title>
+    <link rel="stylesheet" href="colores.css">
+    <link rel="stylesheet" href="estilos.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="tailwind-config.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-page="mapa" class="bg-slate-900 text-slate-800 font-sans min-h-screen flex items-center justify-center p-0 sm:p-4">
+
+    <div id="mobileFrame" class="w-full sm:max-w-sm h-screen sm:h-[844px] bg-slate-50 sm:rounded-[42px] mobile-shadow overflow-hidden flex flex-col relative border-0 sm:border-[8px] border-slate-800">
+
+        <!-- BARRA DE ESTADO -->
+        <div id="statusBar" class="brand-status-bar bg-brand-700 text-white px-6 pt-3 pb-1 flex justify-between items-center text-xs select-none transition-colors duration-300">
+            <span class="font-semibold">9:41</span>
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-signal"></i>
+                <i class="fa-solid fa-battery-full"></i>
+            </div>
+        </div>
+
+        <!-- HEADER PRINCIPAL (COMPARTIDO) -->
+        <header id="mainHeader" class="brand-header bg-brand-700 text-white px-4 py-3 shadow-md flex items-center justify-between relative transition-colors duration-300">
+            <div class="flex items-center space-x-3">
+                <button id="appMenuTrigger" onclick="toggleMenu()" class="p-2 rounded-full hover:bg-white/10 text-white focus:outline-none" aria-label="Abrir Menú" aria-controls="appMenu" aria-expanded="false">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div>
+                    <div class="flex items-center space-x-1 cursor-pointer" onclick="openZoneModal()">
+                        <span class="font-display font-bold text-xl tracking-tight text-white">sumayni</span>
+                        <i class="fa-solid fa-chevron-down text-xs text-brand-100"></i>
+                    </div>
+                    <div class="text-[11px] text-brand-100 flex items-center space-x-1">
+                        <i class="fa-solid fa-location-dot text-amber-300"></i>
+                        <span id="currentZoneText" class="truncate max-w-[140px]">Buscando tu ubicación...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button id="accessibilityBtn" onclick="toggleAccessibility()" title="Modo Accesibilidad (Texto Grande)" aria-label="Activar texto grande" aria-pressed="false" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20">
+                    <i class="fa-solid fa-universal-access"></i>
+                </button>
+                <button id="sosTrigger" onclick="toggleEmergencyMode(true)" class="sos-btn bg-red-600 hover:bg-red-700 text-white font-bold w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-2 border-white focus:outline-none" title="Activar Modo Emergencia" aria-label="Activar modo emergencia">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </button>
+            </div>
+        </header>
+
+        <div id="appMenu" class="hidden absolute inset-0 z-50 bg-slate-950/45" onclick="closeMenu()">
+            <section role="dialog" aria-modal="true" aria-labelledby="appMenuTitle" class="w-[min(18rem,85%)] h-full bg-white shadow-2xl p-4 flex flex-col" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <div>
+                        <h2 id="appMenuTitle" class="font-display font-bold text-slate-900">Menú sumayni</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Accesos de tu comunidad</p>
+                    </div>
+                    <button onclick="closeMenu()" class="w-9 h-9 rounded-full hover:bg-slate-100 text-slate-500" aria-label="Cerrar menú">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <nav aria-label="Opciones del menú" class="py-3 space-y-1">
+                    <button onclick="selectMenuOption('perfil')" class="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                        <i class="fa-solid fa-user w-5 text-center text-brand-600"></i><span>Perfil</span>
+                    </button>
+                    <button onclick="selectMenuOption('configuracion')" class="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                        <i class="fa-solid fa-gear w-5 text-center text-brand-600"></i><span>Configuración</span>
+                    </button>
+                    <button onclick="selectMenuOption('banco-tiempo')" class="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                        <i class="fa-solid fa-clock-rotate-left w-5 text-center text-brand-600"></i><span>Banco de Tiempo sumayni</span>
+                    </button>
+                </nav>
+            </section>
+        </div>
+
+        <div id="profileModal" class="hidden absolute inset-0 z-50 bg-slate-950/50 flex items-center justify-center p-4" onclick="closeProfileModal()">
+            <section role="dialog" aria-modal="true" aria-labelledby="profileTitle" class="w-full max-w-xs bg-white rounded-2xl p-4 shadow-2xl" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="w-11 h-11 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center text-lg"><i class="fa-solid fa-user"></i></span>
+                        <div><h2 id="profileTitle" class="font-display font-bold text-slate-900">Perfil vecinal</h2><p class="text-xs text-slate-500">Comunidad sumayni</p></div>
+                    </div>
+                    <button onclick="closeProfileModal()" aria-label="Cerrar perfil" class="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="mt-4 rounded-xl bg-slate-50 border border-slate-200 p-3">
+                    <p class="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Tu barrio</p>
+                    <p id="profileZoneText" class="text-sm font-semibold text-slate-800 mt-1"></p>
+                </div>
+                <button onclick="closeProfileModal()" class="w-full mt-4 bg-brand-700 hover:bg-brand-800 text-white font-bold py-2.5 rounded-xl text-sm">Listo</button>
+            </section>
+        </div>
+
+        <!-- TÍTULO, BÚSQUEDA Y FILTROS -->
+        <section class="bg-white px-4 pt-3 pb-3 border-b border-slate-200 shrink-0" aria-label="Buscar y filtrar el mapa">
+            <div class="mb-2.5">
+                <h2 class="font-display font-bold text-base text-slate-900">Mapa y recursos</h2>
+                <p class="text-[11px] text-slate-500 mt-0.5">Lo que tu barrio tiene cerca, y dónde estar a salvo.</p>
+                <p id="resultsCount" class="text-[10px] text-slate-400 mt-1" aria-live="polite"></p>
+            </div>
+
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                <input type="search" id="searchInput" oninput="renderAll()" aria-label="Buscar en el mapa" placeholder="Generador, botiquín, olla común..." class="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 rounded-xl border border-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <button onclick="clearSearch()" aria-label="Limpiar búsqueda" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 p-1">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="chip-scroll flex gap-2 overflow-x-auto text-xs font-medium mt-2.5" role="group" aria-label="Categorías del mapa">
+                <button type="button" data-cat="all" onclick="setCategory('all')" class="map-chip shrink-0 bg-slate-900 text-white px-3 py-1.5 rounded-full font-semibold">Todos</button>
+                <button type="button" data-cat="recurso" onclick="setCategory('recurso')" class="map-chip shrink-0 bg-white text-slate-700 border border-slate-200 px-3 py-1.5 rounded-full font-semibold hover:bg-slate-50">Recursos</button>
+                <button type="button" data-cat="voluntariado" onclick="setCategory('voluntariado')" class="map-chip shrink-0 bg-white text-slate-700 border border-slate-200 px-3 py-1.5 rounded-full font-semibold hover:bg-slate-50">Voluntariado</button>
+                <button type="button" data-cat="seguro" onclick="setCategory('seguro')" class="map-chip shrink-0 bg-white text-slate-700 border border-slate-200 px-3 py-1.5 rounded-full font-semibold hover:bg-slate-50">Zonas seguras</button>
+                <button type="button" data-cat="riesgo" onclick="setCategory('riesgo')" class="map-chip shrink-0 bg-white text-slate-700 border border-slate-200 px-3 py-1.5 rounded-full font-semibold hover:bg-slate-50">Riesgo</button>
+            </div>
+        </section>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main id="mainView" class="flex-1 overflow-y-auto bg-slate-50 p-3 space-y-3">
+
+            <!-- BANNER DE EMERGENCIA -->
+            <section id="emergencyBanner" class="hidden bg-red-700 rounded-2xl p-3 text-white shadow-xl border-2 border-red-500">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fa-solid fa-triangle-exclamation text-2xl text-yellow-300"></i>
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wider">Modo emergencia</h3>
+                        <p class="text-[11px] text-red-100">Mostrando zonas seguras. Avisa cómo estás.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="sendEmergencyStatus('Estoy Bien')" class="bg-emerald-700 hover:bg-emerald-800 p-2.5 rounded-xl text-white font-bold text-xs">Estoy bien</button>
+                    <button onclick="sendEmergencyStatus('Necesito Ayuda')" class="bg-red-900 hover:bg-red-950 p-2.5 rounded-xl text-white font-bold text-xs border border-red-400">Necesito ayuda</button>
+                    <button onclick="sendEmergencyStatus('Puedo Ayudar')" class="bg-blue-700 hover:bg-blue-800 p-2.5 rounded-xl text-white font-bold text-xs">Puedo ayudar</button>
+                    <button onclick="sendEmergencyStatus('Ahí Llevándola')" class="bg-amber-600 hover:bg-amber-700 p-2.5 rounded-xl text-white font-bold text-xs">Ahí llevándola</button>
+                </div>
+                <button onclick="toggleEmergencyMode(false)" class="w-full mt-2 bg-white/10 hover:bg-white/20 text-white font-bold py-2 rounded-xl text-[11px] border border-white/30">
+                    <i class="fa-solid fa-power-off mr-1"></i> Desactivar modo emergencia
+                </button>
+            </section>
+
+            <!-- GOOGLE MAPS -->
+            <section class="relative h-80 rounded-2xl overflow-hidden border border-slate-200 shadow-lg shadow-slate-300/50 bg-slate-200" aria-label="Mapa del barrio">
+                <div id="map" class="absolute inset-0"></div>
+
+                <!-- Mensaje cuando el mapa no puede cargar -->
+                <div id="mapMessage" class="hidden absolute inset-0 z-40 bg-slate-100 flex flex-col items-center justify-center text-center p-5">
+                    <i class="fa-solid fa-map-location-dot text-4xl text-slate-300 mb-2"></i>
+                    <p id="mapMessageTitle" class="text-xs font-bold text-slate-700"></p>
+                    <p id="mapMessageText" class="text-[11px] text-slate-500 mt-1 leading-snug"></p>
+                    <p class="text-[10px] text-slate-400 mt-2">La lista de abajo sigue funcionando.</p>
+                </div>
+
+                <!-- Chip con el barrio delimitado -->
+                <div id="zoneChip" class="hidden absolute top-3 left-3 z-30 max-w-[62%] bg-white/95 border border-red-200 rounded-xl shadow-md px-2.5 py-1.5">
+                    <p class="text-[11px] font-bold text-slate-800 flex items-center gap-1 min-w-0">
+                        <span class="inline-block w-3 border-t-2 border-dashed border-red-600 shrink-0"></span>
+                        <span id="zoneChipName" class="truncate">Tu barrio</span>
+                    </p>
+                    <p id="zoneChipSrc" class="text-[9px] text-slate-500 leading-tight"></p>
+                </div>
+
+                <!-- Botones del mapa -->
+                <button onclick="locate(true)" aria-label="Ir a mi ubicación" title="Mi ubicación" class="absolute top-3 right-3 z-30 w-9 h-9 bg-white text-blue-600 rounded-xl shadow-md border border-slate-200 flex items-center justify-center hover:bg-slate-50 active:scale-95">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                </button>
+                <button onclick="startDrawing()" aria-label="Dibujar los límites de mi barrio" title="Dibujar los límites de mi barrio" class="absolute top-14 right-3 z-30 w-9 h-9 bg-white text-red-600 rounded-xl shadow-md border border-slate-200 flex items-center justify-center hover:bg-slate-50 active:scale-95">
+                    <i class="fa-solid fa-draw-polygon"></i>
+                </button>
+
+                <!-- Barra de dibujo de zona -->
+                <div id="drawBar" class="hidden absolute bottom-2 left-2 right-2 z-40 bg-white rounded-2xl shadow-2xl border-2 border-red-500 p-2.5">
+                    <p class="text-[11px] font-bold text-slate-800 mb-0.5">Dibuja tu barrio</p>
+                    <p id="drawHint" class="text-[10px] text-slate-500 leading-snug mb-2">Toca el mapa en cada esquina del límite de tu barrio (mínimo 3 puntos).</p>
+                    <div class="grid grid-cols-3 gap-1.5 text-[11px] font-bold">
+                        <button onclick="undoDraw()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded-lg"><i class="fa-solid fa-rotate-left mr-1"></i>Deshacer</button>
+                        <button onclick="cancelDraw()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded-lg">Cancelar</button>
+                        <button onclick="finishDraw()" class="bg-red-600 hover:bg-red-700 text-white py-1.5 rounded-lg"><i class="fa-solid fa-check mr-1"></i>Listo</button>
+                    </div>
+                </div>
+
+                <!-- Card flotante al tocar un pin -->
+                <div id="mapFloatingCard" class="hidden absolute bottom-2 left-2 right-2 bg-white p-3 rounded-2xl shadow-2xl border-2 border-sumayniOrange-500 z-30"></div>
+            </section>
+
+            <!-- LISTA DE CARDS -->
+            <div id="listView" class="space-y-3"></div>
+
+        </main>
+
+        <!-- BARRA INFERIOR (COMPARTIDA) -->
+        <nav id="bottomNav"
+            aria-label="Navegación principal"
+            class="app-bottom-nav bg-white border-t border-slate-200 px-1 py-2 flex justify-between items-center text-slate-500 transition-colors duration-300">
+            <button onclick="window.location.href='Sumayni.html'" class="nav-item flex flex-1 min-w-0 flex-col items-center hover:text-brand-600" aria-label="Inicio">
+                <i class="fa-solid fa-house text-sm"></i>
+                <span class="text-[9px] font-medium mt-0.5 leading-tight">Inicio</span>
+            </button>
+            <button onclick="window.location.href='Servicios.html'" class="nav-item flex flex-1 min-w-0 flex-col items-center hover:text-brand-600" aria-label="Servicios">
+                <i class="fa-solid fa-wrench text-sm"></i>
+                <span class="text-[9px] font-medium mt-0.5 leading-tight">Servicios</span>
+            </button>
+            <button onclick="openAddModal()" aria-label="Marcar en el mapa" title="Marcar en el mapa"
+                class="flex flex-col items-center justify-center w-9 h-9 shrink-0 rounded-full bg-brand-600 text-white shadow-md -mt-3 hover:bg-brand-700 active:scale-95 transition-transform">
+                <i class="fa-solid fa-plus text-sm"></i>
+            </button>
+            <button onclick="window.location.href='favores.html'" class="nav-item flex flex-1 min-w-0 flex-col items-center hover:text-brand-600" aria-label="Favores">
+                <i class="fa-solid fa-handshake text-sm"></i>
+                <span class="text-[9px] font-medium mt-0.5 leading-tight">Favores</span>
+            </button>
+            <button class="nav-item active flex flex-1 min-w-0 flex-col items-center text-brand-600" aria-current="page" aria-label="Mapa">
+                <i class="fa-solid fa-map-location-dot text-sm"></i>
+                <span class="text-[9px] font-bold mt-0.5 leading-tight">Mapa</span>
+            </button>
+        </nav>
+
+        <!-- MODAL: ZONA -->
+        <div id="zoneModal" class="hidden absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-xs rounded-2xl p-4 space-y-3">
+                <h3 class="font-bold text-slate-800 text-sm text-center">Tu barrio</h3>
+                <p id="zoneModalName" class="text-xs font-bold text-brand-700 text-center"></p>
+                <p class="text-[11px] text-slate-500 text-center">La app usa tu ubicación para delimitar el barrio donde estás. Puedes corregir sus límites.</p>
+                <button onclick="redetectZone()" class="w-full p-2.5 rounded-xl bg-purple-50 text-brand-700 font-bold border border-purple-200 text-xs flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-location-crosshairs"></i> Detectar mi barrio de nuevo
+                </button>
+                <button onclick="closeZoneModal(); startDrawing();" class="w-full p-2.5 rounded-xl bg-red-50 text-red-700 font-bold border border-red-200 text-xs flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-draw-polygon"></i> Dibujar los límites yo mismo
+                </button>
+                <button onclick="closeZoneModal()" class="w-full bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">Cerrar</button>
+            </div>
+        </div>
+
+        <!-- MODAL: MARCAR EN EL MAPA (3 PASOS) -->
+        <div id="addModal" class="hidden absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-white w-full rounded-t-3xl sm:rounded-2xl p-4 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <h3 class="font-display font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-map-pin text-sumayniOrange-600"></i> Marcar en el mapa
+                    </h3>
+                    <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600" aria-label="Cerrar">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <form onsubmit="saveNewItem(event)" class="space-y-3 text-xs">
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">1. ¿Qué vas a marcar?</label>
+                        <select id="newType" class="w-full p-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sumayniOrange-500 focus:outline-none">
+                            <option value="recurso">🧰 Un recurso que puedo compartir</option>
+                            <option value="voluntariado">🍲 Voluntariado u olla común</option>
+                            <option value="seguro">🟢 Zona segura o punto de reunión</option>
+                            <option value="riesgo">⚠️ Zona de riesgo</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">2. Nombre corto</label>
+                        <input type="text" id="newTitle" required placeholder="Ej: Escalera de 3 metros" class="w-full p-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sumayniOrange-500 focus:outline-none">
+                    </div>
+
+                    <p class="text-[10px] text-slate-500 flex items-center gap-1">
+                        <i class="fa-solid fa-location-dot text-blue-600"></i> Se marcará en tu ubicación actual.
+                    </p>
+
+                    <button type="submit" class="w-full bg-sumayniOrange-600 hover:bg-sumayniOrange-700 text-white font-bold py-2.5 rounded-xl shadow-md text-xs">
+                        <i class="fa-solid fa-check-circle mr-1"></i> 3. Marcar en mi barrio
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- TOAST -->
+        <div id="toast" class="hidden absolute top-14 left-4 right-4 bg-slate-900 text-white text-xs px-3 py-2 rounded-xl shadow-xl z-50 flex items-center justify-between border border-slate-700">
+            <span class="flex items-center gap-2">
+                <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                <span id="toastMsg">Mensaje</span>
+            </span>
+            <button onclick="hideToast()" class="text-slate-400 hover:text-white" aria-label="Cerrar aviso"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+    </div>
+
+    <script src="google-maps-config.js"></script>
+    
+    <script src="mapa.js"></script>
+</body>
+</html>

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sumayni - Favores y Solidaridad</title>
+    <link rel="stylesheet" href="colores.css">
+    <link rel="stylesheet" href="estilos.css">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="tailwind-config.js"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-page="favores" class="bg-slate-900 text-slate-800 font-sans min-h-screen flex items-center justify-center p-0 sm:p-4">
+
+    <!-- Mockup Wrapper for Mobile Frame -->
+    <div id="mobileFrame" class="w-full sm:max-w-sm h-screen sm:h-[844px] bg-white sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col relative border-0 sm:border-[8px] border-slate-800">
+        
+        <!-- TOP STATUS BAR -->
+        <div id="statusBar" class="brand-status-bar bg-brand-700 text-white px-6 pt-3 pb-1 flex justify-between items-center text-xs select-none transition-colors duration-300">
+            <span class="font-semibold">9:41</span>
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-signal"></i>
+                <i class="fa-solid fa-battery-full"></i>
+            </div>
+        </div>
+
+        <!-- HEADER (PURPLE HEADER FROM WIREFRAME) -->
+        <header id="mainHeader"
+            class="brand-header bg-brand-700 text-white px-4 py-3 shadow-md flex items-center justify-between relative transition-colors duration-300">
+            <div class="flex items-center space-x-3">
+                <button id="appMenuTrigger" onclick="toggleMenu()" class="p-2 rounded-full hover:bg-white/10 text-white focus:outline-none"
+                    aria-label="Abrir Menú" aria-controls="appMenu" aria-expanded="false">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div>
+                    <div class="flex items-center space-x-1 cursor-pointer" onclick="openZoneModal()">
+                        <span class="font-display font-bold text-xl tracking-tight text-white">sumayni</span>
+                        <i class="fa-solid fa-chevron-down text-xs text-brand-100"></i>
+                    </div>
+                    <div class="text-[11px] text-brand-100 flex items-center space-x-1">
+                        <i class="fa-solid fa-location-dot text-amber-300"></i>
+                        <span id="currentZoneText" class="truncate max-w-[140px]">Urb. Bellamar, Chimbote</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="accessibilityBtn" onclick="toggleAccessibility()" title="Modo Accesibilidad (Texto Grande)"
+                    aria-label="Activar texto grande" aria-pressed="false"
+                    class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20">
+                    <i class="fa-solid fa-universal-access"></i>
+                </button>
+                <button id="sosTrigger" onclick="toggleEmergencyMode(true)"
+                    class="sos-btn bg-red-600 hover:bg-red-700 text-white font-bold w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-2 border-white focus:outline-none"
+                    title="Activar Modo Emergencia" aria-label="Activar modo emergencia" aria-pressed="false">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </button>
+            </div>
+        </header>
+
+        <div id="appMenu" class="hidden absolute inset-0 z-50 bg-slate-950/45" onclick="closeMenu()">
+            <section role="dialog" aria-modal="true" aria-labelledby="appMenuTitle" class="w-[min(18rem,85%)] h-full bg-white shadow-2xl p-4 flex flex-col" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <div>
+                        <h2 id="appMenuTitle" class="font-display font-bold text-slate-900">Menú sumayni</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Accesos de tu comunidad</p>
+                    </div>
+                    <button onclick="closeMenu()" class="w-9 h-9 rounded-full hover:bg-slate-100 text-slate-500" aria-label="Cerrar menú">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <nav aria-label="Opciones del menú" class="py-3 space-y-1">
+                    <button onclick="selectMenuOption('perfil')" class="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                        <i class="fa-solid fa-user w-5 text-center text-brand-600"></i><span>Perfil</span>
+                    </button>
+                    <button onclick="selectMenuOption('configuracion')" class="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                        <i class="fa-solid fa-gear w-5 text-center text-brand-600"></i><span>Configuración</span>
+                    </button>
+                    <button onclick="selectMenuOption('banco-tiempo')" class="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                        <i class="fa-solid fa-clock-rotate-left w-5 text-center text-brand-600"></i><span>Banco de Tiempo sumayni</span>
+                    </button>
+                </nav>
+            </section>
+        </div>
+
+        <div id="profileModal" class="hidden absolute inset-0 z-50 bg-slate-950/50 flex items-center justify-center p-4" onclick="closeProfileModal()">
+            <section role="dialog" aria-modal="true" aria-labelledby="profileTitle" class="w-full max-w-xs bg-white rounded-2xl p-4 shadow-2xl" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="w-11 h-11 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center text-lg"><i class="fa-solid fa-user"></i></span>
+                        <div><h2 id="profileTitle" class="font-display font-bold text-slate-900">Perfil vecinal</h2><p class="text-xs text-slate-500">Comunidad sumayni</p></div>
+                    </div>
+                    <button onclick="closeProfileModal()" aria-label="Cerrar perfil" class="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="mt-4 rounded-xl bg-slate-50 border border-slate-200 p-3">
+                    <p class="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Tu barrio</p>
+                    <p id="profileZoneText" class="text-sm font-semibold text-slate-800 mt-1"></p>
+                </div>
+                <button onclick="closeProfileModal()" class="w-full mt-4 bg-brand-700 hover:bg-brand-800 text-white font-bold py-2.5 rounded-xl text-sm">Listo</button>
+            </section>
+        </div>
+
+        <!-- FAVOR DIRECTORY HEADER -->
+        <section class="bg-white px-4 pt-3 pb-3 border-b border-slate-200 shrink-0" aria-label="Buscar y filtrar favores">
+            <div class="mb-2.5">
+                <h2 class="font-display font-bold text-base text-slate-900">Favores del barrio</h2>
+                <p class="text-[11px] text-slate-500 mt-0.5">Apoyos, préstamos y actividades vecinales.</p>
+                <p id="favorResultsCount" class="text-[10px] text-slate-400 mt-1" aria-live="polite"></p>
+            </div>
+
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                <input type="search" id="favorSearchInput" oninput="filterFavors()" aria-label="Buscar favores"
+                    placeholder="¿Qué apoyo necesitas?" class="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 rounded-xl border border-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <button onclick="clearFavorSearch()" aria-label="Limpiar búsqueda" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 p-1">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="favor-filter-scroll flex gap-2 text-xs font-medium mt-2.5" role="group" aria-label="Categorías de favores" tabindex="0">
+                <button type="button" data-category="all" onclick="filterFavors('all')" aria-pressed="true" class="favor-filter-chip shrink-0 bg-slate-900 text-white px-3 py-1.5 rounded-full">Todos</button>
+                <button type="button" data-category="Herramientas" onclick="filterFavors('Herramientas')" aria-pressed="false" class="favor-filter-chip shrink-0 bg-white text-slate-700 border border-slate-200 px-3 py-1.5 rounded-full hover:bg-slate-50">Herramientas</button>
+                <button type="button" data-category="Trueque" onclick="filterFavors('Trueque')" aria-pressed="false" class="favor-filter-chip shrink-0 bg-white text-slate-700 border border-slate-200 px-3 py-1.5 rounded-full hover:bg-slate-50">Trueque</button>
+                <button type="button" data-category="Materiales" onclick="filterFavors('Materiales')" aria-pressed="false" class="favor-filter-chip shrink-0 bg-white text-slate-700 border border-slate-200 px-3 py-1.5 rounded-full hover:bg-slate-50">Materiales</button>
+                <button type="button" data-category="Faena" onclick="filterFavors('Faena')" aria-pressed="false" class="favor-filter-chip shrink-0 bg-white text-slate-700 border border-slate-200 px-3 py-1.5 rounded-full hover:bg-slate-50">Faenas</button>
+                <button type="button" data-category="Movilidad" onclick="filterFavors('Movilidad')" aria-pressed="false" class="favor-filter-chip shrink-0 bg-white text-slate-700 border border-slate-200 px-3 py-1.5 rounded-full hover:bg-slate-50">Movilidad</button>
+            </div>
+        </section>
+
+        <!-- CONTENIDO PRINCIPAL SCROLLABLE (MODO NORMAL) -->
+        <main id="normalView" class="flex-1 overflow-y-auto bg-slate-50 p-3 space-y-4">
+
+            <!-- BANCO DE RECURSOS DEL BARRIO (CARROUSEL/BANNER) -->
+            <div class="bg-gradient-to-r from-orange-600 to-amber-600 rounded-2xl p-3 text-white shadow-md">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[11px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 text-amber-200">
+                        <i class="fa-solid fa-vault text-yellow-300"></i> Banco de Recursos del Barrio
+                    </span>
+                </div>
+                <div class="grid grid-cols-4 gap-1.5 text-center text-[10px]">
+                    <div onclick="showResourceDetails('Generador Eléctrico 5KW', 'Don Pedro - Mz C Lt 4')" class="bg-white/10 hover:bg-white/20 backdrop-blur-sm p-1.5 rounded-xl border border-white/20 cursor-pointer transition-all">
+                        <i class="fa-solid fa-bolt text-yellow-300 text-sm mb-1 block"></i>
+                        <span class="font-bold truncate block">Generador</span>
+                    </div>
+                    <div onclick="showResourceDetails('Camioneta 4x4 de Carga', 'Carlos M. - Mz K Lt 10')" class="bg-white/10 hover:bg-white/20 backdrop-blur-sm p-1.5 rounded-xl border border-white/20 cursor-pointer transition-all">
+                        <i class="fa-solid fa-truck-pickup text-white text-sm mb-1 block"></i>
+                        <span class="font-bold truncate block">Camioneta</span>
+                    </div>
+                    <div onclick="showResourceDetails('Botiquín Completo de Primeros Auxilios', 'Sra. Rosa - Mz F Lt 2')" class="bg-white/10 hover:bg-white/20 backdrop-blur-sm p-1.5 rounded-xl border border-white/20 cursor-pointer transition-all">
+                        <i class="fa-solid fa-kit-medical text-red-300 text-sm mb-1 block"></i>
+                        <span class="font-bold truncate block">Botiquín</span>
+                    </div>
+                    <div onclick="showResourceDetails('Tanque de Agua 1000L Movible', 'Comité Vecinal')" class="bg-white/10 hover:bg-white/20 backdrop-blur-sm p-1.5 rounded-xl border border-white/20 cursor-pointer transition-all">
+                        <i class="fa-solid fa-faucet-drip text-blue-200 text-sm mb-1 block"></i>
+                        <span class="font-bold truncate block">Agua</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LISTA DE FAVORES -->
+            <div id="favorsGrid" class="grid grid-cols-1 gap-3">
+
+                <!-- Favor 1: Préstamo de Herramientas -->
+                <div class="favor-card category-Herramientas bg-white rounded-xl border border-slate-200 border-l-4 border-l-orange-600 overflow-hidden shadow-lg shadow-slate-300/50 flex hover:shadow-xl hover:shadow-slate-400/50 transition-shadow">
+                    <div class="relative w-28 shrink-0">
+                        <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80" alt="Taladro Roto" class="w-full h-full min-h-[148px] object-cover">
+                        <span class="absolute top-1.5 left-1.5 bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                            DISPONIBLE
+                        </span>
+                        <button onclick="speakText('Préstamo de Taladro Percutor. Ofrecido por Don Manuel.')" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 text-xs">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                    <div class="p-3 flex-1 min-w-0 flex flex-col justify-between space-y-3">
+                        <div>
+                            <span class="text-[9px] font-bold text-orange-600 block uppercase">Herramientas</span>
+                            <h3 class="text-xs font-bold text-slate-800 leading-tight">Presto Taladro Percutor</h3>
+                            <p class="text-[10px] text-slate-600 mt-1 line-clamp-2">Incluye brocas para concreto. Solo presentar DNI vecinal.</p>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+                            <span class="text-[9px] text-slate-500 font-medium truncate">Por: Manuel R.</span>
+                            <button onclick="requestFavor('Taladro Percutor')" class="bg-orange-600 hover:bg-orange-700 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition-colors">
+                                Pedir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Favor 2: Donación de Materiales -->
+                <div class="favor-card category-Materiales bg-white rounded-xl border border-slate-200 border-l-4 border-l-orange-600 overflow-hidden shadow-lg shadow-slate-300/50 flex hover:shadow-xl hover:shadow-slate-400/50 transition-shadow">
+                    <div class="relative w-28 shrink-0">
+                        <img src="https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=300&q=80" alt="Ladrillos sobrantes" class="w-full h-full min-h-[148px] object-cover">
+                        <span class="absolute top-1.5 left-1.5 bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                            DISPONIBLE
+                        </span>
+                        <button onclick="speakText('Donación de 30 Ladrillos de techo. Ofrecido por Lucía.')" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 text-xs">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                    <div class="p-3 flex-1 min-w-0 flex flex-col justify-between space-y-3">
+                        <div>
+                            <span class="text-[9px] font-bold text-blue-600 block uppercase">Donación</span>
+                            <h3 class="text-xs font-bold text-slate-800 leading-tight">30 Ladrillos de Techo</h3>
+                            <p class="text-[10px] text-slate-600 mt-1 line-clamp-2">Sobró de mi remodelación. Para quien lo necesite urgente.</p>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+                            <span class="text-[9px] text-slate-500 font-medium truncate">Por: Lucía M.</span>
+                            <button onclick="requestFavor('30 Ladrillos de Techo')" class="bg-orange-600 hover:bg-orange-700 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition-colors">
+                                Pedir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Favor 3: Faena Vecinal -->
+                <div class="favor-card category-Faena bg-white rounded-xl border border-slate-200 border-l-4 border-l-orange-600 overflow-hidden shadow-lg shadow-slate-300/50 flex hover:shadow-xl hover:shadow-slate-400/50 transition-shadow">
+                    <div class="relative w-28 shrink-0">
+                        <img src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=300&q=80" alt="Limpieza de parque" class="w-full h-full min-h-[148px] object-cover">
+                        <span class="absolute top-1.5 left-1.5 bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                            EN PROCESO
+                        </span>
+                        <button onclick="speakText('Faena de Limpieza del Parque Los Pinos este sábado.')" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 text-xs">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                    <div class="p-3 flex-1 min-w-0 flex flex-col justify-between space-y-3">
+                        <div>
+                            <span class="text-[9px] font-bold text-emerald-600 block uppercase">Faena Comunitaria</span>
+                            <h3 class="text-xs font-bold text-slate-800 leading-tight">Limpieza Parque Pinos</h3>
+                            <p class="text-[10px] text-slate-600 mt-1 line-clamp-2">Se buscan 4 voluntarios para pintar bancas y despejar maleza.</p>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+                            <span class="text-[9px] text-slate-500 font-medium truncate">5 unidos</span>
+                            <button onclick="requestFavor('Faena Parque Pinos')" class="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition-colors">
+                                Unirse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Favor 4: Trueque de Habilidades -->
+                <div class="favor-card category-Trueque bg-white rounded-xl border border-slate-200 border-l-4 border-l-orange-600 overflow-hidden shadow-lg shadow-slate-300/50 flex hover:shadow-xl hover:shadow-slate-400/50 transition-shadow">
+                    <div class="relative w-28 shrink-0">
+                        <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=300&q=80" alt="Clases matemáticas" class="w-full h-full min-h-[148px] object-cover">
+                        <span class="absolute top-1.5 left-1.5 bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                            DISPONIBLE
+                        </span>
+                        <button onclick="speakText('Trueque: Enseño matemáticas por apoyo en costura.')" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 text-xs">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                    <div class="p-3 flex-1 min-w-0 flex flex-col justify-between space-y-3">
+                        <div>
+                            <span class="text-[9px] font-bold text-purple-600 block uppercase">Trueque sumayni</span>
+                            <h3 class="text-xs font-bold text-slate-800 leading-tight">Clases Mates x Costura</h3>
+                            <p class="text-[10px] text-slate-600 mt-1 line-clamp-2">Refuerzo primaria a cambio de ayuda ajustando un vestido.</p>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+                            <span class="text-[9px] text-slate-500 font-medium truncate">Por: Profesora Ana</span>
+                            <button onclick="requestFavor('Trueque Matemáticas')" class="bg-orange-600 hover:bg-orange-700 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition-colors">
+                                Aceptar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Favor 5: Movilidad Solidaria -->
+                <div class="favor-card category-Movilidad bg-white rounded-xl border border-slate-200 border-l-4 border-l-orange-600 overflow-hidden shadow-lg shadow-slate-300/50 flex hover:shadow-xl hover:shadow-slate-400/50 transition-shadow">
+                    <div class="relative w-28 shrink-0">
+                        <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=300&q=80" alt="Auto en ruta" class="w-full h-full min-h-[148px] object-cover">
+                        <span class="absolute top-1.5 left-1.5 bg-slate-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                            RESUELTO
+                        </span>
+                        <button onclick="speakText('Movilidad Solidaria al Hospital Essalud resuelta por Jorge.')" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 text-xs">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                    <div class="p-3 flex-1 min-w-0 flex flex-col justify-between space-y-3 opacity-80">
+                        <div>
+                            <span class="text-[9px] font-bold text-slate-500 block uppercase">Movilidad</span>
+                            <h3 class="text-xs font-bold text-slate-800 leading-tight">Traslado a Essalud</h3>
+                            <p class="text-[10px] text-slate-600 mt-1 line-clamp-2">Llevar a abuelita a cita médica de las 8:00 AM.</p>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+                            <span class="text-[9px] text-slate-500 font-medium truncate">Ayudó: Jorge V.</span>
+                            <span class="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-0.5 rounded">
+                                Completo
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Favor 6: Préstamo de Escalera -->
+                <div class="favor-card category-Herramientas bg-white rounded-xl border border-slate-200 border-l-4 border-l-orange-600 overflow-hidden shadow-lg shadow-slate-300/50 flex hover:shadow-xl hover:shadow-slate-400/50 transition-shadow">
+                    <div class="relative w-28 shrink-0">
+                        <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=300&q=80" alt="Escalera de aluminio" class="w-full h-full min-h-[148px] object-cover">
+                        <span class="absolute top-1.5 left-1.5 bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                            DISPONIBLE
+                        </span>
+                        <button onclick="speakText('Préstamo de Escalera de 3 cuerpos. Ofrecido por Don Beto.')" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 text-xs">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                    <div class="p-3 flex-1 min-w-0 flex flex-col justify-between space-y-3">
+                        <div>
+                            <span class="text-[9px] font-bold text-orange-600 block uppercase">Herramientas</span>
+                            <h3 class="text-xs font-bold text-slate-800 leading-tight">Escalera de Aluminio</h3>
+                            <p class="text-[10px] text-slate-600 mt-1 line-clamp-2">Escalera alta de 3 metros para trabajos en techo.</p>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+                            <span class="text-[9px] text-slate-500 font-medium truncate">Por: Roberto T.</span>
+                            <button onclick="requestFavor('Escalera de Aluminio')" class="bg-orange-600 hover:bg-orange-700 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition-colors">
+                                Pedir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div id="favorEmptyState" class="hidden text-center py-8 bg-white rounded-xl border border-dashed border-slate-300">
+                <i class="fa-solid fa-magnifying-glass text-2xl text-slate-300 mb-2"></i>
+                <p class="text-xs font-semibold text-slate-600">No se encontraron favores</p>
+                <p class="text-[10px] text-slate-400">Prueba con otra búsqueda o categoría.</p>
+            </div>
+
+        </main>
+
+        <!-- CONTENIDO MODO EMERGENCIA (OCULTO POR DEFECTO) -->
+        <main id="emergencyView" class="hidden flex-1 overflow-y-auto bg-slate-950 p-4 space-y-4 text-white">
+            <div class="bg-red-700 rounded-2xl p-4 text-white shadow-xl border-2 border-red-500 text-center animate-pulse">
+                <i class="fa-solid fa-triangle-exclamation text-4xl mb-2 text-yellow-300"></i>
+                <h2 class="text-xl font-black uppercase tracking-wider">¡EMERGENCIA SOLIDARIA!</h2>
+                <p class="text-xs font-medium text-red-100 mt-1">Cadena de ayuda activada para apoyo en el barrio.</p>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 text-center">Respuesta Rápida Vecinal</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="sendEmergencyStatus('Tengo Botiquín')" class="bg-emerald-600 hover:bg-emerald-700 p-3 rounded-2xl font-bold flex flex-col items-center justify-center text-center text-xs">
+                        <i class="fa-solid fa-kit-medical text-2xl mb-1"></i>
+                        <span>TENGO BOTIQUÍN</span>
+                    </button>
+                    <button onclick="sendEmergencyStatus('Ofrezco Movilidad')" class="bg-blue-600 hover:bg-blue-700 p-3 rounded-2xl font-bold flex flex-col items-center justify-center text-center text-xs">
+                        <i class="fa-solid fa-truck-pickup text-2xl mb-1"></i>
+                        <span>OFREZCO CAMIONETA</span>
+                    </button>
+                    <button onclick="sendEmergencyStatus('Punto de Encuentro')" class="bg-purple-600 hover:bg-purple-700 p-3 rounded-2xl font-bold flex flex-col items-center justify-center text-center text-xs">
+                        <i class="fa-solid fa-people-roof text-2xl mb-1"></i>
+                        <span>ABRIR REFUGIO</span>
+                    </button>
+                    <button onclick="sendEmergencyStatus('Necesito Rescate')" class="bg-red-600 hover:bg-red-700 p-3 rounded-2xl font-bold flex flex-col items-center justify-center text-center text-xs">
+                        <i class="fa-solid fa-hand-holding-medical text-2xl mb-1"></i>
+                        <span>NECESITO AYUDA</span>
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="toggleEmergencyMode(false)" class="w-full bg-slate-800 text-slate-300 font-bold py-3 rounded-xl border border-slate-700 text-xs">
+                Desactivar Modo Emergencia
+            </button>
+        </main>
+
+        <div id="zoneModal" class="hidden absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-xs rounded-2xl p-4 space-y-3">
+                <h3 class="font-bold text-slate-800 text-sm text-center">Selecciona tu Barrio</h3>
+                <div class="space-y-2 text-xs">
+                    <button onclick="setZone('Urb. Bellamar, Chimbote')" class="w-full p-2.5 rounded-xl bg-purple-50 text-brand-700 font-bold border border-purple-200 text-left">Urb. Bellamar</button>
+                    <button onclick="setZone('Urb. Buenos Aires, Nuevo Chimbote')" class="w-full p-2.5 rounded-xl bg-slate-50 text-slate-700 font-medium border border-slate-200 text-left">Urb. Buenos Aires</button>
+                    <button onclick="setZone('Casco Urbano, Chimbote')" class="w-full p-2.5 rounded-xl bg-slate-50 text-slate-700 font-medium border border-slate-200 text-left">Casco Urbano</button>
+                </div>
+                <button onclick="closeZoneModal()" class="w-full bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">Cerrar</button>
+            </div>
+        </div>
+
+        <!-- BARRA NAVEGACIÓN INFERIOR (TAB BAR) -->
+        <nav id="bottomNav"
+            aria-label="Navegación principal"
+            class="app-bottom-nav bg-white border-t border-slate-200 px-1 py-2 flex justify-between items-center text-slate-500 transition-colors duration-300">
+            <button onclick="window.location.href='Sumayni.html'" class="nav-item flex flex-1 min-w-0 flex-col items-center hover:text-brand-600" aria-label="Inicio">
+                <i class="fa-solid fa-house text-sm"></i>
+                <span class="text-[9px] font-medium mt-0.5 leading-tight">Inicio</span>
+            </button>
+            <button onclick="window.location.href='Servicios.html'" class="nav-item flex flex-1 min-w-0 flex-col items-center hover:text-brand-600" aria-label="Servicios">
+                <i class="fa-solid fa-wrench text-sm"></i>
+                <span class="text-[9px] font-medium mt-0.5 leading-tight">Servicios</span>
+            </button>
+            <button onclick="openPublishFavorModal()" aria-label="Publicar favor" title="Publicar favor"
+                class="flex flex-col items-center justify-center w-9 h-9 shrink-0 rounded-full bg-brand-600 text-white shadow-md -mt-3 hover:bg-brand-700 active:scale-95 transition-transform">
+                <i class="fa-solid fa-plus text-sm"></i>
+            </button>
+            <button class="nav-item active flex flex-1 min-w-0 flex-col items-center text-brand-600" aria-current="page" aria-label="Favores">
+                <i class="fa-solid fa-handshake text-sm"></i>
+                <span class="text-[9px] font-bold mt-0.5 leading-tight">Favores</span>
+            </button>
+            <button onclick="window.location.href='mapa.html'" class="nav-item flex flex-1 min-w-0 flex-col items-center hover:text-brand-600" aria-label="Mapa">
+                <i class="fa-solid fa-map-location-dot text-sm"></i>
+                <span class="text-[9px] font-medium mt-0.5 leading-tight">Mapa</span>
+            </button>
+        </nav>
+
+        <!-- MODAL SOBREPUESTO: PUBLICAR FAVOR EN 3 CLICS -->
+        <div id="publishFavorModal" class="hidden absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center">
+            <div class="bg-white w-full rounded-t-3xl p-5 space-y-4 animate-in slide-in-from-bottom duration-200">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <h3 class="font-bold text-slate-800 text-sm">Publicar Favor o Apoyo (Sin dinero)</h3>
+                    <button onclick="closePublishFavorModal()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-600 block mb-1">1. Categoría:</label>
+                        <select id="favorCategorySelect" class="w-full p-2 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:ring-2 focus:ring-orange-500">
+                            <option value="Herramientas">Préstamo de Herramienta</option>
+                            <option value="Materiales">Donación de Materiales</option>
+                            <option value="Trueque">Trueque de Habilidades</option>
+                            <option value="Faena">Ayuda en Faena Vecinal</option>
+                            <option value="Movilidad">Movilidad Solidaria</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-600 block mb-1">2. Detalle del favor:</label>
+                        <input id="favorTitleInput" type="text" placeholder="Ej: Presto podadora de césped..." class="w-full p-2.5 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                    </div>
+
+                    <button onclick="submitNewFavor()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl text-xs shadow-md">
+                        3. Publicar en el Muro
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL RECURSO DEL BARRIO -->
+        <div id="resourceModal" class="hidden absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-xs rounded-2xl p-4 space-y-3 text-center">
+                <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </div>
+                <h3 id="resourceTitle" class="font-bold text-slate-800 text-sm">Recurso Comunitario</h3>
+                <p id="resourceOwner" class="text-xs text-slate-500">Ubicación / Responsable</p>
+                <div class="pt-2 flex gap-2">
+                    <button onclick="closeResourceModal()" class="w-1/2 bg-slate-100 text-slate-700 font-bold py-2 rounded-xl text-xs">Cerrar</button>
+                    <a id="resourceWhatsappBtn" href="https://wa.me/" target="_blank" class="w-1/2 bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1">
+                        <i class="fa-brands fa-whatsapp"></i> Solicitar
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOAST NOTIFICATION -->
+        <div id="toast" class="hidden absolute top-16 left-4 right-4 bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl shadow-xl z-50 flex items-center space-x-2 transition-all">
+            <i class="fa-solid fa-circle-info text-amber-400 text-base"></i>
+            <span id="toastText">Mensaje</span>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    
+    <script src="favores.js"></script>
+</body>
+</html>
