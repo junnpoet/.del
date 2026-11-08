@@ -16,6 +16,7 @@ import {
 import { queryClient, asyncStoragePersister } from '../src/services/queryClient';
 import { QuickPublishFAB } from '../src/components/ui/QuickPublishFAB';
 import { DemoProvider } from '../src/services/demoStore';
+import { AuthProvider } from '../src/services/auth';
 
 function RootContent() {
   const segments = useSegments();
@@ -67,9 +68,11 @@ export default function RootLayout() {
         client={queryClient}
         persistOptions={{ persister: asyncStoragePersister }}
       >
-        <DemoProvider>
-          <RootContent />
-        </DemoProvider>
+        <AuthProvider>
+          <DemoProvider>
+            <RootContent />
+          </DemoProvider>
+        </AuthProvider>
       </PersistQueryClientProvider>
     </SafeAreaProvider>
   );

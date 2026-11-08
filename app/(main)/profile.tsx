@@ -27,11 +27,13 @@ import {
 import { Card } from '../../src/components/ui/Card';
 import { Button } from '../../src/components/ui/Button';
 import { Header } from '../../src/components/ui/Header';
-import { useDemo, DEMO_PERSONAS } from '../../src/services/demoStore';
+import { useDemo } from '../../src/services/demoStore';
+import { useAuth } from '../../src/services/auth';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { currentUser, switchUser, favorites } = useDemo();
+  const { currentUser, favorites } = useDemo();
+  const { signOut } = useAuth();
   const [accessibleMode, setAccessibleMode] = useState(currentUser.accessibleMode);
 
   const toggleAccessibleMode = async (value: boolean) => {
@@ -46,6 +48,7 @@ export default function ProfileScreen() {
         text: 'Salir',
         style: 'destructive',
         onPress: async () => {
+          await signOut();
           await AsyncStorage.removeItem('user_session');
           router.replace('/(auth)/login');
         },

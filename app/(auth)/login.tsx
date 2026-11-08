@@ -1,57 +1,46 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Image,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { Card } from '../../src/components/ui/Card';
-import { DEMO_PERSONAS, useDemo } from '../../src/services/demoStore';
+import { useAuth } from '../../src/services/auth';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { switchUser } = useDemo();
-  const [phone, setPhone] = useState('');
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    const cleanPhone = phone.trim();
-    if (!cleanPhone) {
-      Alert.alert('Atención', 'Ingresa tu número de teléfono celular.');
+    if (!email.trim() || !password) {
+      Alert.alert('Atención', 'Ingresa tu correo y tu contraseña.');
       return;
     }
-
     setIsLoading(true);
     try {
-      // Find matching demo persona by phone or default to custom neighbor
-      const matched = DEMO_PERSONAS.find((p) => p.phone === cleanPhone);
-
-      if (matched) {
-        await switchUser(matched.id);
-        const sessionData = {
-          id: matched.id,
-          full_name: matched.name,
-          phone: matched.phone,
-          role: matched.role,
-          home_address: matched.homeAddress,
-        };
-        await AsyncStorage.setItem('user_session', JSON.stringify(sessionData));
-      } else {
-        const customUser = {
-          id: `user-${cleanPhone}`,
-          full_name: 'Vecino de San Martín',
-          phone: cleanPhone,
-          role: 'vecino',
-          home_address: 'Jr. Los Jazmines 340, Sector 4',
-        };
-        await AsyncStorage.setItem('user_session', JSON.stringify(customUser));
-        await switchUser('carmen_vecina');
-      }
-
+      await signIn(email, password);
       router.replace('/(main)');
     } catch (err) {
-      console.error('Login error', err);
-      Alert.alert('Error', 'No se pudo iniciar sesión.');
+      const message = err instanceof Error ? err.message : '';
+      const invalid = /invalid login credentials/i.test(message);
+      Alert.alert(
+        'Error',
+        invalid
+          ? 'Correo o contraseña incorrectos.'
+          : 'No se pudo iniciar sesión. Revisa tu conexión.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -87,11 +76,21 @@ export default function LoginScreen() {
             </Text>
 
             <Input
-              label="Teléfono Celular"
-              placeholder="Ej: 987654321"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
+              label="Correo electrónico"
+              placeholder="Ej: carmen@correo.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={email}
+              onChangeText={setEmail}
+            />
+            <Input
+              label="Contraseña"
+              placeholder="Tu contraseña"
+              secureTextEntry
+              autoCapitalize="none"
+              value={password}
+              onChangeText={setPassword}
             />
 
             <Button

@@ -8,17 +8,20 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MapPin, CheckCircle, Navigation } from 'lucide-react-native';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { Card } from '../../src/components/ui/Card';
 import { Header } from '../../src/components/ui/Header';
+import { useAuth } from '../../src/services/auth';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { signUp } = useAuth();
 
   const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -104,6 +107,14 @@ export default function RegisterScreen() {
       Alert.alert('Faltan Datos', 'Por favor ingresa tus nombres y apellidos.');
       return;
     }
+    if (!email.trim() || !email.includes('@')) {
+      Alert.alert('Faltan Datos', 'Ingresa un correo electrónico válido.');
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert('Faltan Datos', 'La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
     if (!phone.trim()) {
       Alert.alert('Faltan Datos', 'Ingresa tu número de teléfono celular.');
       return;
@@ -122,19 +133,16 @@ export default function RegisterScreen() {
 
     setIsSubmitting(true);
     try {
-      const newProfile = {
-        id: `user-${Date.now()}`,
-        full_name: fullName.trim(),
-        phone: phone.trim(),
-        home_address: homeAddress.trim(),
-        home_location: coords,
-        role: 'vecino',
-        is_vulnerable: false,
-        push_token: pushToken,
-        created_at: new Date().toISOString(),
-      };
-
-      await AsyncStorage.setItem('user_session', JSON.stringify(newProfile));
+      await signUp({
+        email,
+        password,
+        fullName,
+        phone,
+        homeAddress,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        pushToken,
+      });
       Alert.alert(
         '¡Bienvenido a Sumayni!',
         'Tu hogar ha sido georreferenciado con éxito en tu comunidad.'
@@ -142,7 +150,20 @@ export default function RegisterScreen() {
       router.replace('/(main)');
     } catch (err) {
       console.error('Registration error', err);
-      Alert.alert('Error', 'No se pudo guardar el registro del hogar.');
+      const message = err instanceof Error ? err.message : '';
+      let text = 'No se pudo guardar el registro del hogar.';
+      if (/already registered/i.test(message)) {
+        text = 'Ese correo ya está registrado. Inicia sesión.';
+      } else if (message === 'CONFIRM_EMAIL') {
+        text = 'El proyecto exige confirmar el correo. Desactiva "Confirm email" en Supabase.';
+      } else if (/row-level security policy/i.test(message)) {
+        text = 'Supabase bloqueó la creación del perfil. Verifica que el usuario haya iniciado sesión y que la política INSERT de profiles esté aplicada.';
+      } else if (/parse|geometry|geo/i.test(message)) {
+        text = 'La ubicación del domicilio no tiene un formato válido. Vuelve a fijar tu ubicación e inténtalo otra vez.';
+      } else if (message) {
+        text = `No se pudo completar el registro: ${message}`;
+      }
+      Alert.alert('Error', text);
     } finally {
       setIsSubmitting(false);
     }
@@ -169,6 +190,25 @@ export default function RegisterScreen() {
             placeholder="Ej: Carmen Rosa Mamani"
             value={fullName}
             onChangeText={setFullName}
+          />
+
+          <Input
+            label="Correo electrónico"
+            placeholder="Ej: carmen@correo.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            value={email}
+            onChangeText={setEmail}
+          />
+
+          <Input
+            label="Contraseña (mínimo 6 caracteres)"
+            placeholder="Crea una contraseña"
+            secureTextEntry
+            autoCapitalize="none"
+            value={password}
+            onChangeText={setPassword}
           />
 
           <Input
