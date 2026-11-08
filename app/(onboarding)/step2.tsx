@@ -46,7 +46,7 @@ export default function OnboardingStep2() {
         <Button
           title="Siguiente"
           variant="secondary"
-          onPress={() => router.push('/(onboarding)/step2' === '/(onboarding)/step2' ? '/(onboarding)/step3' : '')}
+          onPress={() => router.push('/(onboarding)/step3')}
           icon={<ArrowRight size={20} color="#FFFFFF" />}
         />
       </View>
