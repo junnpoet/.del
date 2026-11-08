@@ -398,6 +398,63 @@ CREATE POLICY "Lectura de noticias zonales" ON neighborhood_news FOR SELECT TO a
 
 ---
 
+### 4.1. Políticas para las Operaciones de la App
+
+Completa las operaciones que la §4 dejaba bloqueadas (registro, Visto Bueno, padrinos, noticias, cierre de emergencias) y protege `sos_alerts` y `neighborhood_groups`, que estaban sin RLS. Migración: `supabase/migrations/20261108140000_spec02_rls_operaciones.sql`.
+
+```sql
+-- 1. Perfiles: el usuario crea solo su fila como 'vecino' y sin grupo; no puede cambiarse el rol
+CREATE POLICY "Usuario crea su propio perfil" ON profiles FOR INSERT TO authenticated
+WITH CHECK (auth.uid() = id AND role = 'vecino' AND group_id IS NULL);
+CREATE POLICY "Usuario actualiza su propio perfil" ON profiles FOR UPDATE TO authenticated
+USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+REVOKE UPDATE ON profiles FROM anon, authenticated;
+GRANT UPDATE (full_name, phone, home_address, home_location, is_vulnerable, push_token) ON profiles TO authenticated;
+
+-- 2. Visto Bueno: solo el cliente que recibió la solicitud del prestador en el chat
+CREATE POLICY "Lectura de reseñas" ON reviews FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Cliente otorga Visto Bueno tras la solicitud" ON reviews FOR INSERT TO authenticated
+WITH CHECK (
+  auth.uid() = client_id
+  AND EXISTS (
+    SELECT 1 FROM chat_conversations c JOIN chat_messages m ON m.conversation_id = c.id
+    WHERE c.service_id = reviews.service_id AND c.client_id = auth.uid()
+      AND m.sender_id = c.provider_id AND m.is_review_request = TRUE
+  )
+);
+
+-- 3. Red de Cuidado: el padrino ve y actualiza lo suyo; el dirigente gestiona todo
+CREATE POLICY "Padrino y dirigentes ven asignaciones" ON care_assignments FOR SELECT TO authenticated
+USING (buddy_profile_id = auth.uid() OR is_dirigente(auth.uid()));
+CREATE POLICY "Dirigentes asignan padrinos" ON care_assignments FOR INSERT TO authenticated
+WITH CHECK (is_dirigente(auth.uid()));
+CREATE POLICY "Padrino y dirigentes actualizan estado" ON care_assignments FOR UPDATE TO authenticated
+USING (buddy_profile_id = auth.uid() OR is_dirigente(auth.uid()))
+WITH CHECK (buddy_profile_id = auth.uid() OR is_dirigente(auth.uid()));
+CREATE POLICY "Dirigentes quitan asignaciones" ON care_assignments FOR DELETE TO authenticated
+USING (is_dirigente(auth.uid()));
+
+-- 4. Noticias zonales y 5. cierre de emergencias: solo dirigentes
+CREATE POLICY "Dirigentes publican noticias" ON neighborhood_news FOR INSERT TO authenticated
+WITH CHECK (is_dirigente(auth.uid()));
+CREATE POLICY "Dirigentes actualizan emergencias" ON emergency_events FOR UPDATE TO authenticated
+USING (is_dirigente(auth.uid())) WITH CHECK (is_dirigente(auth.uid()));
+
+-- 6. RLS en las tablas que estaban abiertas
+ALTER TABLE neighborhood_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sos_alerts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Lectura de grupos vecinales" ON neighborhood_groups FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Vecino envía su SOS" ON sos_alerts FOR INSERT TO authenticated
+WITH CHECK (auth.uid() = sender_id);
+CREATE POLICY "SOS visible para remitente, padrinos y dirigentes" ON sos_alerts FOR SELECT TO authenticated
+USING (auth.uid() = sender_id OR is_padrino_of(auth.uid(), sender_id) OR is_dirigente(auth.uid()));
+CREATE POLICY "Remitente, padrinos y dirigentes actualizan el SOS" ON sos_alerts FOR UPDATE TO authenticated
+USING (auth.uid() = sender_id OR is_padrino_of(auth.uid(), sender_id) OR is_dirigente(auth.uid()))
+WITH CHECK (auth.uid() = sender_id OR is_padrino_of(auth.uid(), sender_id) OR is_dirigente(auth.uid()));
+```
+
+---
+
 ## 5. Canales de Supabase Realtime
 
 Mauro configurará la publicación de eventos en tiempo real para:
@@ -410,10 +467,11 @@ Mauro configurará la publicación de eventos en tiempo real para:
 
 ## 6. Criterios de Aceptación (Checklist de Mauro)
 
-- [ ] Script SQL ejecutado y tablas creadas en Supabase con índices espaciales (`GIST(home_location)`).
-- [ ] Integridad referencial resuelta sin dependencias circulares.
-- [ ] Soporte para usuarios omnicanal de WhatsApp en `group_join_requests` y `solidary_posts`.
-- [ ] Tablas de chat `chat_conversations` y `chat_messages` listas con Realtime activado.
-- [ ] Funciones `is_dirigente()` e `is_padrino_of()` probadas, erradicando cualquier riesgo de recursión en RLS.
-- [ ] Trigger de actualización de rating promedio probado tras insertar una reseña.
-- [ ] Archivo `src/types/database.ts` generado y entregado al equipo con las interfaces de TypeScript.
+- [x] Script SQL ejecutado y tablas creadas en Supabase con índices espaciales (`GIST(home_location)`).
+- [x] Integridad referencial resuelta sin dependencias circulares.
+- [x] Soporte para usuarios omnicanal de WhatsApp en `group_join_requests` y `solidary_posts`.
+- [x] Tablas de chat `chat_conversations` y `chat_messages` listas con Realtime activado.
+- [x] Funciones `is_dirigente()` e `is_padrino_of()` probadas, erradicando cualquier riesgo de recursión en RLS.
+- [x] Trigger de actualización de rating promedio probado tras insertar una reseña.
+- [x] Políticas de §4.1 probadas: registro, Visto Bueno, padrinos, noticias, cierre de emergencias y SOS protegido.
+- [x] Archivo `src/types/database.ts` generado y entregado al equipo con las interfaces de TypeScript.

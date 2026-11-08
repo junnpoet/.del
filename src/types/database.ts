@@ -4,434 +4,790 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
+  | Json[]
 
-export type UserRole = 'vecino' | 'dirigente' | 'padrino';
-
-export type PostType = 'PRESTAMO' | 'DONACION' | 'TRUEQUE' | 'VOLUNTARIADO' | 'AYUDA';
-
-export type UrgencyLevel = 'BAJA' | 'MEDIA' | 'ALTA_CRITICA';
-
-export type PostStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
-
-export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
-
-export type CareStatus = 'AL_DIA' | 'SEGUIMIENTO_REQUERIDO' | 'ALERTA_ACTIVA';
-
-export type EmergencyType = 'SISMO' | 'HUAICO' | 'INCENDIO' | 'CORTE_SERVICIOS' | 'INSEGURIDAD';
-
-export interface Database {
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.18"
+  }
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          id: string;
-          full_name: string;
-          phone: string;
-          home_address: string;
-          home_location: unknown; // PostGIS Point geography
-          role: UserRole;
-          is_vulnerable: boolean;
-          push_token: string | null;
-          group_id: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id: string;
-          full_name: string;
-          phone: string;
-          home_address: string;
-          home_location: unknown;
-          role?: UserRole;
-          is_vulnerable?: boolean;
-          push_token?: string | null;
-          group_id?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          full_name?: string;
-          phone?: string;
-          home_address?: string;
-          home_location?: unknown;
-          role?: UserRole;
-          is_vulnerable?: boolean;
-          push_token?: string | null;
-          group_id?: string | null;
-          created_at?: string;
-        };
-      };
-      neighborhood_groups: {
-        Row: {
-          id: string;
-          name: string;
-          sector_name: string;
-          leader_id: string | null;
-          boundary: unknown | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          sector_name: string;
-          leader_id?: string | null;
-          boundary?: unknown | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          sector_name?: string;
-          leader_id?: string | null;
-          boundary?: unknown | null;
-          created_at?: string;
-        };
-      };
-      group_join_requests: {
-        Row: {
-          id: string;
-          group_id: string;
-          user_id: string | null;
-          whatsapp_phone: string | null;
-          full_name: string | null;
-          address: string | null;
-          status: RequestStatus;
-          is_emergency: boolean;
-          is_from_whatsapp: boolean;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          group_id: string;
-          user_id?: string | null;
-          whatsapp_phone?: string | null;
-          full_name?: string | null;
-          address?: string | null;
-          status?: RequestStatus;
-          is_emergency?: boolean;
-          is_from_whatsapp?: boolean;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          group_id?: string;
-          user_id?: string | null;
-          whatsapp_phone?: string | null;
-          full_name?: string | null;
-          address?: string | null;
-          status?: RequestStatus;
-          is_emergency?: boolean;
-          is_from_whatsapp?: boolean;
-          created_at?: string;
-        };
-      };
-      services: {
-        Row: {
-          id: string;
-          provider_id: string;
-          title: string;
-          category: string;
-          description: string;
-          rating_average: number;
-          reviews_count: number;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          provider_id: string;
-          title: string;
-          category: string;
-          description: string;
-          rating_average?: number;
-          reviews_count?: number;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          provider_id?: string;
-          title?: string;
-          category?: string;
-          description?: string;
-          rating_average?: number;
-          reviews_count?: number;
-          created_at?: string;
-        };
-      };
-      reviews: {
-        Row: {
-          id: string;
-          service_id: string;
-          client_id: string;
-          rating: number;
-          comment: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          service_id: string;
-          client_id: string;
-          rating: number;
-          comment?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          service_id?: string;
-          client_id?: string;
-          rating?: number;
-          comment?: string | null;
-          created_at?: string;
-        };
-      };
-      user_favorites: {
-        Row: {
-          user_id: string;
-          service_id: string;
-          created_at: string;
-        };
-        Insert: {
-          user_id: string;
-          service_id: string;
-          created_at?: string;
-        };
-        Update: {
-          user_id?: string;
-          service_id?: string;
-          created_at?: string;
-        };
-      };
-      service_reports: {
-        Row: {
-          id: string;
-          reporter_id: string;
-          service_id: string;
-          reason: 'COBRO_ABUSIVO' | 'INCUMPLIMIENTO' | 'PERFIL_FALSO' | 'FALTA_RESPETO' | 'OTRO';
-          details: string | null;
-          status: 'PENDING' | 'REVIEWED' | 'DISMISSED';
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          reporter_id: string;
-          service_id: string;
-          reason: 'COBRO_ABUSIVO' | 'INCUMPLIMIENTO' | 'PERFIL_FALSO' | 'FALTA_RESPETO' | 'OTRO';
-          details?: string | null;
-          status?: 'PENDING' | 'REVIEWED' | 'DISMISSED';
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          reporter_id?: string;
-          service_id?: string;
-          reason?: 'COBRO_ABUSIVO' | 'INCUMPLIMIENTO' | 'PERFIL_FALSO' | 'FALTA_RESPETO' | 'OTRO';
-          details?: string | null;
-          status?: 'PENDING' | 'REVIEWED' | 'DISMISSED';
-          created_at?: string;
-        };
-      };
-      neighborhood_news: {
-        Row: {
-          id: string;
-          sector_name: string;
-          title: string;
-          content: string;
-          source: 'MUNICIPAL' | 'SERVICIOS_PUBLICOS' | 'DIRIGENCIA';
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          sector_name: string;
-          title: string;
-          content: string;
-          source?: 'MUNICIPAL' | 'SERVICIOS_PUBLICOS' | 'DIRIGENCIA';
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          sector_name?: string;
-          title?: string;
-          content?: string;
-          source?: 'MUNICIPAL' | 'SERVICIOS_PUBLICOS' | 'DIRIGENCIA';
-          created_at?: string;
-        };
-      };
-      solidary_posts: {
-        Row: {
-          id: string;
-          author_id: string | null;
-          group_id: string | null;
-          whatsapp_sender_phone: string | null;
-          whatsapp_sender_name: string | null;
-          post_type: PostType;
-          category: string;
-          description: string;
-          urgency: UrgencyLevel;
-          is_from_whatsapp: boolean;
-          status: PostStatus;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          author_id?: string | null;
-          group_id?: string | null;
-          whatsapp_sender_phone?: string | null;
-          whatsapp_sender_name?: string | null;
-          post_type: PostType;
-          category: string;
-          description: string;
-          urgency?: UrgencyLevel;
-          is_from_whatsapp?: boolean;
-          status?: PostStatus;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          author_id?: string | null;
-          group_id?: string | null;
-          whatsapp_sender_phone?: string | null;
-          whatsapp_sender_name?: string | null;
-          post_type?: PostType;
-          category?: string;
-          description?: string;
-          urgency?: UrgencyLevel;
-          is_from_whatsapp?: boolean;
-          status?: PostStatus;
-          created_at?: string;
-        };
-      };
-      emergency_events: {
-        Row: {
-          id: string;
-          group_id: string;
-          event_type: EmergencyType;
-          status: 'ACTIVE' | 'RESOLVED';
-          activated_by: string;
-          description: string | null;
-          activated_at: string;
-        };
-        Insert: {
-          id?: string;
-          group_id: string;
-          event_type: EmergencyType;
-          status?: 'ACTIVE' | 'RESOLVED';
-          activated_by: string;
-          description?: string | null;
-          activated_at?: string;
-        };
-        Update: {
-          id?: string;
-          group_id?: string;
-          event_type?: EmergencyType;
-          status?: 'ACTIVE' | 'RESOLVED';
-          activated_by?: string;
-          description?: string | null;
-          activated_at?: string;
-        };
-      };
       care_assignments: {
         Row: {
-          id: string;
-          vulnerable_profile_id: string;
-          buddy_profile_id: string;
-          status: CareStatus;
-          notes: string | null;
-          updated_at: string;
-        };
+          buddy_profile_id: string
+          id: string
+          notes: string | null
+          status: string | null
+          updated_at: string | null
+          vulnerable_profile_id: string
+        }
         Insert: {
-          id?: string;
-          vulnerable_profile_id: string;
-          buddy_profile_id: string;
-          status?: CareStatus;
-          notes?: string | null;
-          updated_at?: string;
-        };
+          buddy_profile_id: string
+          id?: string
+          notes?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vulnerable_profile_id: string
+        }
         Update: {
-          id?: string;
-          vulnerable_profile_id?: string;
-          buddy_profile_id?: string;
-          status?: CareStatus;
-          notes?: string | null;
-          updated_at?: string;
-        };
-      };
+          buddy_profile_id?: string
+          id?: string
+          notes?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vulnerable_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_assignments_buddy_profile_id_fkey"
+            columns: ["buddy_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_assignments_vulnerable_profile_id_fkey"
+            columns: ["vulnerable_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
-          id: string;
-          service_id: string;
-          client_id: string;
-          provider_id: string;
-          last_message: string | null;
-          updated_at: string;
-          created_at: string;
-        };
+          client_id: string
+          created_at: string | null
+          id: string
+          provider_id: string
+          service_id: string
+        }
         Insert: {
-          id?: string;
-          service_id: string;
-          client_id: string;
-          provider_id: string;
-          last_message?: string | null;
-          updated_at?: string;
-          created_at?: string;
-        };
+          client_id: string
+          created_at?: string | null
+          id?: string
+          provider_id: string
+          service_id: string
+        }
         Update: {
-          id?: string;
-          service_id?: string;
-          client_id?: string;
-          provider_id?: string;
-          last_message?: string | null;
-          updated_at?: string;
-          created_at?: string;
-        };
-      };
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          provider_id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_conversations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_conversations_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_conversations_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
-          id: string;
-          conversation_id: string;
-          sender_id: string;
-          message: string;
-          is_review_request: boolean;
-          created_at: string;
-        };
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          is_review_request: boolean | null
+          sender_id: string
+        }
         Insert: {
-          id?: string;
-          conversation_id: string;
-          sender_id: string;
-          message: string;
-          is_review_request?: boolean;
-          created_at?: string;
-        };
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          is_review_request?: boolean | null
+          sender_id: string
+        }
         Update: {
-          id?: string;
-          conversation_id?: string;
-          sender_id?: string;
-          message?: string;
-          is_review_request?: boolean;
-          created_at?: string;
-        };
-      };
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          is_review_request?: boolean | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emergency_events: {
+        Row: {
+          activated_at: string | null
+          activated_by: string
+          description: string | null
+          event_type: string
+          group_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by: string
+          description?: string | null
+          event_type: string
+          group_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string
+          description?: string | null
+          event_type?: string
+          group_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_events_activated_by_fkey"
+            columns: ["activated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_events_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhood_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_join_requests: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          full_name: string | null
+          group_id: string
+          id: string
+          is_emergency: boolean | null
+          is_from_whatsapp: boolean | null
+          status: string | null
+          user_id: string | null
+          whatsapp_phone: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          group_id: string
+          id?: string
+          is_emergency?: boolean | null
+          is_from_whatsapp?: boolean | null
+          status?: string | null
+          user_id?: string | null
+          whatsapp_phone?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          group_id?: string
+          id?: string
+          is_emergency?: boolean | null
+          is_from_whatsapp?: boolean | null
+          status?: string | null
+          user_id?: string | null
+          whatsapp_phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_join_requests_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhood_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_join_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      neighborhood_groups: {
+        Row: {
+          boundary: unknown
+          created_at: string | null
+          id: string
+          leader_id: string | null
+          name: string
+          sector_name: string
+        }
+        Insert: {
+          boundary?: unknown
+          created_at?: string | null
+          id?: string
+          leader_id?: string | null
+          name: string
+          sector_name: string
+        }
+        Update: {
+          boundary?: unknown
+          created_at?: string | null
+          id?: string
+          leader_id?: string | null
+          name?: string
+          sector_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "neighborhood_groups_leader_id_fkey"
+            columns: ["leader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      neighborhood_news: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          sector_name: string
+          source: string | null
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          sector_name: string
+          source?: string | null
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          sector_name?: string
+          source?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          full_name: string
+          group_id: string | null
+          home_address: string
+          home_location: unknown
+          id: string
+          is_vulnerable: boolean | null
+          phone: string
+          push_token: string | null
+          role: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name: string
+          group_id?: string | null
+          home_address: string
+          home_location: unknown
+          id: string
+          is_vulnerable?: boolean | null
+          phone: string
+          push_token?: string | null
+          role?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string
+          group_id?: string | null
+          home_address?: string
+          home_location?: unknown
+          id?: string
+          is_vulnerable?: boolean | null
+          phone?: string
+          push_token?: string | null
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_profiles_group"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhood_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          client_id: string
+          comment: string | null
+          created_at: string | null
+          id: string
+          rating: number | null
+          service_id: string
+        }
+        Insert: {
+          client_id: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number | null
+          service_id: string
+        }
+        Update: {
+          client_id?: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number | null
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_reports: {
+        Row: {
+          created_at: string | null
+          details: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          service_id: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          service_id: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          service_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_reports_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string
+          id: string
+          provider_id: string
+          rating_average: number | null
+          reviews_count: number | null
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description: string
+          id?: string
+          provider_id: string
+          rating_average?: number | null
+          reviews_count?: number | null
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          provider_id?: string
+          rating_average?: number | null
+          reviews_count?: number | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solidary_posts: {
+        Row: {
+          author_id: string | null
+          category: string
+          created_at: string | null
+          description: string
+          group_id: string | null
+          id: string
+          is_from_whatsapp: boolean | null
+          post_type: string
+          status: string | null
+          urgency: string | null
+          whatsapp_sender_name: string | null
+          whatsapp_sender_phone: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          category: string
+          created_at?: string | null
+          description: string
+          group_id?: string | null
+          id?: string
+          is_from_whatsapp?: boolean | null
+          post_type: string
+          status?: string | null
+          urgency?: string | null
+          whatsapp_sender_name?: string | null
+          whatsapp_sender_phone?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string
+          group_id?: string | null
+          id?: string
+          is_from_whatsapp?: boolean | null
+          post_type?: string
+          status?: string | null
+          urgency?: string | null
+          whatsapp_sender_name?: string | null
+          whatsapp_sender_phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solidary_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solidary_posts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhood_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sos_alerts: {
         Row: {
-          id: string;
-          user_id: string;
-          location: unknown; // Point
-          status: 'TRIGGERED' | 'ACKNOWLEDGED' | 'RESOLVED';
-          created_at: string;
-        };
+          audio_url: string | null
+          created_at: string | null
+          group_id: string | null
+          id: string
+          location: unknown
+          sender_id: string
+          status: string | null
+          transcription: string | null
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          location: unknown;
-          status?: 'TRIGGERED' | 'ACKNOWLEDGED' | 'RESOLVED';
-          created_at?: string;
-        };
+          audio_url?: string | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          location: unknown
+          sender_id: string
+          status?: string | null
+          transcription?: string | null
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          location?: unknown;
-          status?: 'TRIGGERED' | 'ACKNOWLEDGED' | 'RESOLVED';
-          created_at?: string;
-        };
-      };
-    };
-  };
+          audio_url?: string | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          location?: unknown
+          sender_id?: string
+          status?: string | null
+          transcription?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sos_alerts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhood_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sos_alerts_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_favorites: {
+        Row: {
+          created_at: string | null
+          service_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          service_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          service_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorites_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      approve_join_request: { Args: { request_id: string }; Returns: undefined }
+      get_nearby_groups: {
+        Args: { radius_meters: number; user_lat: number; user_lng: number }
+        Returns: {
+          distance_meters: number
+          group_id: string
+          members_count: number
+          name: string
+          sector_name: string
+        }[]
+      }
+      get_nearby_services: {
+        Args: {
+          radius_meters: number
+          user_home_lat: number
+          user_home_lng: number
+        }
+        Returns: {
+          category: string
+          distance_meters: number
+          provider_id: string
+          provider_name: string
+          rating_avg: number
+          reviews_total: number
+          service_id: string
+          title: string
+        }[]
+      }
+      is_dirigente: { Args: { user_id: string }; Returns: boolean }
+      is_padrino_of: {
+        Args: { buddy_id: string; vulnerable_id: string }
+        Returns: boolean
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
