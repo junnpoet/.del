@@ -7,6 +7,7 @@ import {
   Alert,
 } from 'react-native';
 import { Plus, X, Wrench, HeartHandshake, HelpCircle, Mic, Square, Check } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from './Button';
 import { Input } from './Input';
 import { Chip } from './Chip';
@@ -24,6 +25,7 @@ export interface QuickPublishFABProps {
 export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
   onPublishSuccess,
 }) => {
+  const insets = useSafeAreaInsets();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<
     'SERVICIO' | 'AYUDA' | 'SOLIDARIO' | null
@@ -157,7 +159,8 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
     <>
       {/* Floating Action Button */}
       <View
-        className="absolute bottom-20 right-5 z-50 items-center justify-center shadow-lg"
+        className="absolute right-5 z-50 items-center justify-center shadow-lg"
+        style={{ bottom: 68 + Math.max(insets.bottom, 10) }}
         pointerEvents="box-none"
       >
         <TouchableOpacity
@@ -179,7 +182,10 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
         onRequestClose={handleClose}
       >
         <View className="flex-1 bg-black/60 justify-end">
-          <View className="bg-neutral-surface rounded-t-3xl p-5 border-t border-neutral-border max-h-[90%]">
+          <View
+            className="bg-neutral-surface rounded-t-3xl px-5 pt-5 border-t border-neutral-border max-h-[90%]"
+            style={{ paddingBottom: Math.max(insets.bottom + 16, 24) }}
+          >
             {/* Modal Header */}
             <View className="flex-row items-center justify-between pb-3 border-b border-neutral-border">
               <View>

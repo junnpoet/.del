@@ -1,11 +1,12 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Store, Users, User, AlertTriangle } from 'lucide-react-native';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Store, Users, User } from 'lucide-react-native';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function MainLayout() {
-  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, 10);
 
   return (
     <View className="flex-1 bg-neutral-background">
@@ -17,8 +18,8 @@ export default function MainLayout() {
           tabBarStyle: {
             backgroundColor: '#FFFFFF',
             borderTopColor: '#E5E7EB',
-            height: 64,
-            paddingBottom: 8,
+            height: 58 + bottomPadding,
+            paddingBottom: bottomPadding,
             paddingTop: 8,
           },
           tabBarLabelStyle: {

@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  SafeAreaView,
   ScrollView,
   Alert,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MapPin, CheckCircle, Navigation } from 'lucide-react-native';
@@ -149,7 +149,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-background">
+    <SafeAreaView edges={['bottom', 'left', 'right']} className="flex-1 bg-neutral-background">
       <Header title="Registro de Hogar" showBack />
 
       <ScrollView contentContainerClassName="p-5">

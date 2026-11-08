@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface HeaderProps {
   title: string;
@@ -21,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   isEmergency = false,
 }) => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const handleBack = () => {
     if (onBack) {
@@ -43,7 +45,10 @@ export const Header: React.FC<HeaderProps> = ({
     : 'text-neutral-textMuted';
 
   return (
-    <View className={`px-4 pt-12 pb-3 ${bgStyles}`}>
+    <View
+      className={`px-4 pb-3 ${bgStyles}`}
+      style={{ paddingTop: Math.max(insets.top + 8, 16) }}
+    >
       <View className="flex-row items-center justify-between min-h-[48px]">
         <View className="flex-row items-center flex-1">
           {showBack && (
