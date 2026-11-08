@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AYNI - Red Vecinal y Solidaria</title>
+    <link rel="stylesheet" href="colores.css">
+    <link rel="stylesheet" href="estilos.css">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Outfit -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="tailwind-config.js"></script>
+</head>
+
+<body data-page="ayni" class="bg-slate-900 text-slate-800 font-sans min-h-screen flex items-center justify-center p-0 sm:p-4">
+
+    <!-- Mockup Wrapper for Mobile Frame -->
+    <div id="mobileFrame"
+        class="w-full sm:max-w-sm h-screen sm:h-[844px] bg-white sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col relative border-0 sm:border-[8px] border-slate-800">
+
+        <!-- TOP MOBILE STATUS BAR SIMULATION -->
+        <div id="statusBar"
+            class="brand-status-bar text-white px-6 pt-3 pb-1 flex justify-between items-center text-xs select-none transition-colors duration-300">
+            <span class="font-semibold">9:41</span>
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-signal"></i>
+                <i class="fa-solid fa-battery-full"></i>
+            </div>
+        </div>
+
+        <!-- HEADER PRINCIPAL -->
+        <header id="mainHeader"
+            class="brand-header text-white px-4 py-3 shadow-md flex items-center justify-between relative transition-colors duration-300">
+            <!-- Menú Hamburguesa & Barrio -->
+            <div class="flex items-center space-x-3">
+                <button id="appMenuTrigger" onclick="toggleMenu()" class="p-2 rounded-full hover:bg-white/10 text-white focus:outline-none"
+                    aria-label="Abrir Menú" aria-controls="appMenu" aria-expanded="false">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div>
+                    <div class="flex items-center space-x-1 cursor-pointer" onclick="openZoneModal()">
+                        <span class="font-display font-bold text-xl tracking-tight text-white">AYNI</span>
+                        <i class="fa-solid fa-chevron-down text-xs text-brand-100"></i>
+                    </div>
+                    <div class="text-[11px] text-brand-100 flex items-center space-x-1">
+                        <i class="fa-solid fa-location-dot text-amber-300"></i>
+                        <span id="currentZoneText" class="truncate max-w-[140px]">Urb. Bellamar, Chimbote</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accesibilidad y Botón SOS -->
+            <div class="flex items-center space-x-2">
+                <!-- Botón Accesibilidad -->
+                <button id="accessibilityBtn" onclick="toggleAccessibility()" title="Modo Accesibilidad (Texto Grande)"
+                    aria-label="Activar texto grande" aria-pressed="false"
+                    class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20">
+                    <i class="fa-solid fa-universal-access"></i>
+                </button>
+
+                <!-- Botón Alerta SOS Emergencia -->
+                <button id="sosTrigger" onclick="toggleEmergencyMode(true)"
+                    class="sos-btn bg-red-600 hover:bg-red-700 text-white font-bold w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-2 border-white focus:outline-none"
+                    title="Activar Modo Emergencia" aria-label="Activar modo emergencia" aria-pressed="false">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </button>
+            </div>
+        </header>
+
+        <div id="appMenu" class="hidden absolute inset-0 z-50 bg-slate-950/45" onclick="closeMenu()">
+            <section role="dialog" aria-modal="true" aria-labelledby="appMenuTitle" class="w-[min(18rem,85%)] h-full bg-white shadow-2xl p-4 flex flex-col" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <div>
+                        <h2 id="appMenuTitle" class="font-display font-bold text-slate-900">Menú AYNI</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Accesos de tu comunidad</p>
+                    </div>
+                    <button onclick="closeMenu()" class="w-9 h-9 rounded-full hover:bg-slate-100 text-slate-500" aria-label="Cerrar menú">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <nav aria-label="Opciones del menú" class="py-3 space-y-1">
+                    <button onclick="selectMenuOption('perfil')" class="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                        <i class="fa-solid fa-user w-5 text-center text-brand-600"></i><span>Perfil</span>
+                    </button>
+                    <button onclick="selectMenuOption('configuracion')" class="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                        <i class="fa-solid fa-gear w-5 text-center text-brand-600"></i><span>Configuración</span>
+                    </button>
+                    <button onclick="selectMenuOption('banco-tiempo')" class="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                        <i class="fa-solid fa-clock-rotate-left w-5 text-center text-brand-600"></i><span>Banco de Tiempo Ayni</span>
+                    </button>
+                </nav>
+            </section>
+        </div>
+        <div id="profileModal" class="hidden absolute inset-0 z-50 bg-slate-950/50 flex items-center justify-center p-4" onclick="closeProfileModal()">
+            <section role="dialog" aria-modal="true" aria-labelledby="profileTitle" class="w-full max-w-xs bg-white rounded-2xl p-4 shadow-2xl" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="w-11 h-11 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center text-lg"><i class="fa-solid fa-user"></i></span>
+                        <div><h2 id="profileTitle" class="font-display font-bold text-slate-900">Perfil vecinal</h2><p class="text-xs text-slate-500">Comunidad AYNI</p></div>
+                    </div>
+                    <button onclick="closeProfileModal()" aria-label="Cerrar perfil" class="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="mt-4 rounded-xl bg-slate-50 border border-slate-200 p-3">
+                    <p class="text-[10px] uppercase tracking-wide text-slate-500 font-bold">Tu barrio</p>
+                    <p id="profileZoneText" class="text-sm font-semibold text-slate-800 mt-1"></p>
+                </div>
+                <button onclick="closeProfileModal()" class="w-full mt-4 bg-brand-700 hover:bg-brand-800 text-white font-bold py-2.5 rounded-xl text-sm">Listo</button>
+            </section>
+        </div>
+
+        <!-- CONTENIDO PRINCIPAL SCROLLABLE (MODO NORMAL) -->
+        <main id="normalView" class="flex-1 overflow-y-auto bg-slate-50 p-4 space-y-4">
+
+            <!-- BANNER BIENVENIDA Y ACCIÓN RÁPIDA -->
+            <div
+                class="bg-gradient-to-r from-brand-600 to-purple-800 rounded-2xl p-4 text-white shadow-lg flex justify-between items-center relative overflow-hidden">
+                <div class="relative z-10">
+                    <span
+                        class="bg-amber-400 text-slate-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Comunidad
+                        Activa</span>
+                    <h2 class="text-lg font-bold mt-1">¿Qué necesitas hoy?</h2>
+                    <p class="text-xs text-purple-100">Encuentra ayuda o brinda tu apoyo en tu barrio.</p>
+                </div>
+                <button onclick="openPublishModal()"
+                    class="relative z-10 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold px-3 py-2.5 rounded-xl shadow-md flex items-center space-x-1 text-xs shrink-0 active:scale-95 transition-transform">
+                    <i class="fa-solid fa-plus-circle text-base"></i>
+                    <span>Publicar</span>
+                </button>
+                <i
+                    class="fa-solid fa-hand-holding-heart absolute -right-3 -bottom-3 text-7xl text-white/10 pointer-events-none"></i>
+            </div>
+
+            <!-- MÓDULOS DE NAVEGACIÓN PRINCIPALES (GRID 3 COLUMNAS) -->
+            <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 px-1">Módulos Principales</h3>
+                <div class="grid grid-cols-3 gap-2.5">
+                    <!-- Módulo 1: Servicios -->
+                    <button onclick="navegarConToast()"
+                        class="bg-white p-3 rounded-2xl shadow-xl shadow-slate-500/30 border border-blue-500 flex flex-col items-center text-center hover:shadow-2xl hover:shadow-blue-500/40 transition-all active:scale-95 group">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-2 text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            <i class="fa-solid fa-wrench"></i>
+                        </div>
+                        <span class="text-xs font-bold text-slate-700 leading-tight">Servicios de Proximidad</span>
+                        <span class="text-[9px] text-slate-400 mt-1">Gasfitero, Bodega</span>
+                    </button>
+
+                    <!-- Módulo 2: Favores y Solidaridad -->
+                    <button onclick="window.location.href='favores.html'"
+                        class="bg-white p-3 rounded-2xl shadow-xl shadow-slate-500/30 border border-purple-500 flex flex-col items-center text-center hover:shadow-2xl hover:shadow-purple-500/40 transition-all active:scale-95 group">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-2 text-xl group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                            <i class="fa-solid fa-handshake-angle"></i>
+                        </div>
+                        <span class="text-xs font-bold text-slate-700 leading-tight">Cadena de Favores</span>
+                        <span class="text-[9px] text-slate-400 mt-1">Trueque, Ayni</span>
+                    </button>
+
+                    <!-- Módulo 3: Mapa Vecinal y Recursos -->
+                    <button onclick="window.location.href='mapa.html'"
+                        class="bg-white p-3 rounded-2xl shadow-xl shadow-slate-500/30 border border-emerald-500 flex flex-col items-center text-center hover:shadow-2xl hover:shadow-emerald-500/40 transition-all active:scale-95 group">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2 text-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                        <span class="text-xs font-bold text-slate-700 leading-tight">Mapa y Recursos</span>
+                        <span class="text-[9px] text-slate-400 mt-1">Botiquín, Zonas</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- NOTICIAS DEL BARRIO -->
+            <section aria-labelledby="neighborhoodNewsTitle">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="min-w-0">
+                        <h3 id="neighborhoodNewsTitle" class="text-sm font-bold text-slate-800">Noticias de tu barrio</h3>
+                        <p class="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-brand-600"></i>
+                            <span id="newsZoneText">Urb. Bellamar, Chimbote</span>
+                        </p>
+                    </div>
+                    <button type="button" onclick="filterNeighborhoodNews('all')"
+                        class="shrink-0 text-[11px] text-brand-700 font-semibold hover:underline">Ver todas</button>
+                </div>
+
+                <div class="hide-scrollbar flex gap-2 overflow-x-auto pb-2 mb-1 text-[11px]"
+                    aria-label="Filtrar noticias vecinales">
+                    <button type="button" data-news-filter="all" aria-pressed="true"
+                        onclick="filterNeighborhoodNews('all')"
+                        class="news-filter-chip shrink-0 px-3 py-1.5 rounded-full font-semibold">Todas</button>
+                    <button type="button" data-news-filter="alertas" aria-pressed="false"
+                        onclick="filterNeighborhoodNews('alertas')"
+                        class="news-filter-chip shrink-0 px-3 py-1.5 rounded-full font-semibold">Alertas</button>
+                    <button type="button" data-news-filter="comunidad" aria-pressed="false"
+                        onclick="filterNeighborhoodNews('comunidad')"
+                        class="news-filter-chip shrink-0 px-3 py-1.5 rounded-full font-semibold">Comunidad</button>
+                    <button type="button" data-news-filter="servicios" aria-pressed="false"
+                        onclick="filterNeighborhoodNews('servicios')"
+                        class="news-filter-chip shrink-0 px-3 py-1.5 rounded-full font-semibold">Servicios</button>
+                    <button type="button" data-news-filter="seguridad" aria-pressed="false"
+                        onclick="filterNeighborhoodNews('seguridad')"
+                        class="news-filter-chip shrink-0 px-3 py-1.5 rounded-full font-semibold">Seguridad</button>
+                </div>
+
+                <div id="neighborhoodNewsList" class="space-y-2">
+                    <article data-news-category="alertas"
+                        class="neighborhood-news-card bg-white rounded-xl p-3 shadow-md shadow-slate-300/50 border-l-4 border-red-600 flex gap-3 items-center">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <span class="text-[9px] uppercase tracking-wide font-bold text-red-700">Alerta vecinal</span>
+                                <span class="text-[9px] text-slate-400">· Hace 25 min</span>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 leading-snug">Corte de agua programado en el sector 3</h4>
+                            <p class="text-[10px] text-slate-600 mt-1 line-clamp-2">El servicio se interrumpirá hoy de 2:00 a 6:00 p. m. Se recomienda guardar agua.</p>
+                            <p class="text-[9px] text-slate-500 mt-1.5 flex items-center gap-1">
+                                <i class="fa-solid fa-location-dot text-red-600"></i> Sector 3 · Administración vecinal
+                            </p>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=200&q=80"
+                            alt="Agua almacenada para el corte programado" class="w-[4.5rem] h-[4.5rem] rounded-lg object-cover shrink-0">
+                    </article>
+
+                    <article data-news-category="comunidad"
+                        class="neighborhood-news-card bg-white rounded-xl p-3 shadow-md shadow-slate-300/50 border border-slate-200 flex gap-3 items-center">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <span class="text-[9px] uppercase tracking-wide font-bold text-emerald-700">Comunidad</span>
+                                <span class="text-[9px] text-slate-400">· Ayer</span>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 leading-snug">Vecinos convocan a faena en el parque</h4>
+                            <p class="text-[10px] text-slate-600 mt-1 line-clamp-2">Este domingo se limpiarán las áreas verdes y se pintarán las bancas. Se necesitan voluntarios.</p>
+                            <p class="text-[9px] text-slate-500 mt-1.5 flex items-center gap-1">
+                                <i class="fa-solid fa-location-dot text-emerald-700"></i> Parque principal · Comité vecinal
+                            </p>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=200&q=80"
+                            alt="Vecinos participando en una actividad comunitaria" class="w-[4.5rem] h-[4.5rem] rounded-lg object-cover shrink-0">
+                    </article>
+
+                    <article data-news-category="servicios"
+                        class="neighborhood-news-card bg-white rounded-xl p-3 shadow-md shadow-slate-300/50 border border-slate-200 flex gap-3 items-center">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <span class="text-[9px] uppercase tracking-wide font-bold text-blue-700">Servicios</span>
+                                <span class="text-[9px] text-slate-400">· Hace 3 h</span>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 leading-snug">Nuevo horario de atención en la bodega de Don José</h4>
+                            <p class="text-[10px] text-slate-600 mt-1 line-clamp-2">Desde hoy atenderá hasta las 10 p. m. y recibirá pedidos de abarrotes por WhatsApp.</p>
+                            <p class="text-[9px] text-slate-500 mt-1.5 flex items-center gap-1">
+                                <i class="fa-solid fa-location-dot text-blue-700"></i> Mz A, lote 1 · Publicado por Don José
+                            </p>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=200&q=80"
+                            alt="Productos en una bodega del barrio" class="w-[4.5rem] h-[4.5rem] rounded-lg object-cover shrink-0">
+                    </article>
+
+                    <article data-news-category="seguridad"
+                        class="neighborhood-news-card bg-white rounded-xl p-3 shadow-md shadow-slate-300/50 border border-slate-200 flex gap-3 items-center">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <span class="text-[9px] uppercase tracking-wide font-bold text-amber-700">Seguridad</span>
+                                <span class="text-[9px] text-slate-400">· Hace 1 h</span>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 leading-snug">Reportan luminaria apagada cerca del parque</h4>
+                            <p class="text-[10px] text-slate-600 mt-1 line-clamp-2">El comité ya registró el aviso y coordina la revisión del poste. Evita la zona con poca luz.</p>
+                            <p class="text-[9px] text-slate-500 mt-1.5 flex items-center gap-1">
+                                <i class="fa-solid fa-location-dot text-amber-700"></i> Calle Los Pinos · Comité de seguridad
+                            </p>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=200&q=80"
+                            alt="Luminaria en una calle del barrio" class="w-[4.5rem] h-[4.5rem] rounded-lg object-cover shrink-0">
+                    </article>
+                </div>
+                <p id="neighborhoodNewsEmpty" class="hidden text-center text-[11px] text-slate-500 py-4">
+                    No hay noticias en esta categoría por ahora.
+                </p>
+            </section>
+
+        </main>
+
+        <!-- CONTENIDO MODO EMERGENCIA (OCULTO POR DEFECTO, ALTO CONTRASTE) -->
+        <main id="emergencyView" class="hidden flex-1 overflow-y-auto bg-slate-950 p-4 space-y-4 text-white">
+
+            <!-- Banner Alerta Activa -->
+            <div
+                class="bg-red-700 rounded-2xl p-4 text-white shadow-xl border-2 border-red-500 text-center animate-pulse">
+                <i class="fa-solid fa-triangle-exclamation text-4xl mb-2 text-yellow-300"></i>
+                <h2 class="text-xl font-black uppercase tracking-wider">¡MODO EMERGENCIA ACTIVADO!</h2>
+                <p class="text-xs font-medium text-red-100 mt-1">Conexión priorizada con la red vecinal y organismos de
+                    socorro.</p>
+            </div>
+
+            <!-- Botón de Confirmación rápida del estado vecinal -->
+            <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 text-center">¿Cuál es tu
+                    estado actual?</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="sendEmergencyStatus('Estoy Bien')"
+                        class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white p-4 rounded-2xl font-bold flex flex-col items-center justify-center text-center shadow-lg border border-emerald-400">
+                        <i class="fa-solid fa-circle-check text-3xl mb-1"></i>
+                        <span class="text-sm">ESTOY BIEN</span>
+                    </button>
+                    <button onclick="sendEmergencyStatus('Necesito Ayuda')"
+                        class="bg-red-600 hover:bg-red-700 active:scale-95 text-white p-4 rounded-2xl font-bold flex flex-col items-center justify-center text-center shadow-lg border border-red-400">
+                        <i class="fa-solid fa-hand-holding-medical text-3xl mb-1"></i>
+                        <span class="text-sm">NECESITO AYUDA</span>
+                    </button>
+                    <button onclick="sendEmergencyStatus('Puedo Ayudar')"
+                        class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white p-4 rounded-2xl font-bold flex flex-col items-center justify-center text-center shadow-lg border border-blue-400">
+                        <i class="fa-solid fa-kit-medical text-3xl mb-1"></i>
+                        <span class="text-sm">PUEDO AYUDAR</span>
+                    </button>
+                    <button onclick="sendEmergencyStatus('Ahí Llevándola')"
+                        class="bg-amber-600 hover:bg-amber-700 active:scale-95 text-white p-4 rounded-2xl font-bold flex flex-col items-center justify-center text-center shadow-lg border border-amber-400">
+                        <i class="fa-solid fa-house-chimney-crack text-3xl mb-1"></i>
+                        <span class="text-sm">AHÍ LLEVÁNDOLA</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Accesos Críticos sin Internet -->
+            <div class="bg-slate-900 rounded-2xl p-3.5 border border-slate-800 space-y-2">
+                <h4 class="text-xs font-bold text-amber-400 uppercase flex items-center gap-1.5">
+                    <i class="fa-solid fa-wifi-slash"></i> Herramientas Offline (Sin Internet)
+                </h4>
+                <div class="space-y-2">
+                    <button onclick="showToast('Ruta cargada: Punto seguro Estadio Manuel Rivera')"
+                        class="w-full bg-slate-800 hover:bg-slate-700 p-2.5 rounded-xl text-left flex items-center justify-between text-xs font-semibold">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-person-walking-arrow-loop-left text-emerald-400 text-base"></i>
+                            Punto Evacuación: Plaza/Estadio
+                        </span>
+                        <i class="fa-solid fa-chevron-right text-slate-500"></i>
+                    </button>
+                    <button onclick="showToast('Paramédico más cercano: Dr. Perales a 150m (Mz F Lt 12)')"
+                        class="w-full bg-slate-800 hover:bg-slate-700 p-2.5 rounded-xl text-left flex items-center justify-between text-xs font-semibold">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-user-doctor text-red-400 text-base"></i>
+                            Vecinos Paramédicos Cerca (2)
+                        </span>
+                        <i class="fa-solid fa-chevron-right text-slate-500"></i>
+                    </button>
+                    <button onclick="showToast('Abriendo directorio local sin conexión...')"
+                        class="w-full bg-slate-800 hover:bg-slate-700 p-2.5 rounded-xl text-left flex items-center justify-between text-xs font-semibold">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-phone-volume text-blue-400 text-base"></i>
+                            Directorio de Emergencias Local
+                        </span>
+                        <i class="fa-solid fa-chevron-right text-slate-500"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botón Desactivar Emergencia -->
+            <div class="pt-2">
+                <button onclick="toggleEmergencyMode(false)"
+                    class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl border border-slate-700 flex items-center justify-center space-x-2 text-xs">
+                    <i class="fa-solid fa-power-off"></i>
+                    <span>Desactivar Modo Emergencia</span>
+                </button>
+            </div>
+
+        </main>
+
+        <!-- BARRA NAVEGACIÓN INFERIOR (TAB BAR) -->
+        <nav id="bottomNav"
+            aria-label="Navegación principal"
+            class="app-bottom-nav border-t px-1 py-2 flex justify-between items-center transition-colors duration-300">
+            <button class="nav-item active flex flex-1 min-w-0 flex-col items-center" aria-current="page" aria-label="Inicio">
+                <i class="fa-solid fa-house text-sm"></i>
+                <span class="text-[9px] font-bold mt-0.5 leading-tight">Inicio</span>
+            </button>
+            <button onclick="window.location.href='Servicios.html'" class="nav-item flex flex-1 min-w-0 flex-col items-center" aria-label="Servicios">
+                <i class="fa-solid fa-wrench text-sm"></i>
+                <span class="text-[9px] font-medium mt-0.5 leading-tight">Servicios</span>
+            </button>
+            <button onclick="openPublishModal()" aria-label="Publicar" title="Publicar"
+                class="flex flex-col items-center justify-center w-9 h-9 shrink-0 rounded-full bg-brand-600 text-white shadow-md -mt-3 hover:bg-brand-700 active:scale-95 transition-transform">
+                <i class="fa-solid fa-plus text-sm"></i>
+            </button>
+            <button onclick="window.location.href='favores.html'" class="nav-item flex flex-1 min-w-0 flex-col items-center" aria-label="Favores">
+                <i class="fa-solid fa-handshake text-sm"></i>
+                <span class="text-[9px] font-medium mt-0.5 leading-tight">Favores</span>
+            </button>
+            <button onclick="window.location.href='mapa.html'" class="nav-item flex flex-1 min-w-0 flex-col items-center" aria-label="Mapa">
+                <i class="fa-solid fa-map-location-dot text-sm"></i>
+                <span class="text-[9px] font-medium mt-0.5 leading-tight">Mapa</span>
+            </button>
+        </nav>
+
+        <!-- MODAL SOBREPUESTO: PUBLICAR (3 CLICS) -->
+        <div id="publishModal"
+            class="hidden absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center">
+            <div class="bg-white w-full rounded-t-3xl p-5 space-y-4 animate-in slide-in-from-bottom duration-200">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <h3 class="font-bold text-slate-800 text-sm">Nueva Publicación Rápida</h3>
+                    <button onclick="closePublishModal()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-600 block mb-1">1. Selecciona el Tipo:</label>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <button onclick="selectType(this)"
+                                class="type-btn p-2.5 rounded-xl font-semibold flex items-center gap-2">
+                                <i class="type-request-icon fa-solid fa-handshake-angle"></i> Pedir Favor
+                            </button>
+                            <button onclick="selectType(this)"
+                                class="type-btn p-2.5 rounded-xl font-semibold flex items-center gap-2">
+                                <i class="type-offer-icon fa-solid fa-wrench"></i> Ofrecer Servicio
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-600 block mb-1">2. Descripción Corta:</label>
+                        <textarea id="publishText" rows="2"
+                            placeholder="Ej: Presto escalera de 3 metros o necesito ayuda moviendo mueble..."
+                            class="w-full p-2.5 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                    </div>
+
+                    <button onclick="submitPublication()"
+                        class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl text-xs shadow-md">
+                        3. Publicar en mi Barrio
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL SOBREPUESTO: SELECCIÓN DE ZONA / BARRIO -->
+        <div id="zoneModal"
+            class="hidden absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-xs rounded-2xl p-4 space-y-3">
+                <h3 class="font-bold text-slate-800 text-sm text-center">Selecciona tu Barrio</h3>
+                <div class="space-y-2 text-xs">
+                    <button onclick="setZone('Urb. Bellamar, Chimbote')"
+                        class="w-full p-2.5 rounded-xl bg-purple-50 text-brand-700 font-bold border border-purple-200 text-left flex items-center justify-between">
+                        <span>Urb. Bellamar</span>
+                        <i class="fa-solid fa-check"></i>
+                    </button>
+                    <button onclick="setZone('Urb. Buenos Aires, Nuevo Chimbote')"
+                        class="w-full p-2.5 rounded-xl bg-slate-50 text-slate-700 font-medium border border-slate-200 text-left hover:bg-slate-100">
+                        <span>Urb. Buenos Aires</span>
+                    </button>
+                    <button onclick="setZone('Casco Urbano, Chimbote')"
+                        class="w-full p-2.5 rounded-xl bg-slate-50 text-slate-700 font-medium border border-slate-200 text-left hover:bg-slate-100">
+                        <span>Casco Urbano</span>
+                    </button>
+                </div>
+                <button onclick="closeZoneModal()"
+                    class="w-full bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">Cerrar</button>
+            </div>
+        </div>
+
+        <!-- TOAST NOTIFICATION FLOATING -->
+        <div id="toast"
+            class="hidden absolute top-16 left-4 right-4 bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl shadow-xl z-50 flex items-center space-x-2 transition-all">
+            <i class="fa-solid fa-circle-info text-amber-400 text-base"></i>
+            <span id="toastText">Mensaje de notificación</span>
+        </div>
+
+    </div>
+
+    <script src="Ayni.js"></script>
+</body>
+
+</html>
