@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Store, Users, User } from 'lucide-react-native';
+import { Store, Users, User, Newspaper } from 'lucide-react-native';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -37,6 +37,16 @@ export default function MainLayout() {
             tabBarLabel: 'Directorio',
             tabBarIcon: ({ color, focused }) => (
               <Store size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="news"
+          options={{
+            title: 'Noticias',
+            tabBarLabel: 'Noticias',
+            tabBarIcon: ({ color, focused }) => (
+              <Newspaper size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
             ),
           }}
         />

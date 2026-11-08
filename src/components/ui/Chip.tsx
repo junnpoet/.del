@@ -20,7 +20,7 @@ export const Chip: React.FC<ChipProps> = ({
   ...props
 }) => {
   const containerActive = isActive
-    ? 'bg-neutral-textMain shadow-sm shadow-black/10'
+    ? 'bg-neutral-textMain'
     : 'bg-neutral-mutedBg';
 
   const textActive = isActive ? 'text-white' : 'text-neutral-textMuted';
