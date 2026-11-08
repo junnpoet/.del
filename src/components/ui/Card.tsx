@@ -4,8 +4,7 @@ import { View, ViewProps } from 'react-native';
 export type CardVariant =
   | 'default'
   | 'elevated'
-  | 'pastel-sage'
-  | 'pastel-earth'
+  | 'muted'
   | 'emergency';
 
 export interface CardProps extends ViewProps {
@@ -20,21 +19,19 @@ export const Card: React.FC<CardProps> = ({
   style,
   ...props
 }) => {
-  let variantStyles = 'bg-neutral-card border-2 border-neutral-border';
+  let variantStyles = 'bg-neutral-surface shadow-sm shadow-black/5';
 
   if (variant === 'elevated') {
-    variantStyles = 'bg-neutral-card shadow-sm border-2 border-neutral-border';
-  } else if (variant === 'pastel-sage') {
-    variantStyles = 'bg-primary-pastel border-2 border-primary-soft';
-  } else if (variant === 'pastel-earth') {
-    variantStyles = 'bg-earth-pastel border-2 border-earth-soft';
+    variantStyles = 'bg-neutral-surface shadow-md shadow-black/8';
+  } else if (variant === 'muted') {
+    variantStyles = 'bg-neutral-mutedBg';
   } else if (variant === 'emergency') {
-    variantStyles = 'bg-emergency-cardDark border-2 border-emergency-alert';
+    variantStyles = 'bg-emergency-cardDark';
   }
 
   return (
     <View
-      className={`rounded-3xl p-5 ${variantStyles} ${className}`}
+      className={`rounded-3xl p-4 ${variantStyles} ${className}`}
       style={style}
       {...props}
     >

@@ -31,36 +31,36 @@ export const Button: React.FC<ButtonProps> = ({
   const isAccessible = size === 'accessible';
 
   const baseContainerStyles =
-    'flex-row items-center justify-center rounded-2xl px-6';
-  const sizeStyles = isAccessible ? 'min-h-[70px] py-4' : 'min-h-[58px] py-3.5';
+    'flex-row items-center justify-center rounded-2xl px-5';
+  const sizeStyles = isAccessible ? 'min-h-[60px] py-3.5' : 'min-h-[50px] py-3';
 
-  let variantStyles = 'bg-primary border-2 border-primary-dark/20';
+  let variantStyles = 'bg-primary shadow-sm shadow-black/10';
   let textStyles = 'text-white';
   let spinnerColor = '#FFFFFF';
 
   if (variant === 'secondary') {
-    variantStyles = 'bg-earth-pastel border-2 border-earth';
-    textStyles = 'text-earth-dark';
-    spinnerColor = '#6D3B1E';
+    variantStyles = 'bg-neutral-mutedBg';
+    textStyles = 'text-neutral-textMain';
+    spinnerColor = '#1A1D20';
   } else if (variant === 'outline') {
-    variantStyles = 'bg-primary-pastel/70 border-2 border-primary';
-    textStyles = 'text-primary-dark';
-    spinnerColor = '#1B4332';
+    variantStyles = 'bg-neutral-surface border border-neutral-border';
+    textStyles = 'text-neutral-textMain';
+    spinnerColor = '#1A1D20';
   } else if (variant === 'emergency') {
-    variantStyles = 'bg-emergency-alert border-2 border-white/20';
-    textStyles = 'text-white tracking-wide';
+    variantStyles = 'bg-emergency-alert shadow-sm shadow-black/10';
+    textStyles = 'text-white';
     spinnerColor = '#FFFFFF';
   }
 
   const disabledStyles = disabled || isLoading ? 'opacity-50' : '';
-  const fontSize = isAccessible ? 22 : 19;
+  const fontSize = isAccessible ? 18 : 15;
 
   return (
     <TouchableOpacity
       accessibilityRole="button"
       accessibilityState={{ disabled: disabled || isLoading }}
       disabled={disabled || isLoading}
-      activeOpacity={0.8}
+      activeOpacity={0.85}
       className={`${baseContainerStyles} ${sizeStyles} ${variantStyles} ${disabledStyles} ${className}`}
       {...props}
     >
@@ -68,11 +68,11 @@ export const Button: React.FC<ButtonProps> = ({
         <ActivityIndicator color={spinnerColor} size="small" />
       ) : (
         <View className="flex-row items-center justify-center">
-          {icon && <View className="mr-2.5">{icon}</View>}
+          {icon && <View className="mr-2">{icon}</View>}
           <Text
             className={`${textStyles} text-center`}
             style={{
-              fontFamily: 'Nunito_800ExtraBold',
+              fontFamily: 'PlusJakartaSans_600SemiBold',
               fontSize,
             }}
           >

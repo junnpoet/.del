@@ -81,29 +81,29 @@ export default function ProfileScreen() {
     <View className="flex-1 bg-neutral-background">
       <Header title="Mi Perfil" subtitle="Hogar y Preferencias Comunitarias" />
 
-      <ScrollView contentContainerClassName="p-4 pb-32">
+      <ScrollView contentContainerClassName="p-4 pb-28">
         {/* User Card */}
-        <Card className="p-5 mb-4 flex-row items-center">
-          <View className="w-20 h-20 rounded-3xl bg-primary-pastel border-2 border-primary-light/60 items-center justify-center mr-4">
-            <User size={38} color="#1B4332" strokeWidth={2.5} />
+        <Card className="p-4 mb-3 flex-row items-center">
+          <View className="w-14 h-14 rounded-full bg-neutral-mutedBg items-center justify-center mr-3.5">
+            <User size={26} color="#1A1D20" strokeWidth={2} />
           </View>
           <View className="flex-1">
             <Text
               className="text-neutral-textMain"
-              style={{ fontFamily: 'Nunito_900Black', fontSize: 22 }}
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
             >
               {profile.full_name}
             </Text>
             <Text
               className="text-neutral-textMuted mt-0.5"
-              style={{ fontFamily: 'Nunito_700Bold', fontSize: 16 }}
+              style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
             >
               Tel: {profile.phone}
             </Text>
-            <View className="mt-2 bg-earth-pastel border border-earth-light self-start px-3.5 py-1 rounded-xl">
+            <View className="mt-1.5 bg-neutral-mutedBg self-start px-2.5 py-0.5 rounded-md">
               <Text
-                className="text-earth-dark uppercase"
-                style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 13 }}
+                className="text-neutral-textMuted uppercase"
+                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11 }}
               >
                 Rol: {profile.role}
               </Text>
@@ -112,29 +112,27 @@ export default function ProfileScreen() {
         </Card>
 
         {/* Registered Home Address */}
-        <Card className="p-5 mb-4">
-          <View className="flex-row items-center mb-2">
-            <View className="w-10 h-10 rounded-xl bg-primary-pastel items-center justify-center mr-3">
-              <Home size={22} color="#1B4332" strokeWidth={2.5} />
-            </View>
+        <Card className="p-4 mb-3">
+          <View className="flex-row items-center mb-1.5">
+            <Home size={18} color="#1E5E45" strokeWidth={2.2} />
             <Text
-              className="text-neutral-textMain flex-1"
-              style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 19 }}
+              className="text-neutral-textMain ml-2 flex-1"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
             >
               Hogar Georreferenciado
             </Text>
           </View>
           <Text
-            className="text-neutral-textMuted mb-3 leading-6"
-            style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 15 }}
+            className="text-neutral-textMuted mb-2.5 leading-5"
+            style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
           >
             Punto de partida fijo para calcular las distancias a pie en tu barrio.
           </Text>
-          <View className="bg-primary-pastel/50 p-4 rounded-2xl border-2 border-primary-light/50 flex-row items-center">
-            <MapPin size={22} color="#1B4332" strokeWidth={2.5} />
+          <View className="bg-neutral-mutedBg p-3 rounded-xl flex-row items-center">
+            <MapPin size={18} color="#6C727A" strokeWidth={2} />
             <Text
-              className="text-primary-dark ml-2.5 flex-1"
-              style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 16 }}
+              className="text-neutral-textMain ml-2 flex-1"
+              style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
             >
               {profile.home_address}
             </Text>
@@ -142,72 +140,66 @@ export default function ProfileScreen() {
         </Card>
 
         {/* Accessibility Toggle */}
-        <Card className="p-5 mb-4">
+        <Card className="p-4 mb-3">
           <View className="flex-row items-center justify-between">
-            <View className="flex-1 mr-4">
-              <View className="flex-row items-center mb-1.5">
-                <View className="w-10 h-10 rounded-xl bg-sun-pastel items-center justify-center mr-3">
-                  <Eye size={22} color="#7C4D12" strokeWidth={2.5} />
-                </View>
+            <View className="flex-1 mr-3">
+              <View className="flex-row items-center mb-1">
+                <Eye size={18} color="#1E5E45" strokeWidth={2.2} />
                 <Text
-                  className="text-neutral-textMain flex-1"
-                  style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 19 }}
+                  className="text-neutral-textMain ml-2 flex-1"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
                 >
                   Modo Adulto Mayor
                 </Text>
               </View>
               <Text
-                className="text-neutral-textMuted leading-6"
-                style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 15 }}
+                className="text-neutral-textMuted leading-5"
+                style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
               >
-                Amplía aún más los botones y textos para lectura sin esfuerzo.
+                Amplía los botones y textos para facilitar la lectura.
               </Text>
             </View>
             <Switch
               value={accessibleMode}
               onValueChange={toggleAccessibleMode}
-              trackColor={{ false: '#E6DEC8', true: '#52B788' }}
-              thumbColor={accessibleMode ? '#1B4332' : '#FFFFFF'}
+              trackColor={{ false: '#E9ECEF', true: '#348B68' }}
+              thumbColor={accessibleMode ? '#1E5E45' : '#FFFFFF'}
             />
           </View>
         </Card>
 
         {/* Quick links */}
-        <Card className="p-3 mb-6">
+        <Card className="p-2 mb-4">
           <TouchableOpacity
-            className="flex-row items-center justify-between p-4 border-b-2 border-neutral-mutedBg min-h-[60px]"
+            className="flex-row items-center justify-between p-3.5 border-b border-neutral-border/50 min-h-[48px]"
             onPress={() => Alert.alert('Favoritos', 'Tienes 3 oficios guardados en favoritos.')}
           >
             <View className="flex-row items-center flex-1 mr-2">
-              <View className="w-10 h-10 rounded-xl bg-earth-pastel items-center justify-center mr-3">
-                <Bookmark size={22} color="#6D3B1E" strokeWidth={2.5} />
-              </View>
+              <Bookmark size={18} color="#6C727A" strokeWidth={2} />
               <Text
-                className="text-neutral-textMain flex-1"
-                style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 17 }}
+                className="text-neutral-textMain ml-3 flex-1"
+                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
               >
                 Mis Favoritos Guardados
               </Text>
             </View>
-            <ChevronRight size={24} color="#5C564F" />
+            <ChevronRight size={18} color="#9EA3AE" />
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="flex-row items-center justify-between p-4 min-h-[60px]"
+            className="flex-row items-center justify-between p-3.5 min-h-[48px]"
             onPress={() => router.push('/emergency-board')}
           >
             <View className="flex-row items-center flex-1 mr-2">
-              <View className="w-10 h-10 rounded-xl bg-emergency-pastel items-center justify-center mr-3">
-                <Shield size={22} color="#E03131" strokeWidth={2.5} />
-              </View>
+              <Shield size={18} color="#DC2626" strokeWidth={2} />
               <Text
-                className="text-emergency-alert flex-1"
-                style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 17 }}
+                className="text-emergency-alert ml-3 flex-1"
+                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
               >
                 Protocolo de Emergencia y Red SOS
               </Text>
             </View>
-            <ChevronRight size={24} color="#E03131" />
+            <ChevronRight size={18} color="#DC2626" />
           </TouchableOpacity>
         </Card>
 
@@ -216,7 +208,7 @@ export default function ProfileScreen() {
           title="Cerrar Sesión"
           variant="outline"
           onPress={handleLogout}
-          icon={<LogOut size={22} color="#1B4332" />}
+          icon={<LogOut size={18} color="#1A1D20" />}
         />
       </ScrollView>
     </View>

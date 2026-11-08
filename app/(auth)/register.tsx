@@ -152,18 +152,18 @@ export default function RegisterScreen() {
     <SafeAreaView edges={['bottom', 'left', 'right']} className="flex-1 bg-neutral-background">
       <Header title="Registro de Hogar" showBack />
 
-      <ScrollView contentContainerClassName="p-5 pb-12">
-        <View className="bg-earth-pastel/60 p-4 rounded-2xl border border-earth-light mb-5">
+      <ScrollView contentContainerClassName="p-4 pb-12">
+        <View className="bg-neutral-mutedBg p-3.5 rounded-2xl mb-4">
           <Text
-            className="text-earth-dark leading-6"
-            style={{ fontFamily: 'Nunito_700Bold', fontSize: 16 }}
+            className="text-neutral-textMuted leading-5"
+            style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
           >
             Para garantizar la confianza y reciprocidad vecinal, cada cuenta se
             vincula a un domicilio georreferenciado en el sector.
           </Text>
         </View>
 
-        <Card className="p-5 mb-5">
+        <Card className="p-4 mb-4">
           <Input
             label="Nombres y Apellidos"
             placeholder="Ej: Carmen Rosa Mamani"
@@ -187,10 +187,10 @@ export default function RegisterScreen() {
           />
 
           {/* GPS Location Pinning */}
-          <View className="mb-5">
+          <View className="mb-4">
             <Text
-              className="text-neutral-textMain mb-2"
-              style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 17 }}
+              className="text-neutral-textMain mb-1.5"
+              style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
             >
               Punto GPS Fijo del Domicilio
             </Text>
@@ -198,50 +198,50 @@ export default function RegisterScreen() {
             <TouchableOpacity
               onPress={handleCaptureLocation}
               disabled={isLocating}
-              className={`p-4 rounded-2xl border-2 flex-row items-center justify-between min-h-[68px] ${
+              className={`p-3.5 rounded-2xl flex-row items-center justify-between min-h-[56px] ${
                 coords
-                  ? 'bg-primary-pastel border-primary'
-                  : 'bg-neutral-mutedBg border-neutral-border'
+                  ? 'bg-neutral-surface border border-neutral-border shadow-xs'
+                  : 'bg-neutral-mutedBg'
               }`}
             >
               <View className="flex-row items-center flex-1 mr-2">
                 <View
-                  className={`w-12 h-12 rounded-2xl items-center justify-center ${
+                  className={`w-10 h-10 rounded-xl items-center justify-center ${
                     coords ? 'bg-primary' : 'bg-neutral-surface'
                   }`}
                 >
                   <Navigation
-                    size={24}
-                    color={coords ? '#FFFFFF' : '#5C564F'}
-                    strokeWidth={2.5}
+                    size={18}
+                    color={coords ? '#FFFFFF' : '#6C727A'}
+                    strokeWidth={2.2}
                   />
                 </View>
-                <View className="ml-3.5 flex-1">
+                <View className="ml-3 flex-1">
                   <Text
                     className={
-                      coords ? 'text-primary-dark' : 'text-neutral-textMain'
+                      coords ? 'text-neutral-textMain' : 'text-neutral-textMain'
                     }
-                    style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 17 }}
+                    style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
                   >
                     {coords
                       ? 'Ubicación fijada con éxito'
                       : 'Fijar mi ubicación actual'}
                   </Text>
                   <Text
-                    className="text-neutral-textMuted mt-0.5"
-                    style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 14 }}
+                    className="text-neutral-textLight mt-0.5"
+                    style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 12 }}
                   >
                     {coords
                       ? `Lat: ${coords.latitude.toFixed(4)}, Lng: ${coords.longitude.toFixed(4)}`
-                      : 'Pulsa aquí para georreferenciar tu hogar'}
+                      : 'Pulsa para georreferenciar tu hogar'}
                   </Text>
                 </View>
               </View>
 
               {coords ? (
-                <CheckCircle size={28} color="#1B4332" strokeWidth={2.5} />
+                <CheckCircle size={20} color="#1E5E45" strokeWidth={2.2} />
               ) : (
-                <MapPin size={26} color="#5C564F" strokeWidth={2.5} />
+                <MapPin size={18} color="#9EA3AE" strokeWidth={2} />
               )}
             </TouchableOpacity>
           </View>

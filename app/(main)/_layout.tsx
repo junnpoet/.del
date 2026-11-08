@@ -13,19 +13,19 @@ export default function MainLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#1B4332',
-          tabBarInactiveTintColor: '#7A7267',
+          tabBarActiveTintColor: '#1A1D20',
+          tabBarInactiveTintColor: '#9EA3AE',
           tabBarStyle: {
-            backgroundColor: '#FFFDF9',
-            borderTopColor: '#E6DEC8',
-            borderTopWidth: 2,
-            height: 68 + bottomPadding,
+            backgroundColor: '#FFFFFF',
+            borderTopColor: '#F0F2F5',
+            borderTopWidth: 1,
+            height: 56 + bottomPadding,
             paddingBottom: bottomPadding,
-            paddingTop: 8,
+            paddingTop: 6,
           },
           tabBarLabelStyle: {
-            fontFamily: 'Nunito_800ExtraBold',
-            fontSize: 14,
+            fontFamily: 'PlusJakartaSans_600SemiBold',
+            fontSize: 11,
             marginTop: 2,
           },
         }}
@@ -36,7 +36,7 @@ export default function MainLayout() {
             title: 'Oficios',
             tabBarLabel: 'Directorio',
             tabBarIcon: ({ color, focused }) => (
-              <Store size={26} color={color} strokeWidth={focused ? 2.8 : 2.2} />
+              <Store size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
             ),
           }}
         />
@@ -44,9 +44,9 @@ export default function MainLayout() {
           name="community"
           options={{
             title: 'Comunidad',
-            tabBarLabel: 'Muro Barrial',
+            tabBarLabel: 'Comunidad',
             tabBarIcon: ({ color, focused }) => (
-              <Users size={26} color={color} strokeWidth={focused ? 2.8 : 2.2} />
+              <Users size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
             ),
           }}
         />
@@ -54,9 +54,9 @@ export default function MainLayout() {
           name="profile"
           options={{
             title: 'Mi Hogar',
-            tabBarLabel: 'Mi Perfil',
+            tabBarLabel: 'Perfil',
             tabBarIcon: ({ color, focused }) => (
-              <User size={26} color={color} strokeWidth={focused ? 2.8 : 2.2} />
+              <User size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
             ),
           }}
         />

@@ -46,26 +46,24 @@ export default function LoginScreen() {
       >
         <ScrollView contentContainerClassName="p-6 justify-center flex-grow">
           <View className="mb-8 items-center">
-            <View className="bg-primary-pastel px-6 py-2.5 rounded-3xl border-2 border-primary-light/60 mb-2">
-              <Text
-                className="text-primary-dark"
-                style={{ fontFamily: 'Nunito_900Black', fontSize: 38 }}
-              >
-                Sumayni
-              </Text>
-            </View>
+            <Text
+              className="text-neutral-textMain"
+              style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 32 }}
+            >
+              Sumayni
+            </Text>
             <Text
               className="text-neutral-textMuted mt-1 text-center"
-              style={{ fontFamily: 'Nunito_700Bold', fontSize: 17 }}
+              style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14 }}
             >
               Bienestar y reciprocidad comunitaria
             </Text>
           </View>
 
-          <Card className="p-6 mb-6">
+          <Card className="p-5 mb-6">
             <Text
               className="text-neutral-textMain mb-4"
-              style={{ fontFamily: 'Nunito_900Black', fontSize: 24 }}
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 20 }}
             >
               Iniciar Sesión
             </Text>
@@ -89,20 +87,20 @@ export default function LoginScreen() {
 
           <View className="items-center">
             <Text
-              className="text-neutral-textMuted mb-3"
-              style={{ fontFamily: 'Nunito_700Bold', fontSize: 16 }}
+              className="text-neutral-textMuted mb-2.5"
+              style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14 }}
             >
               ¿Aún no has registrado tu hogar?
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/(auth)/register')}
-              className="min-h-[54px] items-center justify-center px-6 bg-earth-pastel border-2 border-earth-light rounded-2xl"
+              className="min-h-[46px] items-center justify-center px-5 bg-neutral-mutedBg rounded-2xl"
             >
               <Text
-                className="text-earth-dark"
-                style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 17 }}
+                className="text-neutral-textMain"
+                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
               >
-                Crear cuenta y geolocalizar domicilio
+                Crear cuenta y registrar domicilio
               </Text>
             </TouchableOpacity>
           </View>

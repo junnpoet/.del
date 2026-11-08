@@ -49,27 +49,27 @@ export default function EmergencyBoardScreen() {
   return (
     <SafeAreaView className="flex-1 bg-emergency-background">
       {/* Top Banner */}
-      <View className="px-5 pt-4 pb-5 bg-emergency-background border-b-2 border-emergency-alert/40">
+      <View className="px-5 pt-3 pb-4 bg-emergency-background border-b border-white/10">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Volver al modo normal"
             onPress={() => router.back()}
-            className="flex-row items-center min-h-[48px] px-3.5 py-2 bg-white/10 rounded-2xl"
+            className="flex-row items-center min-h-[40px] px-3 py-1.5 bg-white/10 rounded-xl"
           >
-            <ChevronLeft size={24} color="#FFFFFF" strokeWidth={2.5} />
+            <ChevronLeft size={18} color="#FFFFFF" strokeWidth={2.2} />
             <Text
               className="text-white ml-1"
-              style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 16 }}
+              style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
             >
               Modo Cotidiano
             </Text>
           </TouchableOpacity>
 
-          <View className="bg-emergency-alert px-3.5 py-1.5 rounded-2xl">
+          <View className="bg-emergency-alert/20 px-3 py-1 rounded-full">
             <Text
-              className="text-white uppercase"
-              style={{ fontFamily: 'Nunito_900Black', fontSize: 13 }}
+              className="text-emergency-alert uppercase"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}
             >
               CONTINGENCIA
             </Text>
@@ -77,44 +77,44 @@ export default function EmergencyBoardScreen() {
         </View>
 
         <Text
-          className="text-white mt-4"
-          style={{ fontFamily: 'Nunito_900Black', fontSize: 28 }}
+          className="text-white mt-3"
+          style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 22 }}
         >
           Tablero de Ayuda Humanitaria
         </Text>
         <Text
-          className="text-emergency-warning mt-1"
-          style={{ fontFamily: 'Nunito_700Bold', fontSize: 16 }}
+          className="text-emergency-warning mt-0.5"
+          style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
         >
           Sector 4 · San Martín de Porres · Alerta Barrial
         </Text>
       </View>
 
-      <ScrollView contentContainerClassName="p-5 pb-20">
+      <ScrollView contentContainerClassName="p-4 pb-20">
         {/* SOS Central Button */}
-        <View className="items-center my-5">
+        <View className="items-center my-4">
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Botón central de auxilio SOS"
             onPress={handleTriggerSOS}
-            activeOpacity={0.8}
-            className={`w-44 h-44 rounded-full items-center justify-center border-4 ${
+            activeOpacity={0.85}
+            className={`w-32 h-32 rounded-full items-center justify-center shadow-xl ${
               sosActive
-                ? 'bg-emergency-warning border-white'
-                : 'bg-emergency-alert border-emergency-pastel shadow-2xl'
+                ? 'bg-emergency-warning'
+                : 'bg-emergency-alert shadow-emergency-alert/30'
             }`}
           >
-            <AlertTriangle size={56} color="#FFFFFF" strokeWidth={2.8} />
+            <AlertTriangle size={36} color="#FFFFFF" strokeWidth={2.2} />
             <Text
-              className="text-white mt-1.5 tracking-wider"
-              style={{ fontFamily: 'Nunito_900Black', fontSize: 24 }}
+              className="text-white mt-1 tracking-wider"
+              style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 18 }}
             >
               {sosActive ? 'ENVIADO' : 'SOS'}
             </Text>
           </TouchableOpacity>
           <Text
-            className="text-neutral-border text-center mt-4 px-4 leading-6"
-            style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 16 }}
+            className="text-white/60 text-center mt-3 px-4 leading-5"
+            style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
           >
             Presiona para pedir auxilio médico, seguridad o apoyo inmediato a tu red de padrinos.
           </Text>
@@ -122,61 +122,61 @@ export default function EmergencyBoardScreen() {
 
         {/* Safe Zones & First Aid */}
         <Text
-          className="text-white uppercase tracking-wider mb-3.5 mt-2"
-          style={{ fontFamily: 'Nunito_900Black', fontSize: 17 }}
+          className="text-white uppercase tracking-wider mb-2.5 mt-2 px-1"
+          style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
         >
           Puntos Seguros y Auxilio en el Sector
         </Text>
 
-        <Card variant="emergency" className="mb-4 p-5">
-          <View className="flex-row items-center mb-2">
-            <MapPin size={24} color="#52B788" strokeWidth={2.5} />
+        <Card variant="emergency" className="mb-3 p-4">
+          <View className="flex-row items-center mb-1">
+            <MapPin size={18} color="#16A34A" strokeWidth={2.2} />
             <Text
-              className="text-white ml-2.5 flex-1"
-              style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 19 }}
+              className="text-white ml-2 flex-1"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
             >
               Losa Deportiva Los Jazmines (Zona Segura)
             </Text>
           </View>
           <Text
-            className="text-neutral-border leading-6"
-            style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 16 }}
+            className="text-white/60 leading-5"
+            style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
           >
             Punto de concentración vecinal libre de cables y postes. A 150m de tu domicilio.
           </Text>
         </Card>
 
-        <Card variant="emergency" className="mb-4 p-5">
-          <View className="flex-row items-center mb-2">
-            <HeartPulse size={24} color="#FF8787" strokeWidth={2.5} />
+        <Card variant="emergency" className="mb-3 p-4">
+          <View className="flex-row items-center mb-1">
+            <HeartPulse size={18} color="#EF4444" strokeWidth={2.2} />
             <Text
-              className="text-white ml-2.5 flex-1"
-              style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 19 }}
+              className="text-white ml-2 flex-1"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
             >
               Botiquín Comunitario y Desfibrilador
             </Text>
           </View>
           <Text
-            className="text-neutral-border leading-6"
-            style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 16 }}
+            className="text-white/60 leading-5"
+            style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
           >
             Custodiado por: Familia Mendoza (Jr. Los Jazmines 310 - Mz. D Lt. 4).
           </Text>
         </Card>
 
-        <Card variant="emergency" className="mb-6 p-5">
-          <View className="flex-row items-center mb-2">
-            <PhoneCall size={24} color="#FCD34D" strokeWidth={2.5} />
+        <Card variant="emergency" className="mb-4 p-4">
+          <View className="flex-row items-center mb-1">
+            <PhoneCall size={18} color="#F59E0B" strokeWidth={2.2} />
             <Text
-              className="text-white ml-2.5 flex-1"
-              style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 19 }}
+              className="text-white ml-2 flex-1"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
             >
               Central Telefónica Rápida
             </Text>
           </View>
           <Text
-            className="text-neutral-border leading-6"
-            style={{ fontFamily: 'Nunito_700Bold', fontSize: 16 }}
+            className="text-white/60 leading-5"
+            style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
           >
             Comisaría del sector: 105 · Bomberos: 116 · SAMU: 106
           </Text>

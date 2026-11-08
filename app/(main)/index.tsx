@@ -95,12 +95,12 @@ export default function PublicServicesScreen() {
         rightAction={
           <TouchableOpacity
             onPress={() => router.push('/emergency-board')}
-            className="flex-row items-center bg-emergency-pastel px-4 py-2.5 rounded-2xl border-2 border-emergency-alert/40 min-h-[46px]"
+            className="flex-row items-center bg-emergency-tint px-3 py-1.5 rounded-full"
           >
-            <AlertTriangle size={20} color="#E03131" strokeWidth={2.5} />
+            <AlertTriangle size={15} color="#DC2626" strokeWidth={2.2} />
             <Text
-              className="text-emergency-alert ml-1.5"
-              style={{ fontFamily: 'Nunito_900Black', fontSize: 15 }}
+              className="text-emergency-alert ml-1"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
             >
               SOS
             </Text>
@@ -108,63 +108,56 @@ export default function PublicServicesScreen() {
         }
       />
 
-      <ScrollView contentContainerClassName="p-4 pb-32">
-        {/* Walkable Radius Selector */}
-        <View className="mb-5 bg-primary-pastel/70 p-4 rounded-3xl border-2 border-primary-light/60">
-          <View className="flex-row items-center justify-between mb-3">
-            <View className="flex-row items-center flex-1 mr-2">
-              <View className="w-9 h-9 rounded-xl bg-primary items-center justify-center mr-2.5">
-                <MapPin size={20} color="#FFFFFF" strokeWidth={2.5} />
-              </View>
+      <ScrollView contentContainerClassName="p-4 pb-28">
+        {/* Walkable Radius Segmented Control */}
+        <View className="mb-4 bg-neutral-surface p-3.5 rounded-3xl shadow-sm shadow-black/5">
+          <View className="flex-row items-center justify-between mb-2.5">
+            <View className="flex-row items-center">
+              <MapPin size={16} color="#1E5E45" strokeWidth={2.2} />
               <Text
-                className="text-primary-dark flex-1"
-                style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 16 }}
+                className="text-neutral-textMain ml-1.5"
+                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
               >
-                Radio caminable desde tu hogar:
+                Radio caminable:
               </Text>
             </View>
-            <View className="bg-primary px-3 py-1 rounded-xl">
-              <Text
-                className="text-white"
-                style={{ fontFamily: 'Nunito_900Black', fontSize: 16 }}
-              >
-                {selectedRadius}
-              </Text>
-            </View>
+            <Text
+              className="text-neutral-textMuted"
+              style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
+            >
+              Fijo desde tu hogar
+            </Text>
           </View>
 
-          <View className="flex-row gap-2.5">
-            {(['300m', '500m', '1km'] as const).map((r) => (
-              <TouchableOpacity
-                key={r}
-                onPress={() => setSelectedRadius(r)}
-                className={`flex-1 min-h-[52px] items-center justify-center rounded-2xl border-2 ${
-                  selectedRadius === r
-                    ? 'bg-primary border-primary-dark shadow-sm'
-                    : 'bg-neutral-surface border-primary-light/50'
-                }`}
-              >
-                <Text
-                  className={
-                    selectedRadius === r ? 'text-white' : 'text-primary-dark'
-                  }
-                  style={{
-                    fontFamily:
-                      selectedRadius === r
-                        ? 'Nunito_900Black'
-                        : 'Nunito_700Bold',
-                    fontSize: 17,
-                  }}
+          {/* Clean Segmented Control */}
+          <View className="flex-row bg-neutral-mutedBg p-1 rounded-2xl">
+            {(['300m', '500m', '1km'] as const).map((r) => {
+              const isSelected = selectedRadius === r;
+              return (
+                <TouchableOpacity
+                  key={r}
+                  onPress={() => setSelectedRadius(r)}
+                  className={`flex-1 min-h-[38px] items-center justify-center rounded-xl ${
+                    isSelected ? 'bg-neutral-surface shadow-xs' : 'bg-transparent'
+                  }`}
                 >
-                  {r}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    className={isSelected ? 'text-neutral-textMain' : 'text-neutral-textMuted'}
+                    style={{
+                      fontFamily: isSelected ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
+                      fontSize: 14,
+                    }}
+                  >
+                    {r}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
         {/* Categories Chips */}
-        <View className="mb-4">
+        <View className="mb-3">
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {categories.map((cat) => (
               <Chip
@@ -177,60 +170,68 @@ export default function PublicServicesScreen() {
           </ScrollView>
         </View>
 
-        {/* Services List */}
-        <Text
-          className="text-neutral-textMain mb-3.5 px-1"
-          style={{ fontFamily: 'Nunito_900Black', fontSize: 18 }}
-        >
-          Vecinos Prestadores en tu Sector ({filteredServices.length})
-        </Text>
+        {/* Services List Header */}
+        <View className="flex-row items-center justify-between mb-3 px-1">
+          <Text
+            className="text-neutral-textMain"
+            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
+          >
+            Vecinos Prestadores ({filteredServices.length})
+          </Text>
+          <Text
+            className="text-neutral-textLight"
+            style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
+          >
+            Ordenados por cercanía
+          </Text>
+        </View>
 
         {filteredServices.map((service) => (
-          <Card key={service.id} className="mb-4 p-5">
+          <Card key={service.id} className="mb-3 p-4">
             <View className="flex-row justify-between items-start mb-2">
-              <View className="flex-1 mr-3">
+              <View className="flex-1 mr-2">
                 <Text
-                  className="text-neutral-textMain mb-1 leading-7"
-                  style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 20 }}
+                  className="text-neutral-textMain mb-0.5 leading-6"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 }}
                 >
                   {service.title}
                 </Text>
                 <Text
                   className="text-neutral-textMuted"
-                  style={{ fontFamily: 'Nunito_700Bold', fontSize: 16 }}
+                  style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
                 >
                   Por {service.provider}
                 </Text>
               </View>
 
-              <View className="bg-sun-pastel px-3.5 py-1.5 rounded-2xl border border-sun/40 flex-row items-center">
-                <Star size={18} color="#B45309" fill="#F59E0B" />
+              <View className="flex-row items-center bg-neutral-mutedBg px-2.5 py-1 rounded-xl">
+                <Star size={13} color="#D97706" fill="#D97706" />
                 <Text
-                  className="text-sun-dark ml-1.5"
-                  style={{ fontFamily: 'Nunito_900Black', fontSize: 16 }}
+                  className="text-neutral-textMain ml-1"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
                 >
                   {service.rating.toFixed(1)}
                 </Text>
               </View>
             </View>
 
-            <View className="flex-row items-center justify-between pt-3 mt-1 border-t-2 border-neutral-mutedBg flex-wrap gap-2">
-              <View className="flex-row items-center bg-neutral-mutedBg px-3 py-1.5 rounded-xl">
-                <MapPin size={18} color="#2D6A4F" strokeWidth={2.5} />
+            <View className="flex-row items-center justify-between pt-2.5 mt-1 border-t border-neutral-border/50">
+              <View className="flex-row items-center">
+                <MapPin size={14} color="#6C727A" strokeWidth={2} />
                 <Text
-                  className="text-neutral-textMain ml-1.5"
-                  style={{ fontFamily: 'Nunito_700Bold', fontSize: 15 }}
+                  className="text-neutral-textMuted ml-1"
+                  style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
                 >
                   {service.distance}
                 </Text>
               </View>
 
               {service.hasNeighborhoodSeal && (
-                <View className="flex-row items-center bg-earth-pastel px-3 py-1.5 rounded-xl border border-earth-light">
-                  <ShieldCheck size={18} color="#6D3B1E" strokeWidth={2.5} />
+                <View className="flex-row items-center bg-neutral-mutedBg px-2.5 py-1 rounded-xl">
+                  <ShieldCheck size={14} color="#1E5E45" strokeWidth={2.2} />
                   <Text
-                    className="text-earth-dark ml-1.5"
-                    style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 14 }}
+                    className="text-neutral-textMain ml-1"
+                    style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}
                   >
                     Visto Bueno Barrial
                   </Text>

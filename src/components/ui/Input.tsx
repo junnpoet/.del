@@ -26,15 +26,15 @@ export const Input: React.FC<InputProps> = ({
   ...props
 }) => {
   const borderColor = error
-    ? 'border-emergency-alert'
-    : 'border-neutral-border focus:border-primary';
+    ? 'border border-emergency-alert'
+    : 'border border-neutral-border/80 focus:border-primary';
 
   return (
-    <View className="mb-5 w-full">
-      <View className="flex-row items-center justify-between mb-2">
+    <View className="mb-4 w-full">
+      <View className="flex-row items-center justify-between mb-1.5">
         <Text
           className="text-neutral-textMain"
-          style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 17 }}
+          style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
         >
           {label}
         </Text>
@@ -43,22 +43,22 @@ export const Input: React.FC<InputProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Dictar por voz"
             onPress={onVoiceInput}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            className={`min-h-[42px] px-3.5 flex-row items-center rounded-xl border ${
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            className={`min-h-[34px] px-3 flex-row items-center rounded-xl ${
               isVoiceRecording
-                ? 'bg-emergency-alert border-emergency-alert'
-                : 'bg-primary-pastel border-primary-light/50'
+                ? 'bg-emergency-alert'
+                : 'bg-neutral-mutedBg'
             }`}
           >
             <Mic
-              size={18}
-              color={isVoiceRecording ? '#FFFFFF' : '#1B4332'}
+              size={15}
+              color={isVoiceRecording ? '#FFFFFF' : '#1A1D20'}
             />
             <Text
-              className={`ml-1.5 ${
-                isVoiceRecording ? 'text-white' : 'text-primary-dark'
+              className={`ml-1 ${
+                isVoiceRecording ? 'text-white' : 'text-neutral-textMain'
               }`}
-              style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 15 }}
+              style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
             >
               {isVoiceRecording ? 'Grabando...' : 'Voz'}
             </Text>
@@ -67,27 +67,27 @@ export const Input: React.FC<InputProps> = ({
       </View>
 
       <View
-        className={`flex-row items-center bg-neutral-surface border-2 rounded-2xl px-4 min-h-[56px] ${borderColor}`}
+        className={`flex-row items-center bg-neutral-surface rounded-2xl px-4 min-h-[48px] ${borderColor}`}
       >
         <TextInput
-          placeholderTextColor="#8C857B"
-          className={`flex-1 text-neutral-textMain py-3.5 ${className}`}
-          style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 17 }}
+          placeholderTextColor="#9EA3AE"
+          className={`flex-1 text-neutral-textMain py-2.5 ${className}`}
+          style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 15 }}
           {...props}
         />
       </View>
 
       {error ? (
         <Text
-          className="text-emergency-alert mt-1.5"
-          style={{ fontFamily: 'Nunito_700Bold', fontSize: 15 }}
+          className="text-emergency-alert mt-1"
+          style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
         >
           {error}
         </Text>
       ) : helperText ? (
         <Text
-          className="text-neutral-textMuted mt-1.5"
-          style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 15 }}
+          className="text-neutral-textMuted mt-1"
+          style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
         >
           {helperText}
         </Text>

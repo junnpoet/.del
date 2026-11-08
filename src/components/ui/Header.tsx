@@ -33,8 +33,8 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const bgStyles = isEmergency
-    ? 'bg-emergency-background border-b-2 border-emergency-alert/40'
-    : 'bg-neutral-surface border-b-2 border-neutral-border';
+    ? 'bg-emergency-background'
+    : 'bg-neutral-surface border-b border-neutral-border/60';
 
   const titleStyles = isEmergency ? 'text-white' : 'text-neutral-textMain';
   const subtitleStyles = isEmergency
@@ -43,10 +43,10 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <View
-      className={`px-5 pb-4 ${bgStyles}`}
-      style={{ paddingTop: Math.max(insets.top + 10, 18) }}
+      className={`px-5 pb-3 ${bgStyles}`}
+      style={{ paddingTop: Math.max(insets.top + 8, 16) }}
     >
-      <View className="flex-row items-center justify-between min-h-[54px]">
+      <View className="flex-row items-center justify-between min-h-[48px]">
         <View className="flex-row items-center flex-1">
           {showBack && (
             <TouchableOpacity
@@ -54,14 +54,14 @@ export const Header: React.FC<HeaderProps> = ({
               accessibilityLabel="Regresar"
               onPress={handleBack}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              className={`h-12 w-12 rounded-2xl items-center justify-center mr-3 ${
-                isEmergency ? 'bg-white/15' : 'bg-primary-pastel'
+              className={`h-10 w-10 rounded-2xl items-center justify-center mr-3 ${
+                isEmergency ? 'bg-white/15' : 'bg-neutral-mutedBg'
               }`}
             >
               <ChevronLeft
-                size={28}
-                strokeWidth={2.5}
-                color={isEmergency ? '#FFFFFF' : '#1B4332'}
+                size={22}
+                strokeWidth={2.2}
+                color={isEmergency ? '#FFFFFF' : '#1A1D20'}
               />
             </TouchableOpacity>
           )}
@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
           <View className="flex-1">
             <Text
               className={titleStyles}
-              style={{ fontFamily: 'Nunito_800ExtraBold', fontSize: 23 }}
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 22 }}
               numberOfLines={1}
             >
               {title}
@@ -77,7 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
             {subtitle && (
               <Text
                 className={`mt-0.5 ${subtitleStyles}`}
-                style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 15 }}
+                style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
                 numberOfLines={1}
               >
                 {subtitle}
