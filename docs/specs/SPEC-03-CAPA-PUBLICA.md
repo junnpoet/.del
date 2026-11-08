@@ -35,15 +35,15 @@ Construir la experiencia de usuario de la **Capa Pública** en **Sumayni**: visi
 * Persiste en disco local mediante `AsyncStorage` para consulta instantánea offline y se sincroniza con el perfil de Supabase.
 
 ### 2.3. Chat de Servicio y Cierre en 1 Tap (`features/public/screens/ServiceChatScreen.tsx`)
-* Conversación limpia y directa entre el vecino y el prestador.
+* Conversación limpia y directa entre el vecino y el prestador usando las tablas `chat_conversations` y `chat_messages` con Supabase Realtime.
 * **Barra de Acción Superior (Prestador):**  
-  * Botón: **`[ Solicitar Visto Bueno Vecinal ]`** (se habilita tras intercambiar mensajes).
+  * Botón: **`[ Solicitar Visto Bueno Vecinal ]`** (inserta un mensaje en `chat_messages` con flag `is_review_request = true`).
 * **Tarjeta de Calificación de 1 Tap (Cliente):**
-  * Cuando el prestador pulsa la solicitud, al cliente le aparece una tarjeta interactiva en el chat:
+  * Cuando el cliente recibe un mensaje con `is_review_request = true`, la UI renderiza una tarjeta interactiva destacada dentro del chat:
     > *"¿Juan Quispe completó el arreglo? Confírmalo con tu Visto Bueno Vecinal."*
   * Selector de 1 a 5 estrellas + campo de texto breve opcional.
   * Botón **`[ Otorgar Visto Bueno ]`**.
-  * Inserta en la tabla `reviews` y actualiza el contador del prestador en Supabase.
+  * Inserta en la tabla `reviews`, lo que dispara automáticamente el trigger `trg_after_review_insert` en Supabase para recalcular el rating del prestador.
 
 ### 2.4. Mecanismo de Reporte / Denuncia (`features/public/components/ReportModal.tsx`)
 * Accesible desde el perfil del prestador o desde el menú del chat.

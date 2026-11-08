@@ -52,11 +52,19 @@ Para aquellos vecinos mayores o personas con discapacidad que utilizan la aplica
     * Ocupa el 50% de la pantalla.
     * Requiere **mantener presionado durante 2 segundos**.
     * Activa vibración continua con `expo-haptics` para evitar toques accidentales.
-    * Al dispararse, notifica a los padrinos vecinales y dirigentes de su manzana.
+    * Al dispararse, inserta un registro en `sos_alerts` con su geolocalización y notifica mediante Supabase Realtime a los padrinos vecinales y dirigentes de su manzana.
   * **Botón de Micrófono Asistente:**
     * Permite pulsar y decir su necesidad en voz alta (*"Necesito que me compren pan"*, *"Me duele el pecho"*).
 
-### 2.5. Soporte Multilingüe (Español / Quechua) (`src/i18n/`)
+### 2.5. Panel de Gestión del Dirigente Barrial (`features/community/screens/LeaderDashboardScreen.tsx`)
+* **Acceso Condicional:** Visible exclusivamente en el perfil de usuarios con `role === 'dirigente'`.
+* **Módulos del Panel:**
+  1. **Solicitudes de Unión Pendientes:** Lista las solicitudes de `group_join_requests` con distintivos visuales (`[ 🚨 Emergencia ]` o `[ 📱 WhatsApp ]`), permitiendo **Aprobar en 1 tap** (invoca RPC `approve_join_request`) o Rechazar.
+  2. **Bandeja de Denuncias Comunitarias:** Visualiza los reportes de `service_reports` para mediar o sancionar malas prácticas.
+  3. **Gestión de Padrinazgo:** Interfaz para asignar vecinos enlace a perfiles vulnerables en `care_assignments`.
+  4. **Publicador de Noticias Zonales:** Formulario ágil para emitir avisos oficiales a `neighborhood_news`.
+
+### 2.6. Soporte Multilingüe (Español / Quechua) (`src/i18n/`)
 * Archivo de traducciones básicas en Quechua para etiquetas críticas:
   * Auxilio / Ayuda $\rightarrow$ *Yanapay*
   * Red de vecinos $\rightarrow$ *Ayllu*
@@ -71,4 +79,5 @@ Para aquellos vecinos mayores o personas con discapacidad que utilizan la aplica
 - [ ] Tarjetas con origen WhatsApp muestran botón directo para abrir `wa.me`.
 - [ ] Capa de mapa de personas vulnerables solo es visible para perfiles autorizados (dirigente/padrino).
 - [ ] Modo Accesible Adaptativo transforma la pantalla en una vista limpia con el Botón SOS central de 2 segundos.
-- [ ] Vibración háptica configurada y funcionando en la confirmación del botón SOS.
+- [ ] Vibración háptica configurada y funcionando en la confirmación del botón SOS con registro en `sos_alerts`.
+- [ ] Panel del Dirigente funcional: aprueba solicitudes de unión (app y WhatsApp) y revisa denuncias.

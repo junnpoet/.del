@@ -173,9 +173,9 @@ Para aquellos vecinos que están registrados individualmente pero aún no forman
 
 ---
 
-## 5. Estrategia Omnicanal e Integración con WhatsApp
+## 5. Estrategia Omnicanal e Integración con WhatsApp (Contacto Único)
 
-Para asegurar que los vecinos con baja alfabetización digital, sin espacio de almacenamiento en el móvil o que no desean instalar nuevas aplicaciones participen activamente, la plataforma se integra de manera bidireccional con una **Comunidad de WhatsApp**:
+Para asegurar que los vecinos con baja alfabetización digital, sin espacio de almacenamiento en el móvil o que no desean instalar nuevas aplicaciones participen activamente, la plataforma implementa el modelo de **Contacto Vecinal Único en WhatsApp**:
 
 ```
                               ┌────────────────────────────────────────┐
@@ -185,36 +185,40 @@ Para asegurar que los vecinos con baja alfabetización digital, sin espacio de a
                                       │                        │
                     ┌─────────────────┴─┐                    ┌─┴─────────────────┐
                     │     APP MÓVIL     │                    │     WHATSAPP      │
-                    │   (React Native)  │                    │                   │
+                    │   (React Native)  │                    │ (Bot Sumayni 1-a-1│
                     ├───────────────────┤                    ├───────────────────┤
-                    │ • Mapa interactivo│                    │ 1. Canal Avisos   │
-                    │ • Muro solidario  │                    │    (Solo lectura, │
-                    │ • Directorio      │                    │     cero spam)    │
-                    │ • Modo Emergencia │                    │ 2. Bot de Ayuda   │
-                    │                   │                    │    (Consultas por │
-                    │                   │                    │     palabra clave)│
+                    │ • Mapa interactivo│                    │ 1. Alertas push   │
+                    │ • Muro solidario  │                    │    automáticas    │
+                    │ • Directorio      │                    │ 2. Publicación de │
+                    │ • Panel dirigente │                    │    audios con IA  │
+                    │ • Modo Emergencia │                    │ 3. Consultas por  │
+                    │                   │                    │    palabra clave  │
                     └───────────────────┘                    └───────────────────┘
 ```
 
-### 5.1. Flujo para el Vecino en WhatsApp
-1. **Canal de Avisos Comunitario (Solo Lectura):**
-   * Canal oficial de la Comunidad de WhatsApp donde **únicamente el sistema y los dirigentes tienen permiso de publicación**.
-   * Se publican alertas críticas de emergencia, cortes de servicios y noticias zonales oficiales.
-   * Evita por completo la saturación por cadenas, stickers o discusiones ajenas.
-2. **Bot Asistente de Consulta y Reporte:**
-   * **Onboarding y Verificación:** El vecino escribe al bot; este le solicita su nombre y que comparta su ubicación nativa de WhatsApp (`Share Location`). La solicitud llega a la app del dirigente, quien al validarla, agrega automáticamente al vecino a la comunidad de WhatsApp.
-   * **Búsqueda por Palabras Clave:**
-     * El vecino escribe *"gasfitero"*, *"electricista"* o *"botiquín"*.
-     * El bot responde con una ficha formateada con nombre, valoración del *Visto Bueno Vecinal* y un enlace directo de contacto: `https://wa.me/51987654321`.
-   * **Publicación por Voz / Texto:**
-     * El vecino envía un audio al bot (*"Vecinos, se me inundó el patio, ¿quién me puede prestar una bomba o baldes?"*).
-     * El motor de IA transcribe y categoriza el requerimiento, publicándolo de inmediato en el Muro Solidario de la app móvil.
+### 5.1. Flujo para el Vecino en WhatsApp (Sin instalar apps)
+El vecino no necesita unirse a grupos caóticos ni canales adicionales; simplemente guarda en sus contactos a **`Sumayni Barrio`**:
+
+1. **Onboarding y Admisión Asistida por Dirigente:**
+   * El vecino escribe *"Hola"* al número del bot.
+   * El bot le solicita su nombre completo y que comparta su dirección o ubicación nativa de WhatsApp (`Share Location`).
+   * La solicitud se registra en estado pendiente y alerta al dirigente del sector en su app móvil.
+   * Cuando el dirigente presiona **`[ ✅ Aprobar ]`**, el bot le envía un mensaje automático de bienvenida confirmándole que ya forma parte de la red vecinal de su cuadra.
+2. **Difusión Automática de Alertas (100% sin intervención humana):**
+   * Cuando se declara una emergencia o aviso crítico en la app, el backend dispara una **difusión directa (Broadcast API)** a cada vecino registrado en WhatsApp.
+   * La alerta llega al chat personal del vecino al instante (*"🚨 Alerta en tu sector: sismo reportado..."*), garantizando entrega sin depender de grupos de anuncios.
+3. **Búsqueda por Palabras Clave (Directorio en el bolsillo):**
+   * El vecino escribe *"gasfitero"*, *"electricista"* o *"botiquín"*.
+   * El bot responde con una ficha formateada con nombre, valoración del *Visto Bueno Vecinal* y un enlace directo de WhatsApp: `https://wa.me/51987654321`.
+4. **Publicación por Voz Asistida por IA:**
+   * El vecino envía un audio al bot (*"Vecinos, se me inundó el patio, ¿quién me puede prestar una bomba o baldes?"*).
+   * El motor de IA transcribe y categoriza el requerimiento, publicándolo de inmediato en el Muro Solidario de la app móvil.
 
 ### 5.2. Conexión Bidireccional en la App (App $\rightarrow$ WhatsApp)
 Cuando un vecino de WhatsApp publica un pedido, los usuarios de la app móvil lo visualizan con una tarjeta adaptada:
 * **Insignia:** `[ 📱 Solicitud vía WhatsApp ]`.
 * **Botón de Acción Directa:** **`[ 🟢 Responder por WhatsApp ]`**.
-* Al tocar el botón, se abre WhatsApp en el teléfono del vecino con la app, con un chat directo hacia el vecino solicitante y un mensaje inicial autocompletado (*"Hola Doña Carmen, vi en la Red Vecinal que necesitas baldes..."*). De esta forma, ambos vecinos se comunican sin fricción tecnológica.
+* Al tocar el botón, se abre WhatsApp en el teléfono del vecino con la app, con un chat directo hacia el vecino solicitante y un mensaje inicial autocompletado (*"Hola Don Manuel, vi en la Red Vecinal que necesitas baldes..."*). De esta forma, ambos vecinos se comunican sin fricción tecnológica.
 
 ---
 

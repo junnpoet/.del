@@ -63,6 +63,7 @@ export const sumayniColors = {
 4. **`Header`:** Barra superior con título claro, botón de regreso accesible y switch de rol/modo.
 5. **`Input`:** Campo de texto con tipografía de alto contraste, label visible y soporte para entrada por voz.
 6. **`Modal`:** Contenedor modal accesible para confirmaciones y flujos rápidos de 1 tap.
+7. **`QuickPublishFAB` (Embudo de los 3 Clics):** Botón flotante global `[ + ]` que despliega el menú radial rápido (*Ofrecer Servicio*, *Pedir Ayuda*, *Aporte Solidario*) y el modal de grabación de audio con `expo-av` para estructuración por voz.
 
 ---
 
@@ -123,5 +124,7 @@ export const asyncStoragePersister = createAsyncStoragePersister({
 - [ ] NativeWind v4 configurado con los tokens de color de **Sumayni** en `tailwind.config.js`.
 - [ ] Componentes base creados en `src/components/ui/` con áreas táctiles $\ge 48$dp.
 - [ ] Flujo de Onboarding de 3 pantallas completado y almacena flag en AsyncStorage (`has_seen_onboarding`).
+- [ ] Pantalla de registro individual con geocodificación fija de residencia en `profiles.home_location`.
+- [ ] Componente `QuickPublishFAB` (Embudo de 3 toques) implementado y accesible en el layout global.
 - [ ] Navegación configurada con Expo Router y Tab Bar visible con iconos intuitivos.
 - [ ] QueryClient configurado con `createAsyncStoragePersister` probado con modo avión.
