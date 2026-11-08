@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Store, Users, User, Newspaper } from 'lucide-react-native';
-import { View } from 'react-native';
+import { View, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function MainLayout() {
@@ -23,10 +23,44 @@ export default function MainLayout() {
             paddingBottom: bottomPadding,
             paddingTop: 6,
           },
+          tabBarItemStyle: {
+            flex: 1,
+            height: 50,
+            overflow: 'hidden',
+            borderRadius: 16,
+          },
+          tabBarButton: ({ ref, ...props }) => (
+            <Pressable
+              {...(props as any)}
+              android_ripple={{
+                color: 'rgba(0, 0, 0, 0.05)',
+                borderless: false,
+              }}
+              style={({ pressed }) => [
+                props.style,
+                {
+                  flex: 1,
+                  width: '100%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  alignSelf: 'center',
+                  height: 48,
+                  overflow: 'hidden',
+                  borderRadius: 16,
+                },
+              ]}
+            />
+          ),
+          tabBarIconStyle: {
+            alignSelf: 'center',
+          },
           tabBarLabelStyle: {
             fontFamily: 'PlusJakartaSans_600SemiBold',
             fontSize: 11,
             marginTop: 2,
+            textAlign: 'center',
+            alignSelf: 'center',
+            width: '100%',
           },
         }}
       >
@@ -36,7 +70,9 @@ export default function MainLayout() {
             title: 'Oficios',
             tabBarLabel: 'Directorio',
             tabBarIcon: ({ color, focused }) => (
-              <Store size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
+              <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+                <Store size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
+              </View>
             ),
           }}
         />
@@ -56,7 +92,9 @@ export default function MainLayout() {
             title: 'Comunidad',
             tabBarLabel: 'Comunidad',
             tabBarIcon: ({ color, focused }) => (
-              <Users size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
+              <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+                <Users size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
+              </View>
             ),
           }}
         />
@@ -66,7 +104,9 @@ export default function MainLayout() {
             title: 'Mi Hogar',
             tabBarLabel: 'Perfil',
             tabBarIcon: ({ color, focused }) => (
-              <User size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
+              <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+                <User size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
+              </View>
             ),
           }}
         />
