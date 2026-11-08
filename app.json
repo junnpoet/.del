@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#2D6A4F"
+      "backgroundColor": "#F8F9FA"
     },
     "ios": {
       "supportsTablet": true,
@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundColor": "#2D6A4F"
+        "backgroundColor": "#F8F9FA"
       },
       "package": "com.sumayni.app",
       "permissions": [

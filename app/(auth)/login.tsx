@@ -1,34 +1,53 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { Card } from '../../src/components/ui/Card';
+import { DEMO_PERSONAS, useDemo } from '../../src/services/demoStore';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { switchUser } = useDemo();
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!phone.trim()) {
+    const cleanPhone = phone.trim();
+    if (!cleanPhone) {
       Alert.alert('Atención', 'Ingresa tu número de teléfono celular.');
       return;
     }
 
     setIsLoading(true);
     try {
-      // Mock / local demo session persistence
-      const dummyUser = {
-        id: 'demo-user-id',
-        full_name: 'Vecino Demo',
-        phone: phone.trim(),
-        role: 'vecino',
-        home_address: 'Av. Las Palmeras 450, Los Olivos',
-      };
-      await AsyncStorage.setItem('user_session', JSON.stringify(dummyUser));
+      // Find matching demo persona by phone or default to custom neighbor
+      const matched = DEMO_PERSONAS.find((p) => p.phone === cleanPhone);
+
+      if (matched) {
+        await switchUser(matched.id);
+        const sessionData = {
+          id: matched.id,
+          full_name: matched.name,
+          phone: matched.phone,
+          role: matched.role,
+          home_address: matched.homeAddress,
+        };
+        await AsyncStorage.setItem('user_session', JSON.stringify(sessionData));
+      } else {
+        const customUser = {
+          id: `user-${cleanPhone}`,
+          full_name: 'Vecino de San Martín',
+          phone: cleanPhone,
+          role: 'vecino',
+          home_address: 'Jr. Los Jazmines 340, Sector 4',
+        };
+        await AsyncStorage.setItem('user_session', JSON.stringify(customUser));
+        await switchUser('carmen_vecina');
+      }
+
       router.replace('/(main)');
     } catch (err) {
       console.error('Login error', err);
@@ -45,16 +64,15 @@ export default function LoginScreen() {
         className="flex-1"
       >
         <ScrollView contentContainerClassName="p-6 justify-center flex-grow">
-          <View className="mb-8 items-center">
+          <View className="mb-6 items-center">
+            <Image
+              source={require('../../assets/images/logo-with-text.png')}
+              style={{ width: 180, height: 180 }}
+              resizeMode="contain"
+            />
             <Text
-              className="text-neutral-textMain"
-              style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 32 }}
-            >
-              Sumayni
-            </Text>
-            <Text
-              className="text-neutral-textMuted mt-1 text-center"
-              style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14 }}
+              className="text-neutral-textMuted -mt-4 text-center"
+              style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
             >
               Bienestar y reciprocidad comunitaria
             </Text>

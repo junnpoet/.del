@@ -5,15 +5,23 @@ import {
   TouchableOpacity,
   Modal,
   Alert,
+  Animated,
 } from 'react-native';
 import { Plus, X, Wrench, HeartHandshake, HelpCircle, Mic, Square, Check } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDemo } from '../../services/demoStore';
 import { Button } from './Button';
 import { Input } from './Input';
 import { Chip } from './Chip';
 import type { AudioRecorder } from 'expo-audio';
 
 export interface QuickPublishFABProps {
+  animatedTranslateY?: Animated.AnimatedInterpolation<number | string> | Animated.Value | number;
+  animatedBottom?: Animated.AnimatedInterpolation<number | string> | Animated.Value | number;
+  animatedOpacity?: Animated.AnimatedInterpolation<number | string> | Animated.Value | number;
+  baseBottom?: number;
+  zIndex?: number;
+  pointerEvents?: 'auto' | 'none' | 'box-none';
   onPublishSuccess?: (data: {
     type: 'SERVICIO' | 'AYUDA' | 'SOLIDARIO';
     category: string;
@@ -23,9 +31,16 @@ export interface QuickPublishFABProps {
 }
 
 export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
+  animatedTranslateY,
+  animatedBottom,
+  animatedOpacity,
+  baseBottom,
+  zIndex = 35,
+  pointerEvents,
   onPublishSuccess,
 }) => {
   const insets = useSafeAreaInsets();
+  const { fabOffset, hideGlobalFAB } = useDemo();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<
     'SERVICIO' | 'AYUDA' | 'SOLIDARIO' | null
@@ -155,30 +170,46 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
     }, 600);
   };
 
+  // When a screen (like the map) mounts its own synchronized FAB, hide the global layout instance
+  if (animatedTranslateY === undefined && animatedBottom === undefined && hideGlobalFAB) {
+    return null;
+  }
+
   return (
     <>
-      {/* Floating Action Button — Pill style inspired by modern productivity interfaces */}
-      <View
-        className="absolute right-5 z-50 items-center justify-center"
-        style={{ bottom: 72 + Math.max(insets.bottom, 12) }}
-        pointerEvents="box-none"
+      {/* Floating Action Button — Minimalist circular '+' button */}
+      <Animated.View
+        className="absolute right-5 items-center justify-center"
+        style={{
+          bottom:
+            baseBottom !== undefined
+              ? baseBottom
+              : animatedBottom !== undefined
+              ? animatedBottom
+              : 72 + Math.max(insets.bottom, 12) + fabOffset,
+          opacity:
+            animatedOpacity !== undefined
+              ? animatedOpacity
+              : (fabOffset > 240 ? 0 : 1),
+          transform:
+            animatedTranslateY !== undefined
+              ? [{ translateY: animatedTranslateY }]
+              : undefined,
+          zIndex,
+        }}
+        pointerEvents={pointerEvents ?? 'auto'}
       >
         <TouchableOpacity
           accessibilityRole="button"
-          accessibilityLabel="Publicación rápida en 3 clics"
+          accessibilityLabel="Publicación rápida vecinal"
           onPress={handleOpenMenu}
           activeOpacity={0.88}
-          className="flex-row items-center bg-primary px-5 py-3.5 rounded-full shadow-lg shadow-black/20"
+          className="rounded-full bg-primary items-center justify-center shadow-lg shadow-black/25"
+          style={{ width: 54, height: 54 }}
         >
-          <Plus size={20} color="#FFFFFF" strokeWidth={2.5} />
-          <Text
-            className="text-white ml-2"
-            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
-          >
-            Publicar
-          </Text>
+          <Plus size={26} color="#FFFFFF" strokeWidth={2.4} />
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
       {/* 3-Click Funnel Modal */}
       <Modal

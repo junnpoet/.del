@@ -36,43 +36,57 @@ Para conciliar la promoción laboral abierta con la privacidad e integridad fís
 │                                   APLICATIVO VECINAL                                   │
 ├───────────────────────────────────────────┬────────────────────────────────────────────┤
 │                CAPA PÚBLICA               │                CAPA PRIVADA                │
-│         (Visibilización Comercial)        │          (Comunidad y Solidaridad)         │
+│    (Servicios, Productos y Auxilio)       │          (Comunidad y Solidaridad)         │
 ├───────────────────────────────────────────┼────────────────────────────────────────────┤
 │ • Registro individual requerido (perfil,  │ • Acceso restringido por validación        │
 │   dirección del hogar y credenciales)     │   del dirigente barrial                    │
 │ • Sin necesidad de pertenecer a un grupo  │ • Membresía activa en comunidad vecinal    │
-│ • Directorio de oficios independientes    │ • Asignación de co-administradores         │
+│ • Directorio de oficios y productos caseros│ • Asignación de co-administradores        │
 │ • Radio de búsqueda desde hogar registrado│ • Doble vista: [ Muro Feed | Mapa ]        │
-│ • Guardado de servicios en Favoritos      │ • Muro Solidario Unificado con etiquetas   │
+│ • Guardado en Favoritos                   │ • Muro Solidario Unificado con etiquetas   │
 │ • Sistema de "Visto Bueno Vecinal"        │ • Capa de Red de Acompañamiento a personas │
 │ • Sistema de Reporte / Denuncia comunitaria│   vulnerables (restringida a enlaces)      │
 │ • Tablón de Noticias Zonales públicas     │ • Tablero de Ayuda Humanitaria             │
-│ • Directorio público de auxilio           │                                            │
-│   (botiquines, albergues, serenazgo)      │                                            │
+│ • Directorio público de auxilio barrial   │                                            │
+│   (botiquines comunales y zonas seguras)  │                                            │
 └───────────────────────────────────────────┴────────────────────────────────────────────┘
 ```
 
-### 2.1. Capa Pública (Visibilización Comercial, Noticias y Recursos Críticos)
+### 2.1. Capa Pública (Servicios, Productos Caseros, Auxilio y Noticias)
 
 * **Registro de Usuario Individual (Sin pertenencia a grupo obligatoria):**
   * Para operar en la capa pública (establecer el radio desde el hogar, guardar favoritos, chatear y emitir el Visto Bueno), el usuario debe registrarse con sus datos esenciales: nombres, apellidos, dirección fija de residencia, correo/teléfono y contraseña.
-  * No requiere ser admitido por un dirigente ni estar asociado a un grupo vecinal cerrado para acceder al directorio comercial o a las noticias zonales.
-* **Enfoque exclusivo en oficios independientes:** Se descarta deliberadamente la importación de cadenas o negocios ya registrados en Google Maps. La plataforma existe para visibilizar a la gasfitera, electricista, carpintero, paseador de mascotas o costurera de la cuadra.
+  * No requiere ser admitido por un dirigente ni estar asociado a un grupo vecinal cerrado para acceder al directorio de proximidad o a las noticias zonales.
+* **Enfoque en Proximidad Barrial (Oficios y Productos de Ventana):**
+  * Se descarta deliberadamente la importación de cadenas o negocios ya registrados en Google Maps.
+  * La plataforma visibiliza la economía real de la manzana:
+    - **Oficios y Servicios Independientes:** Gasfitería, electricidad, costura, carpintería, cerrajería, etc.
+    - **Productos Caseros y de Ventana:** Panadería artesanal, queques/repostería, viandas del día, huerto urbano o pequeños abarrotes de ventana.
+* **Pines Inteligentes de Hogar en el Mapa (Modelo Tricolor Multirrol):**
+  * Para evitar un mapa atiborrado de pines duplicados en una misma casa, **cada marcador representa un Hogar o Punto Comunitario**.
+  * El pin incorpora un indicador con hasta tres colores discretos que identifican su oferta:
+    - 🟢 **Verde Esmeralda (`#1E5E45`):** Oficios y Servicios independientes.
+    - 🔵 **Azul / Celeste (`#0284C7`):** Productos caseros y de ventana.
+    - 🟡 **Ámbar / Amarillo cálido (`#D97706`):** Auxilio Barrial (botiquín comunal, punto de auxilio).
+  * **Interacción con Tarjeta Deslizable Multirrol:**
+    - Al presionar un hogar que ofrece más de una opción (ej. Servicio + Producto, o Producto + Auxilio), la tarjeta deslizable incluye un selector de píldoras segmentadas en la parte superior `[ 🟢 Servicio | 🔵 Producto | 🟡 Auxilio ]`.
+    - Al tocar cada opción, la tarjeta actualiza dinámicamente sus detalles, tarifas, visto bueno y botón de acción (WhatsApp / Llamada / Ver botiquín).
 * **Selector de Radio de Búsqueda (Centrado en el Hogar):**
   * La distancia y los rangos de alcance (*300 m*, *500 m*, *1 km*) se calculan **siempre a partir de la residencia registrada por el usuario en la app**, no de su posición GPS transitoria. Esto asegura que los resultados estén verdaderamente a distancia caminable de su casa para mantener costos mínimos de transporte.
 * **Marcador de "Favoritos":**
-  * Permite al vecino guardar un listado personal de prestadores de confianza a los que ya ha recurrido, agilizando contrataciones recurrentes.
+  * Permite al vecino guardar un listado personal de prestadores y emprendimientos de confianza a los que ya ha recurrido, agilizando contrataciones recurrentes.
 * **Sistema de "Visto Bueno Vecinal" (Reputación sin pasarela de pago):**
-  1. La interacción inicia mediante un chat directo entre el vecino interesado y el prestador.
+  1. La interacción inicia mediante un chat directo entre el vecino interesado y el prestador o vendedor casero.
   2. No existen máquinas de estado complejas ni cotizaciones formales que generen fricción.
-  3. **Flujo de Cierre en 1 Tap:** Al finalizar el trabajo, el prestador presiona el botón **`[ Solicitar Visto Bueno Vecinal ]`**.
-  4. Al cliente le aparece en el chat una tarjeta de acción directa: *"¿Juan completó el servicio? Otórgale tu Visto Bueno (1 a 5 estrellas + reseña breve)"*.
+  3. **Flujo de Cierre en 1 Tap:** Al finalizar la transacción o servicio, se presiona el botón **`[ Solicitar Visto Bueno Vecinal ]`**.
+  4. Al cliente le aparece en el chat una tarjeta de acción directa: *"¿Completaste el servicio/compra con Juan? Otórgale tu Visto Bueno (1 a 5 estrellas + reseña breve)"*.
   5. **Regla de integridad:** Solo usuarios validados en el sector pueden emitir el Visto Bueno, previniendo granjas de reseñas falsas.
 * **Mecanismo de Reporte y Denuncia:**
   * Opción visible en perfiles y chats para reportar malas prácticas, cobros indebidos, perfiles fraudulentos o faltas de respeto. El reporte escala directamente al panel de los dirigentes barriales para moderación y sanción comunitaria.
 * **Tablón de Noticias Zonales:**
   * Espacio informativo público que recopila avisos de interés vecinal general: cortes programados de agua/luz (Sedapal, Enel), faenas comunales, obras en pistas o alertas tempranas del distrito.
-* **Directorio de Auxilio Barrial:** Puntos fijos de botiquines vecinales, zonas seguras de evacuación y teléfonos de emergencia geolocalizados a partir de la residencia registrada por el usuario.
+* **Directorio de Auxilio Barrial:**
+  * Puntos fijos de botiquines vecinales, zonas seguras de evacuación y módulos de auxilio/serenazgo geolocalizados desde el hogar.
 
 ### 2.2. Capa Privada (Comunidad, Apoyo Solidario y Red de Cuidado)
 

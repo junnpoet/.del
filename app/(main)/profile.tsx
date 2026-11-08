@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Switch,
@@ -19,44 +18,21 @@ import {
   LogOut,
   ChevronRight,
   Shield,
+  Users,
+  CheckCircle,
+  Wrench,
+  Heart,
+  ShieldCheck,
 } from 'lucide-react-native';
 import { Card } from '../../src/components/ui/Card';
 import { Button } from '../../src/components/ui/Button';
 import { Header } from '../../src/components/ui/Header';
+import { useDemo, DEMO_PERSONAS } from '../../src/services/demoStore';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const [profile, setProfile] = useState<{
-    full_name: string;
-    phone: string;
-    home_address: string;
-    role: string;
-  }>({
-    full_name: 'Vecino de San Martín',
-    phone: '998877665',
-    home_address: 'Jr. Los Jazmines 340, Sector 4',
-    role: 'vecino',
-  });
-
-  const [accessibleMode, setAccessibleMode] = useState(false);
-
-  useEffect(() => {
-    const loadSession = async () => {
-      try {
-        const saved = await AsyncStorage.getItem('user_session');
-        if (saved) {
-          setProfile(JSON.parse(saved));
-        }
-        const acc = await AsyncStorage.getItem('accessible_mode');
-        if (acc === 'true') {
-          setAccessibleMode(true);
-        }
-      } catch (err) {
-        console.error('Error loading session', err);
-      }
-    };
-    loadSession();
-  }, []);
+  const { currentUser, switchUser, favorites } = useDemo();
+  const [accessibleMode, setAccessibleMode] = useState(currentUser.accessibleMode);
 
   const toggleAccessibleMode = async (value: boolean) => {
     setAccessibleMode(value);
@@ -77,35 +53,48 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const getPersonaIcon = (avatar: string, color: string) => {
+    switch (avatar) {
+      case 'wrench':
+        return <Wrench size={22} color={color} strokeWidth={2.2} />;
+      case 'heart':
+        return <Heart size={22} color={color} strokeWidth={2.2} />;
+      case 'shield':
+        return <ShieldCheck size={22} color={color} strokeWidth={2.2} />;
+      default:
+        return <User size={22} color={color} strokeWidth={2.2} />;
+    }
+  };
+
   return (
     <View className="flex-1 bg-neutral-background">
       <Header title="Mi Perfil" subtitle="Hogar y Preferencias Comunitarias" />
 
       <ScrollView contentContainerClassName="p-4 pb-28">
-        {/* User Card */}
-        <Card className="p-4 mb-3 flex-row items-center">
+        {/* Active User Card */}
+        <Card className="p-4 mb-3 flex-row items-center shadow-sm">
           <View className="w-14 h-14 rounded-full bg-neutral-mutedBg items-center justify-center mr-3.5">
-            <User size={26} color="#1A1D20" strokeWidth={2} />
+            {getPersonaIcon(currentUser.avatarIcon, '#1E5E45')}
           </View>
           <View className="flex-1">
             <Text
               className="text-neutral-textMain"
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
             >
-              {profile.full_name}
+              {currentUser.name}
             </Text>
             <Text
               className="text-neutral-textMuted mt-0.5"
               style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
             >
-              Tel: {profile.phone}
+              {currentUser.roleTitle}
             </Text>
-            <View className="mt-1.5 bg-neutral-mutedBg self-start px-2.5 py-0.5 rounded-md">
+            <View className="mt-1.5 bg-neutral-mutedBg self-start px-2.5 py-0.5 rounded-md flex-row items-center">
               <Text
                 className="text-neutral-textMuted uppercase"
                 style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11 }}
               >
-                Rol: {profile.role}
+                Membresía: {currentUser.membershipStatus}
               </Text>
             </View>
           </View>
@@ -126,7 +115,7 @@ export default function ProfileScreen() {
             className="text-neutral-textMuted mb-2.5 leading-5"
             style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
           >
-            Punto de partida fijo para calcular las distancias a pie en tu barrio.
+            Punto de partida inmutable para calcular las distancias a pie en tu barrio.
           </Text>
           <View className="bg-neutral-mutedBg p-3 rounded-xl flex-row items-center">
             <MapPin size={18} color="#6C727A" strokeWidth={2} />
@@ -134,7 +123,7 @@ export default function ProfileScreen() {
               className="text-neutral-textMain ml-2 flex-1"
               style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
             >
-              {profile.home_address}
+              {currentUser.homeAddress}
             </Text>
           </View>
         </Card>
@@ -149,14 +138,14 @@ export default function ProfileScreen() {
                   className="text-neutral-textMain ml-2 flex-1"
                   style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
                 >
-                  Modo Adulto Mayor
+                  Modo Adulto Mayor Adaptativo
                 </Text>
               </View>
               <Text
                 className="text-neutral-textMuted leading-5"
                 style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
               >
-                Amplía los botones y textos para facilitar la lectura.
+                Habilita el botón SOS de 2s y asistencia por voz de la propuesta.
               </Text>
             </View>
             <Switch
@@ -172,7 +161,12 @@ export default function ProfileScreen() {
         <Card className="p-2 mb-4">
           <TouchableOpacity
             className="flex-row items-center justify-between p-3.5 border-b border-neutral-border/50 min-h-[48px]"
-            onPress={() => Alert.alert('Favoritos', 'Tienes 3 oficios guardados en favoritos.')}
+            onPress={() =>
+              Alert.alert(
+                'Favoritos Guardados',
+                `Tienes ${favorites.length} oficios guardados en favoritos.`
+              )
+            }
           >
             <View className="flex-row items-center flex-1 mr-2">
               <Bookmark size={18} color="#6C727A" strokeWidth={2} />
@@ -180,7 +174,7 @@ export default function ProfileScreen() {
                 className="text-neutral-textMain ml-3 flex-1"
                 style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
               >
-                Mis Favoritos Guardados
+                Mis Favoritos Guardados ({favorites.length})
               </Text>
             </View>
             <ChevronRight size={18} color="#9EA3AE" />
