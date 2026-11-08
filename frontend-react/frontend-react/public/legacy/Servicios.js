@@ -80,6 +80,7 @@
         let selectedCategory = 'all';
         // Initialize App UI
         document.addEventListener('DOMContentLoaded', () => {
+            if (document.body.dataset.page !== 'servicios') return;
             renderServicesList();
             renderMapPins();
         });

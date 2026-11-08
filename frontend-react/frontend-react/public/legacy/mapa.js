@@ -847,6 +847,7 @@ const GOOGLE_MAPS_API_KEY = window.GOOGLE_MAPS_API_KEY || '';
 
         // ---------- Inicio ----------
         document.addEventListener('DOMContentLoaded', () => {
+            if (document.body.dataset.page !== 'mapa') return;
             renderList();
             loadGoogleMaps();
             locate(false);

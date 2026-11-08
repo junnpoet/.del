@@ -143,7 +143,7 @@ function showToast(msg) {
 function navegarConToast() {
     showToast('Abriendo Directorio de Servicios de Proximidad...');
     setTimeout(() => {
-        window.location.href = 'Servicios.html';
+        window.location.href = '/servicios';
     }, 400);
 }
 
