@@ -16,6 +16,7 @@ import { Header } from '../../../components/ui/Header';
 import { Chip } from '../../../components/ui/Chip';
 import { useDirectory } from '../hooks/useDirectory';
 import { ServiceCard } from '../components/ServiceCard';
+import { useI18n } from '../../../i18n';
 
 const CATEGORIES = [
   'Todos',
@@ -39,6 +40,7 @@ function NativeMap({ latitude, longitude, radius, services, locations }: {
   services: ReturnType<typeof useDirectory>['services'];
   locations: ReturnType<typeof useDirectory>['locations'];
 }) {
+  const { t } = useI18n();
   if (Platform.OS === 'web') {
     return (
       <View className="flex-1 items-center justify-center bg-[#E8F0EC] px-8">
@@ -47,13 +49,13 @@ function NativeMap({ latitude, longitude, radius, services, locations }: {
           className="mt-3 text-center text-neutral-textMain"
           style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 }}
         >
-          El mapa interactivo está disponible en Expo Go
+          {t('directory.mapWebTitle')}
         </Text>
         <Text
           className="mt-2 text-center text-neutral-textMuted"
           style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
         >
-          En web puedes consultar el directorio en modo lista.
+          {t('directory.mapWebBody')}
         </Text>
       </View>
     );
@@ -75,7 +77,7 @@ function NativeMap({ latitude, longitude, radius, services, locations }: {
       showsUserLocation
       customMapStyle={require('../../../theme/cleanMapStyle').CLEAN_NEIGHBORHOOD_MAP_STYLE}
     >
-      <maps.Marker coordinate={{ latitude, longitude }} title="Tu ubicación actual" pinColor="#1E5E45" />
+      <maps.Marker coordinate={{ latitude, longitude }} title={t('directory.yourLocation')} pinColor="#1E5E45" />
       <maps.Circle
         center={{ latitude, longitude }}
         radius={radius}
@@ -105,6 +107,7 @@ export default function DirectoryScreen() {
   const [query, setQuery] = useState('');
   const [view, setView] = useState<'list' | 'map'>('list');
   const directory = useDirectory(radius);
+  const { t, tCategory } = useI18n();
 
   const filteredServices = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -129,20 +132,20 @@ export default function DirectoryScreen() {
   if (!directory.hasLocation) {
     return (
       <View className="flex-1 bg-neutral-background">
-        <Header title="Directorio barrial" subtitle="Oficios cerca de tu hogar" />
+        <Header title={t('directory.title')} subtitle={t('directory.subtitle')} />
         <View className="flex-1 items-center justify-center px-8">
           <MapPin size={42} color="#1E5E45" />
           <Text
             className="mt-3 text-center text-neutral-textMain"
             style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 17 }}
           >
-            Necesitamos la ubicación de tu hogar
+            {t('directory.needLocation')}
           </Text>
           <Text
             className="mt-2 text-center text-neutral-textMuted"
             style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 14, lineHeight: 21 }}
           >
-            Registra o actualiza tu domicilio para ordenar los oficios por distancia caminable.
+            {t('directory.needLocationBody')}
           </Text>
         </View>
       </View>
@@ -151,14 +154,14 @@ export default function DirectoryScreen() {
 
   return (
     <View className="flex-1 bg-neutral-background">
-      <Header title="Directorio barrial" subtitle="Oficios cerca de tu hogar" />
+      <Header title={t('directory.title')} subtitle={t('directory.subtitle')} />
       <View className="border-b border-neutral-border/60 bg-neutral-surface px-4 pb-2 pt-3">
         <View className="flex-row items-center rounded-2xl bg-neutral-mutedBg px-3 min-h-[44px]">
           <Search size={18} color="#6C727A" />
           <TextInput
-            accessibilityLabel="Buscar oficio o vecino"
+            accessibilityLabel={t('directory.search')}
             className="ml-2 flex-1 py-2 text-neutral-textMain"
-            placeholder="Buscar oficio o vecino"
+            placeholder={t('directory.search')}
             placeholderTextColor="#9EA3AE"
             value={query}
             onChangeText={setQuery}
@@ -179,7 +182,7 @@ export default function DirectoryScreen() {
           {CATEGORIES.map((item) => (
             <Chip
               key={item}
-              label={item}
+              label={tCategory(item)}
               isActive={category === item}
               onPress={() => setCategory(item)}
             />
@@ -189,7 +192,7 @@ export default function DirectoryScreen() {
           <View className="flex-row rounded-xl bg-neutral-mutedBg p-1">
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityLabel="Ver lista de tarjetas"
+              accessibilityLabel={t('directory.viewList')}
               accessibilityState={{ selected: view === 'list' }}
               onPress={() => setView('list')}
               className={`h-10 w-11 items-center justify-center rounded-lg ${view === 'list' ? 'bg-white' : ''}`}
@@ -198,7 +201,7 @@ export default function DirectoryScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityLabel="Ver mapa interactivo"
+              accessibilityLabel={t('directory.viewMap')}
               accessibilityState={{ selected: view === 'map' }}
               onPress={() => setView('map')}
               className={`h-10 w-11 items-center justify-center rounded-lg ${view === 'map' ? 'bg-white' : ''}`}
@@ -226,7 +229,9 @@ export default function DirectoryScreen() {
               service={item}
               isFavorite={directory.favorites.includes(item.service_id)}
               onToggleFavorite={() => directory.toggleFavorite(item.service_id)}
-              onConsult={() => Alert.alert('Consultar', `Puedes consultar a ${item.provider_name}.`)}
+              onConsult={() =>
+                Alert.alert(t('directory.consultTitle'), t('directory.consultBody', { name: item.provider_name }))
+              }
               isTogglingFavorite={directory.isTogglingFavorite}
             />
           )}
@@ -246,9 +251,7 @@ export default function DirectoryScreen() {
                 className="mt-3 text-center text-neutral-textMuted"
                 style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 15 }}
               >
-                {directory.isError
-                  ? 'No pudimos cargar los oficios. Desliza para reintentar.'
-                  : 'No encontramos oficios con estos filtros.'}
+                {directory.isError ? t('directory.loadError') : t('directory.empty')}
               </Text>
             </View>
           }

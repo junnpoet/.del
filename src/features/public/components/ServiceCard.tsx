@@ -3,6 +3,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { Heart, MessageCircle, ShieldCheck, Star, MapPin } from 'lucide-react-native';
 import { Card } from '../../../components/ui/Card';
 import type { Database } from '../../../types/database';
+import { useI18n } from '../../../i18n';
 
 type NearbyService = Database['public']['Functions']['get_nearby_services']['Returns'][number];
 
@@ -21,6 +22,7 @@ export function ServiceCard({
   onConsult,
   isTogglingFavorite = false,
 }: ServiceCardProps) {
+  const { t, tCategory } = useI18n();
   return (
     <Card className="mb-3">
       <View className="flex-row items-start">
@@ -43,12 +45,12 @@ export function ServiceCard({
             className="mt-0.5 text-neutral-textMuted"
             style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
           >
-            {service.provider_name} · {service.category}
+            {service.provider_name} · {tCategory(service.category)}
           </Text>
         </View>
         <TouchableOpacity
           accessibilityRole="button"
-          accessibilityLabel={isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+          accessibilityLabel={isFavorite ? t('service.favRemove') : t('service.favAdd')}
           accessibilityState={{ busy: isTogglingFavorite }}
           disabled={isTogglingFavorite}
           onPress={onToggleFavorite}
@@ -66,7 +68,7 @@ export function ServiceCard({
             className="ml-1 text-primary"
             style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}
           >
-            Visto Bueno Vecinal
+            {t('service.seal')}
           </Text>
         </View>
         <View className="mr-3 flex-row items-center">
@@ -90,14 +92,14 @@ export function ServiceCard({
             className="ml-1 text-neutral-textMuted"
             style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}
           >
-            A {Math.round(service.distance_meters)} metros de tu casa
+            {t('service.distance', { n: Math.round(service.distance_meters) })}
           </Text>
         </View>
       </View>
 
       <TouchableOpacity
         accessibilityRole="button"
-        accessibilityLabel={`Consultar con ${service.provider_name}`}
+        accessibilityLabel={t('service.consultA11y', { name: service.provider_name })}
         onPress={onConsult}
         className="mt-4 min-h-[46px] flex-row items-center justify-center rounded-2xl bg-primary"
       >
@@ -106,7 +108,7 @@ export function ServiceCard({
           className="ml-2 text-white"
           style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
         >
-          Chatear / Consultar
+          {t('service.consult')}
         </Text>
       </TouchableOpacity>
     </Card>

@@ -18,6 +18,8 @@ export interface AuthProfile {
   home_address: string;
   role: string | null;
   is_vulnerable: boolean | null;
+  /** Junta vecinal a la que pertenece (null = aún no admitido en la Capa Privada). */
+  group_id: string | null;
   lat: number | null;
   lng: number | null;
 }
@@ -48,7 +50,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 async function fetchProfile(userId: string): Promise<AuthProfile | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, phone, home_address, role, is_vulnerable, home_location')
+    .select('id, full_name, phone, home_address, role, is_vulnerable, group_id, home_location')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw error;
@@ -61,6 +63,7 @@ async function fetchProfile(userId: string): Promise<AuthProfile | null> {
     home_address: data.home_address,
     role: data.role,
     is_vulnerable: data.is_vulnerable,
+    group_id: data.group_id,
     lat: point?.lat ?? null,
     lng: point?.lng ?? null,
   };

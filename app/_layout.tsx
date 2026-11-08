@@ -17,6 +17,7 @@ import { queryClient, asyncStoragePersister } from '../src/services/queryClient'
 import { QuickPublishFAB } from '../src/components/ui/QuickPublishFAB';
 import { DemoProvider } from '../src/services/demoStore';
 import { AuthProvider } from '../src/services/auth';
+import { LanguageProvider } from '../src/i18n';
 
 function RootContent() {
   const segments = useSegments();
@@ -38,6 +39,9 @@ function RootContent() {
             animation: 'fade',
           }}
         />
+        <Stack.Screen name="care-network" options={{ headerShown: false }} />
+        <Stack.Screen name="leader-dashboard" options={{ headerShown: false }} />
+        <Stack.Screen name="accessible" options={{ headerShown: false, gestureEnabled: false }} />
       </Stack>
       {/* Quick 3-click Publish Floating Action Button only on main tab views */}
       {isMainTab && <QuickPublishFAB />}
@@ -69,9 +73,11 @@ export default function RootLayout() {
         persistOptions={{ persister: asyncStoragePersister }}
       >
         <AuthProvider>
-          <DemoProvider>
-            <RootContent />
-          </DemoProvider>
+          <LanguageProvider>
+            <DemoProvider>
+              <RootContent />
+            </DemoProvider>
+          </LanguageProvider>
         </AuthProvider>
       </PersistQueryClientProvider>
     </SafeAreaProvider>

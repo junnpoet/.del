@@ -10,36 +10,32 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   AlertTriangle,
-  Flame,
-  Activity,
   HeartPulse,
   MapPin,
   ChevronLeft,
   PhoneCall,
-  Volume2,
 } from 'lucide-react-native';
 import { Button } from '../src/components/ui/Button';
 import { Card } from '../src/components/ui/Card';
+import { useI18n } from '../src/i18n';
 
 export default function EmergencyBoardScreen() {
   const router = useRouter();
+  const { t } = useI18n();
   const [sosActive, setSosActive] = useState(false);
 
   const handleTriggerSOS = () => {
     Alert.alert(
-      '¿Activar Alerta SOS Vecinal?',
-      'Esta señal notificará de inmediato a tus Padrinos asignados y a la dirigencia de tu sector con tu ubicación GPS.',
+      t('emergency.sosConfirmTitle'),
+      t('emergency.sosConfirmBody'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'EMITIR SOS AHORA',
+          text: t('emergency.sosConfirmAction'),
           style: 'destructive',
           onPress: () => {
             setSosActive(true);
-            Alert.alert(
-              'Alerta SOS Emitida',
-              'Tus padrinos y vecinos coordinadores han sido notificados.'
-            );
+            Alert.alert(t('emergency.sosSentTitle'), t('emergency.sosSentBody'));
           },
         },
       ]
@@ -53,7 +49,7 @@ export default function EmergencyBoardScreen() {
         <View className="flex-row items-center justify-between">
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="Volver al modo normal"
+            accessibilityLabel={t('emergency.backA11y')}
             onPress={() => router.back()}
             className="flex-row items-center min-h-[40px] px-3 py-1.5 bg-white/10 rounded-xl"
           >
@@ -62,7 +58,7 @@ export default function EmergencyBoardScreen() {
               className="text-white ml-1"
               style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
             >
-              Modo Cotidiano
+              {t('emergency.backNormal')}
             </Text>
           </TouchableOpacity>
 
@@ -71,7 +67,7 @@ export default function EmergencyBoardScreen() {
               className="text-emergency-alert uppercase"
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}
             >
-              CONTINGENCIA
+              {t('emergency.badge')}
             </Text>
           </View>
         </View>
@@ -80,13 +76,13 @@ export default function EmergencyBoardScreen() {
           className="text-white mt-3"
           style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 22 }}
         >
-          Tablero de Ayuda Humanitaria
+          {t('emergency.title')}
         </Text>
         <Text
           className="text-emergency-warning mt-0.5"
           style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
         >
-          Sector 4 · San Martín de Porres · Alerta Barrial
+          {t('emergency.subtitle')}
         </Text>
       </View>
 
@@ -95,7 +91,7 @@ export default function EmergencyBoardScreen() {
         <View className="items-center my-4">
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="Botón central de auxilio SOS"
+            accessibilityLabel={t('emergency.sosA11y')}
             onPress={handleTriggerSOS}
             activeOpacity={0.85}
             className={`w-32 h-32 rounded-full items-center justify-center shadow-xl ${
@@ -106,17 +102,17 @@ export default function EmergencyBoardScreen() {
           >
             <AlertTriangle size={36} color="#FFFFFF" strokeWidth={2.2} />
             <Text
-              className="text-white mt-1 tracking-wider"
+              className="text-white mt-1 tracking-wider text-center"
               style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 18 }}
             >
-              {sosActive ? 'ENVIADO' : 'SOS'}
+              {sosActive ? t('emergency.sent') : t('sos.button')}
             </Text>
           </TouchableOpacity>
           <Text
             className="text-white/60 text-center mt-3 px-4 leading-5"
             style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
           >
-            Presiona para pedir auxilio médico, seguridad o apoyo inmediato a tu red de padrinos.
+            {t('emergency.sosHint')}
           </Text>
         </View>
 
@@ -125,7 +121,7 @@ export default function EmergencyBoardScreen() {
           className="text-white uppercase tracking-wider mb-2.5 mt-2 px-1"
           style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
         >
-          Puntos Seguros y Auxilio en el Sector
+          {t('emergency.safeTitle')}
         </Text>
 
         <Card variant="emergency" className="mb-3 p-4">
@@ -135,14 +131,14 @@ export default function EmergencyBoardScreen() {
               className="text-white ml-2 flex-1"
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
             >
-              Losa Deportiva Los Jazmines (Zona Segura)
+              {t('emergency.zone')}
             </Text>
           </View>
           <Text
             className="text-white/60 leading-5"
             style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
           >
-            Punto de concentración vecinal libre de cables y postes. A 150m de tu domicilio.
+            {t('emergency.zoneBody')}
           </Text>
         </Card>
 
@@ -153,14 +149,14 @@ export default function EmergencyBoardScreen() {
               className="text-white ml-2 flex-1"
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
             >
-              Botiquín Comunitario y Desfibrilador
+              {t('emergency.kit')}
             </Text>
           </View>
           <Text
             className="text-white/60 leading-5"
             style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
           >
-            Custodiado por: Familia Mendoza (Jr. Los Jazmines 310 - Mz. D Lt. 4).
+            {t('emergency.kitBody')}
           </Text>
         </Card>
 
@@ -171,19 +167,19 @@ export default function EmergencyBoardScreen() {
               className="text-white ml-2 flex-1"
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
             >
-              Central Telefónica Rápida
+              {t('emergency.phones')}
             </Text>
           </View>
           <Text
             className="text-white/60 leading-5"
             style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
           >
-            Comisaría del sector: 105 · Bomberos: 116 · SAMU: 106
+            {t('emergency.phonesBody')}
           </Text>
         </Card>
 
         <Button
-          title="Regresar a Modo Cotidiano"
+          title={t('emergency.backButton')}
           variant="secondary"
           onPress={() => router.back()}
         />
