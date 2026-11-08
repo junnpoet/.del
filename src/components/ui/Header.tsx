@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ export interface HeaderProps {
   title: string;
   subtitle?: string;
   showBack?: boolean;
+  showLogo?: boolean;
   onBack?: () => void;
   rightAction?: React.ReactNode;
   isEmergency?: boolean;
@@ -17,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
   title,
   subtitle,
   showBack = false,
+  showLogo = false,
   onBack,
   rightAction,
   isEmergency = false,
@@ -64,6 +66,14 @@ export const Header: React.FC<HeaderProps> = ({
                 color={isEmergency ? '#FFFFFF' : '#1A1D20'}
               />
             </TouchableOpacity>
+          )}
+
+          {showLogo && (
+            <Image
+              source={require('../../../assets/images/logo.png')}
+              style={{ width: 36, height: 36, borderRadius: 10, marginRight: 10 }}
+              resizeMode="contain"
+            />
           )}
 
           <View className="flex-1">
