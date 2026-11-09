@@ -1,11 +1,14 @@
 # Matriz de Usuarios de Prueba (Inicio de Sesión en Sumayni)
 
-Para probar los diferentes roles y capas de la aplicación ([docs/PROPUESTA.md](file:///home/lucille/Workspace/3_Hackathons/5_Hackathon_El_Comercio_2026/docs/PROPUESTA.md)), ingresa a la pantalla de **Iniciar Sesión** con cualquiera de los siguientes números de celular:
+Para probar los diferentes roles y capas de la aplicación ([docs/PROPUESTA.md](file:///home/lucille/Workspace/3_Hackathons/5_Hackathon_El_Comercio_2026/docs/PROPUESTA.md)), ingresa a la pantalla de **Iniciar Sesión** con cualquiera de los siguientes números de celular y la contraseña unificada:
+
+> 🔑 **Contraseña para todos los usuarios de prueba:** `Sumayni2026!`
 
 ---
 
 ## 1. Carmen Rosa Mamani (Vecina Nueva - Solo Capa Pública)
 * **Teléfono Celular:** `998877665`
+* **Contraseña:** `Sumayni2026!`
 * **Domicilio Georreferenciado:** Jr. Los Jazmines 340, Sector 4 (San Martín de Porres)
 * **Estado de Membresía:** `NO_SOLICITADO`
 * **¿Qué probar con este usuario?**
@@ -22,6 +25,7 @@ Para probar los diferentes roles y capas de la aplicación ([docs/PROPUESTA.md](
 
 ## 2. Elena Mendoza (Dirigenta Barrial - Sector 4)
 * **Teléfono Celular:** `991122334`
+* **Contraseña:** `Sumayni2026!`
 * **Domicilio Georreferenciado:** Jr. Los Jazmines 310, Mz. D Lt. 4
 * **Estado de Membresía:** `DIRIGENTE`
 * **¿Qué probar con este usuario?**
@@ -40,6 +44,7 @@ Para probar los diferentes roles y capas de la aplicación ([docs/PROPUESTA.md](
 
 ## 3. Don Segundo Morales (Prestador de Oficio - Gasfitería)
 * **Teléfono Celular:** `987654321`
+* **Contraseña:** `Sumayni2026!`
 * **Domicilio Georreferenciado:** Jr. Los Jazmines 380, Sector 4
 * **Estado de Membresía:** `MIEMBRO` (con Visto Bueno Vecinal)
 * **¿Qué probar con este usuario?**
@@ -51,6 +56,7 @@ Para probar los diferentes roles y capas de la aplicación ([docs/PROPUESTA.md](
 
 ## 4. Don Jacinto Valdés (Adulto Mayor - 82 años)
 * **Teléfono Celular:** `976543210`
+* **Contraseña:** `Sumayni2026!`
 * **Domicilio Georreferenciado:** Calle Las Dalias 120, Mz. C Lt. 8
 * **Estado de Membresía:** `MIEMBRO` (Persona Vulnerable Registrada)
 * **¿Qué probar con este usuario?**
@@ -63,4 +69,4 @@ Para probar los diferentes roles y capas de la aplicación ([docs/PROPUESTA.md](
 ## ¿Cómo cambiar de usuario?
 1. Ve a la pestaña **Mi Perfil** (ícono de usuario en la barra inferior).
 2. Desplázate al final y presiona **`Cerrar Sesión`**.
-3. En la pantalla de inicio, ingresa cualquiera de los 4 números de celular indicados arriba y presiona **`Ingresar a mi Barrio`**.
+3. En la pantalla de inicio, ingresa cualquiera de los 4 números de celular indicados arriba con la contraseña `Sumayni2026!` y presiona **`Ingresar a mi Barrio`**.
