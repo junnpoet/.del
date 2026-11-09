@@ -15,6 +15,12 @@ Este directorio contiene las Serverless Edge Functions (Deno) para la integraci�
 2. **`process-voice-post`**
    - Endpoint JSON directo para la app móvil: recibe `{ audioBase64, mimeType }` y devuelve la ficha estructurada procesada por Gemini Flash (`{ tipo, categoria, urgencia, resumen }`).
 
+3. **`send-push-alert`**
+   - Despacho masivo vía **Expo Push API** (`https://exp.host/--/api/v2/push/send`) para alertas críticas comunitarias.
+   - **Alerta SOS**: Envía push prioritaria inmediata a dirigentes y padrinos asignados en `care_assignments`.
+   - **Modo Emergencia**: Notificación masiva a todos los vecinos registrados en el sector.
+   - **Algoritmo de Consenso de Crisis**: Pre-alerta si se detectan $\ge 3$ reportes `ALTA_CRITICA` en $< 10$ minutos.
+
 ## Variables de Entorno Requeridas
 
 Configurar en Supabase CLI o Dashboard (`supabase secrets set ...`):
