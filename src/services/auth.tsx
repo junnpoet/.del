@@ -33,11 +33,19 @@ export interface SignUpInput {
   pushToken?: string | null;
 }
 
+export interface RequestOtpResult {
+  success: boolean;
+  devOtp?: string;
+  whatsappSent?: boolean;
+}
+
 interface AuthContextValue {
   session: Session | null;
   profile: AuthProfile | null;
   loading: boolean;
   signIn: (phoneOrEmail: string, password: string) => Promise<void>;
+  signInWithOtp: (phone: string, token: string) => Promise<void>;
+  requestOtp: (phone: string) => Promise<RequestOtpResult>;
   signUp: (input: SignUpInput) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -124,6 +132,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   }, []);
 
+  const requestOtp = useCallback(async (phone: string): Promise<RequestOtpResult> => {
+    const cleanPhone = phone.trim().replace(/\D/g, '');
+    const nationalDigits =
+      cleanPhone.length === 11 && cleanPhone.startsWith('51')
+        ? cleanPhone.slice(2)
+        : cleanPhone;
+    const authEmail = `${nationalDigits}@sumayni.pe`;
+
+    // 1. Intentar llamar a la Edge Function de Supabase
+    try {
+      const { data, error } = await supabase.functions.invoke('send-whatsapp-otp', {
+        body: { phone: nationalDigits },
+      });
+      if (!error && data?.success) {
+        return {
+          success: true,
+          devOtp: data.devOtp,
+          whatsappSent: data.whatsappSent,
+        };
+      }
+    } catch {
+      // Si la Edge Function aún no está desplegada en el cloud, pasa al fallback
+    }
+
+    // 2. Fallback de desarrollo usando el secret key local
+    const secretKey = process.env.EXPO_PUBLIC_SUPABASE_SERVICE_KEY;
+    if (secretKey) {
+      const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://lzgvbthqceupmyjyhzgo.supabase.co'}/auth/v1/admin/generate_link`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          apikey: secretKey,
+          Authorization: `Bearer ${secretKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'magiclink',
+          email: authEmail,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const devOtp = json?.properties?.email_otp || json?.email_otp;
+        return { success: true, devOtp, whatsappSent: false };
+      }
+    }
+
+    throw new Error(
+      'No se pudo generar el código. Verifica que el celular esté registrado.'
+    );
+  }, []);
+
+  const signInWithOtp = useCallback(async (phone: string, token: string) => {
+    const email = phoneToAuthEmail(phone);
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: token.trim(),
+      type: 'magiclink',
+    });
+    if (error) throw error;
+  }, []);
+
   const signUp = useCallback(async (input: SignUpInput) => {
     const email = input.email?.trim() || phoneToAuthEmail(input.phone);
     const { data, error } = await supabase.auth.signUp({
@@ -156,8 +226,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ session, profile, loading, signIn, signUp, signOut, refreshProfile }),
-    [session, profile, loading, signIn, signUp, signOut, refreshProfile]
+    () => ({
+      session,
+      profile,
+      loading,
+      signIn,
+      signInWithOtp,
+      requestOtp,
+      signUp,
+      signOut,
+      refreshProfile,
+    }),
+    [
+      session,
+      profile,
+      loading,
+      signIn,
+      signInWithOtp,
+      requestOtp,
+      signUp,
+      signOut,
+      refreshProfile,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

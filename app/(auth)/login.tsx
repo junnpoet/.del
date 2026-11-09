@@ -18,10 +18,14 @@ import { useAuth } from '../../src/services/auth';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, requestOtp, signInWithOtp } = useAuth();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [mode, setMode] = useState<'password' | 'otp'>('password');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRequestingOtp, setIsRequestingOtp] = useState(false);
 
   const handleLogin = async () => {
     if (!phone.trim() || !password) {
@@ -41,6 +45,46 @@ export default function LoginScreen() {
           ? 'Número de celular o contraseña incorrectos. Verifica que el usuario esté registrado en la base de datos.'
           : 'No se pudo iniciar sesión. Revisa tu conexión a la red.'
       );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRequestOtp = async () => {
+    if (!phone.trim()) {
+      Alert.alert('Atención', 'Ingresa tu número de celular registrado.');
+      return;
+    }
+    setIsRequestingOtp(true);
+    try {
+      const result = await requestOtp(phone);
+      setOtpSent(true);
+      Alert.alert(
+        'Código Generado',
+        result.devOtp
+          ? `Tu código de acceso temporal es: ${result.devOtp}\n\nIngrésalo abajo para entrar a tu cuenta.`
+          : 'Revisa tu WhatsApp: te enviamos un mensaje con tu código de acceso temporal.'
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'No se pudo enviar el código.';
+      Alert.alert('Aviso', msg);
+    } finally {
+      setIsRequestingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!phone.trim() || !otpCode.trim()) {
+      Alert.alert('Atención', 'Ingresa tu número de celular y el código recibido.');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await signInWithOtp(phone, otpCode);
+      router.replace('/(main)');
+    } catch (err) {
+      console.error('OTP error', err);
+      Alert.alert('Error', 'Código inválido o vencido. Solicita uno nuevo.');
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +116,7 @@ export default function LoginScreen() {
               className="text-neutral-textMain mb-4"
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 20 }}
             >
-              Iniciar Sesión
+              {mode === 'password' ? 'Iniciar Sesión' : 'Acceso con WhatsApp'}
             </Text>
 
             <Input
@@ -84,22 +128,101 @@ export default function LoginScreen() {
               value={phone}
               onChangeText={setPhone}
             />
-            <Input
-              label="Contraseña"
-              placeholder="Tu contraseña"
-              secureTextEntry
-              autoCapitalize="none"
-              value={password}
-              onChangeText={setPassword}
-            />
 
-            <Button
-              title="Ingresar a mi Barrio"
-              variant="primary"
-              onPress={handleLogin}
-              isLoading={isLoading}
-              className="mt-2"
-            />
+            {mode === 'password' ? (
+              <>
+                <Input
+                  label="Contraseña"
+                  placeholder="Tu contraseña"
+                  secureTextEntry
+                  autoCapitalize="none"
+                  value={password}
+                  onChangeText={setPassword}
+                />
+
+                <Button
+                  title="Ingresar a mi Barrio"
+                  variant="primary"
+                  onPress={handleLogin}
+                  isLoading={isLoading}
+                  className="mt-2"
+                />
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setMode('otp');
+                    setOtpSent(false);
+                    setOtpCode('');
+                  }}
+                  className="mt-4 items-center py-2"
+                >
+                  <Text
+                    className="text-primary-emeraldDark"
+                    style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
+                  >
+                    💬 ¿Olvidaste tu contraseña? Entrar con WhatsApp
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                {otpSent && (
+                  <Input
+                    label="Código recibido por WhatsApp"
+                    placeholder="Ej: 12345678"
+                    keyboardType="number-pad"
+                    autoCapitalize="none"
+                    value={otpCode}
+                    onChangeText={setOtpCode}
+                  />
+                )}
+
+                {otpSent ? (
+                  <Button
+                    title="Verificar e Ingresar"
+                    variant="primary"
+                    onPress={handleVerifyOtp}
+                    isLoading={isLoading}
+                    className="mt-2"
+                  />
+                ) : (
+                  <Button
+                    title="Enviar código por WhatsApp"
+                    variant="primary"
+                    onPress={handleRequestOtp}
+                    isLoading={isRequestingOtp}
+                    className="mt-2"
+                  />
+                )}
+
+                {otpSent && (
+                  <TouchableOpacity
+                    onPress={handleRequestOtp}
+                    disabled={isRequestingOtp}
+                    className="mt-3 items-center py-1.5"
+                  >
+                    <Text
+                      className="text-neutral-textMuted"
+                      style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
+                    >
+                      {isRequestingOtp ? 'Reenviando...' : '¿No llegó? Reenviar código'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  onPress={() => setMode('password')}
+                  className="mt-4 items-center py-2 border-t border-neutral-border/60"
+                >
+                  <Text
+                    className="text-neutral-textMuted"
+                    style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
+                  >
+                    ← Volver a inicio con contraseña
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </Card>
 
           <View className="items-center">
