@@ -38,6 +38,8 @@ import { Header } from '../../src/components/ui/Header';
 import { Button } from '../../src/components/ui/Button';
 import { Modal } from '../../src/components/ui/Modal';
 import { useDemo } from '../../src/services/demoStore';
+import { useRouter } from 'expo-router';
+import { SlideToActivate } from '../../src/features/emergency/components/SlideToActivate';
 
 interface PostComment {
   id: string;
@@ -261,6 +263,7 @@ const VULNERABLE_CARE_HOUSEHOLDS = [
 ];
 
 export default function CommunityScreen() {
+  const router = useRouter();
   const {
     currentUser,
     requestMembership,
@@ -632,6 +635,22 @@ export default function CommunityScreen() {
               Revisar ({pendingRequests.length})
             </Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Control Antierror 'Slide to Activate' para Dirigentes (SPEC-05) */}
+      {currentUser.membershipStatus === 'DIRIGENTE' && (
+        <View className="px-4">
+          <SlideToActivate
+            isDirigente={true}
+            onActivated={(type) => {
+              Alert.alert(
+                '¡Contingencia Activada!',
+                `Se ha activado el protocolo de emergencia barrial (${type}). Despachando alertas y redirigiendo al Tablero de Ayuda Humanitaria.`
+              );
+              router.push('/emergency-board');
+            }}
+          />
         </View>
       )}
 
