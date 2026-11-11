@@ -1,8 +1,20 @@
 const { getDefaultConfig } = require("expo/metro-config");
 const { withNativeWind } = require("nativewind/metro");
 const path = require("path");
+const fs = require("fs");
 
-const config = getDefaultConfig(__dirname);
+const projectRoot = __dirname;
+const config = getDefaultConfig(projectRoot);
+
+// Support symlinked node_modules across git worktrees
+const localNodeModules = path.resolve(projectRoot, "node_modules");
+if (fs.existsSync(localNodeModules)) {
+  const realNodeModules = fs.realpathSync(localNodeModules);
+  if (realNodeModules !== localNodeModules) {
+    config.watchFolders = [projectRoot, realNodeModules];
+    config.resolver.nodeModulesPaths = [localNodeModules, realNodeModules];
+  }
+}
 
 const defaultResolveRequest = config.resolver.resolveRequest;
 
