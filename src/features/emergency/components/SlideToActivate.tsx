@@ -19,6 +19,7 @@ import {
   ShieldAlert,
 } from 'lucide-react-native';
 import { supabase } from '../../../services/supabase';
+import { useAuth } from '../../../services/auth';
 
 export type EmergencyEventType =
   | 'SISMO_TERREMOTO'
@@ -74,6 +75,7 @@ export function SlideToActivate({
   isDirigente,
   onActivated,
 }: SlideToActivateProps) {
+  const { session } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedType, setSelectedType] = useState<EmergencyEventType>('SISMO_TERREMOTO');
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -144,12 +146,13 @@ export function SlideToActivate({
     try {
       if (groupId) {
         const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id || session?.user?.id || '00000000-0000-0000-0000-000000000000';
         await supabase.from('emergency_events').insert({
           group_id: groupId,
           event_type: eventType,
           description: `Activación de contingencia vecinal: ${eventType}`,
           status: 'ACTIVE',
-          activated_by: user?.id || '00000000-0000-0000-0000-000000000000',
+          activated_by: userId,
         });
       }
     } catch (err) {
