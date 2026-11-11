@@ -107,8 +107,8 @@ export default function RegisterScreen() {
       Alert.alert(missing, t('register.missingName'));
       return;
     }
-    if (!email.trim() || !email.includes('@')) {
-      Alert.alert(missing, t('register.missingEmail'));
+    if (email.trim() && !email.includes('@')) {
+      Alert.alert(missing, t('register.invalidEmailOptional'));
       return;
     }
     if (password.length < 6) {
@@ -186,8 +186,8 @@ export default function RegisterScreen() {
           />
 
           <Input
-            label={t('login.email')}
-            placeholder={t('login.emailPlaceholder')}
+            label={t('register.emailOptional')}
+            placeholder={t('register.emailOptionalPlaceholder')}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}

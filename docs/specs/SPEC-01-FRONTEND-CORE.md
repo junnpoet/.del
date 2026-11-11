@@ -120,11 +120,11 @@ export const asyncStoragePersister = createAsyncStoragePersister({
 
 ## 6. Criterios de Aceptación (Checklist de Juan)
 
-- [ ] Proyecto Expo iniciado y corriendo con hot reload en móvil físico.
-- [ ] NativeWind v4 configurado con los tokens de color de **Sumayni** en `tailwind.config.js`.
-- [ ] Componentes base creados en `src/components/ui/` con áreas táctiles $\ge 48$dp.
-- [ ] Flujo de Onboarding de 3 pantallas completado y almacena flag en AsyncStorage (`has_seen_onboarding`).
-- [ ] Pantalla de registro individual con geocodificación fija de residencia en `profiles.home_location`.
-- [ ] Componente `QuickPublishFAB` (Embudo de 3 toques) implementado y accesible en el layout global.
-- [ ] Navegación configurada con Expo Router y Tab Bar visible con iconos intuitivos.
-- [ ] QueryClient configurado con `createAsyncStoragePersister` probado con modo avión.
+- [x] Proyecto Expo iniciado y corriendo con hot reload en móvil físico.
+- [x] NativeWind v4 configurado con los tokens de color de **Sumayni** en `tailwind.config.js`.
+- [x] Componentes base creados en `src/components/ui/` con áreas táctiles $\ge 48$dp.
+- [x] Flujo de Onboarding de 3 pantallas completado y almacena flag en AsyncStorage (`has_seen_onboarding`).
+- [x] Pantalla de registro individual con geocodificación fija de residencia en `profiles.home_location`.
+- [x] Componente `QuickPublishFAB` (Embudo de 3 toques) implementado y accesible en el layout global.
+- [x] Navegación configurada con Expo Router y Tab Bar visible con iconos intuitivos.
+- [x] QueryClient configurado con `createAsyncStoragePersister` probado con modo avión.

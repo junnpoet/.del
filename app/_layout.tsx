@@ -42,6 +42,12 @@ function RootContent() {
         <Stack.Screen name="care-network" options={{ headerShown: false }} />
         <Stack.Screen name="leader-dashboard" options={{ headerShown: false }} />
         <Stack.Screen name="accessible" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen
+          name="chat/[id]"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
       {/* Quick 3-click Publish Floating Action Button only on main tab views */}
       {isMainTab && <QuickPublishFAB />}

@@ -1,13 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: "class",
   content: [
     "./app/**/*.{js,jsx,ts,tsx}",
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   presets: [require("nativewind/preset")],
-  // 'class' permite que NativeWind cambie el esquema de color en web sin lanzar
-  // "Cannot manually set color scheme, as dark mode is type 'media'".
-  darkMode: "class",
   theme: {
     extend: {
       fontFamily: {
