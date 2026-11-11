@@ -12,27 +12,31 @@ import { Header } from '../../../components/ui/Header';
 import { Card } from '../../../components/ui/Card';
 import { Chip } from '../../../components/ui/Chip';
 import { useNews, NeighborhoodNews } from '../hooks/useNews';
+import { useI18n, type TranslationKey } from '../../../i18n';
 
 const SOURCE_META: Record<
   string,
-  { label: string; color: string; bg: string; Icon: typeof Megaphone }
+  { label: TranslationKey; color: string; bg: string; Icon: typeof Megaphone }
 > = {
-  MUNICIPAL: { label: 'Municipalidad', color: '#1E5E45', bg: '#EDF5F1', Icon: Megaphone },
-  SERVICIOS_PUBLICOS: { label: 'Servicios públicos', color: '#92400E', bg: '#FEF3C7', Icon: Droplets },
-  DIRIGENCIA: { label: 'Dirigencia', color: '#583018', bg: '#FBF3EE', Icon: Hammer },
+  MUNICIPAL: { label: 'news.source.MUNICIPAL', color: '#1E5E45', bg: '#EDF5F1', Icon: Megaphone },
+  SERVICIOS_PUBLICOS: { label: 'news.source.SERVICIOS_PUBLICOS', color: '#92400E', bg: '#FEF3C7', Icon: Droplets },
+  DIRIGENCIA: { label: 'news.source.DIRIGENCIA', color: '#583018', bg: '#FBF3EE', Icon: Hammer },
 };
 const FALLBACK_META = SOURCE_META.MUNICIPAL;
+const ALL_SECTORS = '__ALL__';
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null, numeric: boolean): string {
   if (!iso) return '';
+  // Los navegadores no traen nombres de meses en quechua: en ese idioma se usa la fecha numérica.
   return new Date(iso).toLocaleDateString('es-PE', {
-    day: 'numeric',
-    month: 'short',
+    day: numeric ? '2-digit' : 'numeric',
+    month: numeric ? '2-digit' : 'short',
     year: 'numeric',
   });
 }
 
 function NewsCard({ item }: { item: NeighborhoodNews }) {
+  const { t, language } = useI18n();
   const meta = (item.source && SOURCE_META[item.source]) || FALLBACK_META;
   const { Icon } = meta;
   return (
@@ -47,14 +51,14 @@ function NewsCard({ item }: { item: NeighborhoodNews }) {
             className="ml-1.5"
             style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12, color: meta.color }}
           >
-            {meta.label}
+            {t(meta.label)}
           </Text>
         </View>
         <Text
           className="text-neutral-textLight"
           style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
         >
-          {formatDate(item.created_at)}
+          {formatDate(item.created_at, language === 'qu')}
         </Text>
       </View>
       <Text
@@ -81,21 +85,22 @@ function NewsCard({ item }: { item: NeighborhoodNews }) {
 
 export default function NewsScreen() {
   const { data, isLoading, isError, refetch, isRefetching } = useNews();
-  const [sector, setSector] = useState<string>('Todos');
+  const { t } = useI18n();
+  const [sector, setSector] = useState<string>(ALL_SECTORS);
 
   const sectors = useMemo(
-    () => ['Todos', ...Array.from(new Set((data ?? []).map((n) => n.sector_name)))],
+    () => [ALL_SECTORS, ...Array.from(new Set((data ?? []).map((n) => n.sector_name)))],
     [data]
   );
 
   const filtered = useMemo(
-    () => (sector === 'Todos' ? data ?? [] : (data ?? []).filter((n) => n.sector_name === sector)),
+    () => (sector === ALL_SECTORS ? data ?? [] : (data ?? []).filter((n) => n.sector_name === sector)),
     [data, sector]
   );
 
   return (
     <View className="flex-1 bg-neutral-background">
-      <Header title="Noticias de la zona" subtitle="Avisos de tu barrio" />
+      <Header title={t('news.title')} subtitle={t('news.subtitle')} />
 
       {sectors.length > 2 && (
         <View className="py-3">
@@ -105,7 +110,12 @@ export default function NewsScreen() {
             contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
           >
             {sectors.map((s) => (
-              <Chip key={s} label={s} isActive={s === sector} onPress={() => setSector(s)} />
+              <Chip
+                key={s}
+                label={s === ALL_SECTORS ? t('common.all') : s}
+                isActive={s === sector}
+                onPress={() => setSector(s)}
+              />
             ))}
           </ScrollView>
         </View>
@@ -136,9 +146,7 @@ export default function NewsScreen() {
                 className="text-neutral-textMuted mt-3 text-center"
                 style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 15 }}
               >
-                {isError
-                  ? 'No pudimos cargar las noticias. Desliza para reintentar.'
-                  : 'Aún no hay noticias en tu zona.'}
+                {isError ? t('news.loadError') : t('news.empty')}
               </Text>
             </View>
           }

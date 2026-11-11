@@ -143,11 +143,13 @@ export function SlideToActivate({
   const executeActivation = async (eventType: EmergencyEventType) => {
     try {
       if (groupId) {
+        const { data: { user } } = await supabase.auth.getUser();
         await supabase.from('emergency_events').insert({
           group_id: groupId,
           event_type: eventType,
           description: `Activación de contingencia vecinal: ${eventType}`,
           status: 'ACTIVE',
+          activated_by: user?.id || '00000000-0000-0000-0000-000000000000',
         });
       }
     } catch (err) {

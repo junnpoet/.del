@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MapPin, ArrowRight } from 'lucide-react-native';
 import { Button } from '../../src/components/ui/Button';
+import { useI18n } from '../../src/i18n';
 
 export default function OnboardingStep1() {
   const router = useRouter();
+  const { t } = useI18n();
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-background justify-between p-6">
@@ -22,7 +24,7 @@ export default function OnboardingStep1() {
           className="text-neutral-textMuted py-2 px-1"
           style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
         >
-          Saltar
+          {t('common.skip')}
         </Text>
       </View>
 
@@ -36,22 +38,21 @@ export default function OnboardingStep1() {
           className="text-neutral-textMain text-center mb-3"
           style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 26 }}
         >
-          Tu barrio a pie
+          {t('onboarding.s1.title')}
         </Text>
 
         <Text
           className="text-neutral-textMuted text-center leading-6"
           style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 15 }}
         >
-          Descubre oficios independientes, gasfiteros, costureras y apoyo mutuo
-          a menos de 10 minutos caminando de tu puerta.
+          {t('onboarding.s1.body')}
         </Text>
       </View>
 
       {/* Bottom Action */}
       <View className="pb-4">
         <Button
-          title="Siguiente"
+          title={t('common.next')}
           variant="primary"
           onPress={() => router.push('/(onboarding)/step2')}
           icon={<ArrowRight size={18} color="#FFFFFF" strokeWidth={2} />}

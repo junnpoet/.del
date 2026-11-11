@@ -3,9 +3,11 @@ import { Tabs } from 'expo-router';
 import { Store, Users, User, Newspaper } from 'lucide-react-native';
 import { View, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useI18n } from '../../src/i18n';
 
 export default function MainLayout() {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   const bottomPadding = Math.max(insets.bottom, 10);
 
   return (
@@ -67,8 +69,8 @@ export default function MainLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Oficios',
-            tabBarLabel: 'Directorio',
+            title: t('tabs.directoryTitle'),
+            tabBarLabel: t('tabs.directory'),
             tabBarIcon: ({ color, focused }) => (
               <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
                 <Store size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
@@ -79,8 +81,8 @@ export default function MainLayout() {
         <Tabs.Screen
           name="news"
           options={{
-            title: 'Noticias',
-            tabBarLabel: 'Noticias',
+            title: t('tabs.news'),
+            tabBarLabel: t('tabs.news'),
             tabBarIcon: ({ color, focused }) => (
               <Newspaper size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
             ),
@@ -89,8 +91,8 @@ export default function MainLayout() {
         <Tabs.Screen
           name="community"
           options={{
-            title: 'Comunidad',
-            tabBarLabel: 'Comunidad',
+            title: t('tabs.community'),
+            tabBarLabel: t('tabs.community'),
             tabBarIcon: ({ color, focused }) => (
               <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
                 <Users size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />
@@ -101,8 +103,8 @@ export default function MainLayout() {
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Mi Hogar',
-            tabBarLabel: 'Perfil',
+            title: t('tabs.profileTitle'),
+            tabBarLabel: t('tabs.profile'),
             tabBarIcon: ({ color, focused }) => (
               <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
                 <User size={22} color={color} strokeWidth={focused ? 2.2 : 1.8} />

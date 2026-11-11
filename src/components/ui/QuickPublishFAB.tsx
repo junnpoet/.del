@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   Modal,
-  Alert,
   Animated,
 } from 'react-native';
 import { Plus, X, Wrench, HeartHandshake, HelpCircle, Mic, Square, Check } from 'lucide-react-native';
@@ -14,6 +13,22 @@ import { Button } from './Button';
 import { Input } from './Input';
 import { Chip } from './Chip';
 import type { AudioRecorder } from 'expo-audio';
+import { useQueryClient } from '@tanstack/react-query';
+import { useI18n } from '../../i18n';
+import { useAuth } from '../../services/auth';
+import { supabase } from '../../services/supabase';
+import type { PostType } from '../../types';
+import { useCreateSolidaryPost } from '../../features/community/hooks/useSolidaryFeed';
+import { DIRECTORY_QUERY_KEY } from '../../features/public/hooks/useDirectory';
+import { errorMessage, showMessage } from '../../features/community/utils';
+
+/** Categoría del aporte solidario → post_type de solidary_posts (CHECK de la SPEC-02). */
+const SOLIDARY_POST_TYPE: Record<string, PostType> = {
+  Préstamo: 'PRESTAMO',
+  Donación: 'DONACION',
+  Trueque: 'TRUEQUE',
+  Voluntariado: 'VOLUNTARIADO',
+};
 
 export interface QuickPublishFABProps {
   animatedTranslateY?: Animated.AnimatedInterpolation<number | string> | Animated.Value | number;
@@ -41,6 +56,10 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { fabOffset, hideGlobalFAB } = useDemo();
+  const { t, tCategory } = useI18n();
+  const { session } = useAuth();
+  const queryClient = useQueryClient();
+  const createSolidaryPost = useCreateSolidaryPost();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<
     'SERVICIO' | 'AYUDA' | 'SOLIDARIO' | null
@@ -86,10 +105,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       const ExpoAudio = await import('expo-audio');
       const permission = await ExpoAudio.requestRecordingPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert(
-          'Permiso Denegado',
-          'Se requiere acceso al micrófono para grabar la solicitud por voz.'
-        );
+        showMessage(t('fab.micDeniedTitle'), t('fab.micDenied'));
         return;
       }
 
@@ -125,49 +141,71 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       }
       setIsRecording(false);
       if (!description) {
-        setDescription('[Nota de voz adjunta para transcripción automática con Gemini]');
+        setDescription(t('fab.voiceAttached'));
       }
     } catch (err) {
       console.warn('Error stopping recording, using fallback URI:', err);
       setRecordedUri('file://simulated-voice-note.m4a');
       setIsRecording(false);
       if (!description) {
-        setDescription('[Nota de voz adjunta para transcripción automática con Gemini]');
+        setDescription(t('fab.voiceAttached'));
       }
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedType) {
-      Alert.alert('Atención', 'Selecciona el tipo de publicación.');
+      showMessage(t('common.attention'), t('fab.selectType'));
       return;
     }
     if (!category) {
-      Alert.alert('Atención', 'Selecciona una categoría.');
+      showMessage(t('common.attention'), t('fab.selectCategory'));
       return;
     }
     if (!description.trim() && !recordedUri) {
-      Alert.alert('Atención', 'Escribe un detalle o graba una nota de voz.');
+      showMessage(t('common.attention'), t('fab.needDetail'));
+      return;
+    }
+    if (!session) {
+      showMessage(t('common.attention'), t('fab.loginRequired'));
       return;
     }
 
+    const finalDescription = description.trim() || t('fab.voicePost');
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      if (onPublishSuccess) {
-        onPublishSuccess({
-          type: selectedType,
+    try {
+      if (selectedType === 'SERVICIO') {
+        // Oficio para el Directorio público (tabla services, SPEC-03).
+        const { error } = await supabase.from('services').insert({
+          provider_id: session.user.id,
+          title: finalDescription.slice(0, 80),
           category,
-          description: description.trim() || 'Publicación por voz',
-          audioUri: recordedUri,
+          description: finalDescription,
+        });
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: DIRECTORY_QUERY_KEY });
+      } else {
+        // Ayuda o aporte solidario para el Muro Solidario (tabla solidary_posts, SPEC-04).
+        await createSolidaryPost.mutateAsync({
+          postType: selectedType === 'AYUDA' ? 'AYUDA' : SOLIDARY_POST_TYPE[category] ?? 'DONACION',
+          category,
+          description: finalDescription,
         });
       }
-      Alert.alert(
-        '¡Publicado con éxito!',
-        'Tu aviso ya está visible para los vecinos de tu sector.'
-      );
+
+      onPublishSuccess?.({
+        type: selectedType,
+        category,
+        description: finalDescription,
+        audioUri: recordedUri,
+      });
+      showMessage(t('fab.successTitle'), t('fab.success'));
       handleClose();
-    }, 600);
+    } catch (error) {
+      showMessage(t('fab.failed'), errorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // When a screen (like the map) mounts its own synchronized FAB, hide the global layout instance
@@ -201,7 +239,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       >
         <TouchableOpacity
           accessibilityRole="button"
-          accessibilityLabel="Publicación rápida vecinal"
+          accessibilityLabel={t('fab.a11y')}
           onPress={handleOpenMenu}
           activeOpacity={0.88}
           className="rounded-full bg-primary items-center justify-center shadow-lg shadow-black/25"
@@ -230,13 +268,13 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                   className="text-neutral-textMain"
                   style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 20 }}
                 >
-                  Publicación Rápida
+                  {t('fab.title')}
                 </Text>
                 <Text
                   className="text-neutral-textMuted mt-0.5"
                   style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
                 >
-                  Embudo vecinal en 3 pasos simples
+                  {t('fab.subtitle')}
                 </Text>
               </View>
               <TouchableOpacity
@@ -255,7 +293,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                   className="text-neutral-textMain mb-3"
                   style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 15 }}
                 >
-                  ¿Qué deseas comunicar al barrio?
+                  {t('fab.question')}
                 </Text>
 
                 <TouchableOpacity
@@ -270,13 +308,13 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                       className="text-neutral-textMain"
                       style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
                     >
-                      Ofrecer un Servicio
+                      {t('fab.service')}
                     </Text>
                     <Text
                       className="text-neutral-textMuted mt-0.5"
                       style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
                     >
-                      Gasfitería, electricidad, costura, talleres
+                      {t('fab.serviceBody')}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -293,13 +331,13 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                       className="text-neutral-textMain"
                       style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
                     >
-                      Pedir Ayuda / Necesidad
+                      {t('fab.help')}
                     </Text>
                     <Text
                       className="text-neutral-textMuted mt-0.5"
                       style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
                     >
-                      Medicinas urgentes, soporte, acompañamiento
+                      {t('fab.helpBody')}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -316,13 +354,13 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                       className="text-neutral-textMain"
                       style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
                     >
-                      Aporte Solidario / Donación
+                      {t('fab.solidary')}
                     </Text>
                     <Text
                       className="text-neutral-textMuted mt-0.5"
                       style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
                     >
-                      Préstamo de herramientas, trueque, voluntariado
+                      {t('fab.solidaryBody')}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -336,10 +374,10 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                     style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
                   >
                     {selectedType === 'SERVICIO'
-                      ? '🛠️ OFRECER SERVICIO'
+                      ? t('fab.badgeService')
                       : selectedType === 'AYUDA'
-                      ? '🆘 PEDIR AYUDA'
-                      : '🤝 APORTE SOLIDARIO'}
+                      ? t('fab.badgeHelp')
+                      : t('fab.badgeSolidary')}
                   </Text>
                   <TouchableOpacity
                     onPress={() => setSelectedType(null)}
@@ -349,7 +387,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                       className="text-neutral-textMain"
                       style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
                     >
-                      Cambiar
+                      {t('fab.change')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -359,13 +397,13 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                   className="text-neutral-textMain mb-2"
                   style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
                 >
-                  Paso 2: Categoría
+                  {t('fab.step2')}
                 </Text>
                 <View className="flex-row flex-wrap mb-3">
                   {categoriesByType[selectedType].map((cat) => (
                     <Chip
                       key={cat}
-                      label={cat}
+                      label={tCategory(cat)}
                       isActive={category === cat}
                       onPress={() => setCategory(cat)}
                     />
@@ -377,7 +415,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                   className="text-neutral-textMain mb-2"
                   style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
                 >
-                  Paso 3: Detalle o Nota de Voz
+                  {t('fab.step3')}
                 </Text>
 
                 {/* Voice recorder box */}
@@ -388,13 +426,13 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                         className="text-neutral-textMain"
                         style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
                       >
-                        ¿Prefieres dictar?
+                        {t('fab.dictateTitle')}
                       </Text>
                       <Text
                         className="text-neutral-textMuted mt-0.5"
                         style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 12 }}
                       >
-                        La IA estructurará el pedido automáticamente.
+                        {t('fab.dictateBody')}
                       </Text>
                     </View>
 
@@ -408,7 +446,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                           className="text-white ml-1.5"
                           style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
                         >
-                          Detener
+                          {t('fab.stop')}
                         </Text>
                       </TouchableOpacity>
                     ) : (
@@ -421,7 +459,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                           className="text-white ml-1.5"
                           style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
                         >
-                          Grabar
+                          {t('fab.record')}
                         </Text>
                       </TouchableOpacity>
                     )}
@@ -434,15 +472,15 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                         className="text-neutral-textMain ml-1.5"
                         style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
                       >
-                        Nota de voz lista para procesar
+                        {t('fab.voiceReady')}
                       </Text>
                     </View>
                   )}
                 </View>
 
                 <Input
-                  label="Descripción breve"
-                  placeholder="Ej: Apoyo para reparar tubería principal..."
+                  label={t('fab.description')}
+                  placeholder={t('fab.descriptionPlaceholder')}
                   value={description}
                   onChangeText={setDescription}
                   multiline
@@ -450,7 +488,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                 />
 
                 <Button
-                  title="Confirmar y Publicar"
+                  title={t('fab.submit')}
                   variant={selectedType === 'AYUDA' ? 'emergency' : 'primary'}
                   onPress={handleSubmit}
                   isLoading={isSubmitting}
