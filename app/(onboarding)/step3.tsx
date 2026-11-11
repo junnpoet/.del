@@ -5,9 +5,11 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ShieldAlert, CheckCircle } from 'lucide-react-native';
 import { Button } from '../../src/components/ui/Button';
+import { useI18n } from '../../src/i18n';
 
 export default function OnboardingStep3() {
   const router = useRouter();
+  const { t } = useI18n();
 
   const handleFinish = async () => {
     try {
@@ -40,22 +42,21 @@ export default function OnboardingStep3() {
           className="text-neutral-textMain text-center mb-3"
           style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 26 }}
         >
-          Red protectora y SOS
+          {t('onboarding.s3.title')}
         </Text>
 
         <Text
           className="text-neutral-textMuted text-center leading-6"
           style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 15 }}
         >
-          Frente a emergencias o vulnerabilidad, activamos la red barrial de
-          padrinos y apoyo mutuo. Nadie se queda solo en Sumayni.
+          {t('onboarding.s3.body')}
         </Text>
       </View>
 
       {/* Bottom Action */}
       <View className="pb-4">
         <Button
-          title="Empezar en mi Barrio"
+          title={t('onboarding.s3.start')}
           variant="primary"
           onPress={handleFinish}
           icon={<CheckCircle size={18} color="#FFFFFF" strokeWidth={2} />}

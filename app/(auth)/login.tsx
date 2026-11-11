@@ -15,10 +15,14 @@ import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { Card } from '../../src/components/ui/Card';
 import { useAuth } from '../../src/services/auth';
+import { useI18n } from '../../src/i18n';
+import { LanguageToggle } from '../../src/i18n/LanguageToggle';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn, requestOtp, signInWithOtp } = useAuth();
+  const { t } = useI18n();
+
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<'password' | 'otp'>('password');
@@ -29,7 +33,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!phone.trim() || !password) {
-      Alert.alert('Atención', 'Ingresa tu número de celular y tu contraseña.');
+      Alert.alert(t('common.attention'), t('login.missingPhoneOrPassword'));
       return;
     }
     setIsLoading(true);
@@ -40,10 +44,10 @@ export default function LoginScreen() {
       const message = err instanceof Error ? err.message : '';
       const invalid = /invalid login credentials/i.test(message);
       Alert.alert(
-        'Error',
+        t('common.error'),
         invalid
-          ? 'Número de celular o contraseña incorrectos. Verifica que el usuario esté registrado en la base de datos.'
-          : 'No se pudo iniciar sesión. Revisa tu conexión a la red.'
+          ? t('login.invalidPhoneOrPassword')
+          : t('login.failed')
       );
     } finally {
       setIsLoading(false);
@@ -52,7 +56,7 @@ export default function LoginScreen() {
 
   const handleRequestOtp = async () => {
     if (!phone.trim()) {
-      Alert.alert('Atención', 'Ingresa tu número de celular registrado.');
+      Alert.alert(t('common.attention'), t('login.missingPhone'));
       return;
     }
     setIsRequestingOtp(true);
@@ -60,14 +64,14 @@ export default function LoginScreen() {
       const result = await requestOtp(phone);
       setOtpSent(true);
       Alert.alert(
-        'Código Generado',
+        t('login.otpGenerated'),
         result.devOtp
-          ? `Tu código de acceso temporal es: ${result.devOtp}\n\nIngrésalo abajo para entrar a tu cuenta.`
-          : 'Revisa tu WhatsApp: te enviamos un mensaje con tu código de acceso temporal.'
+          ? t('login.otpDevNotice', { code: result.devOtp })
+          : t('login.otpWhatsAppNotice')
       );
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'No se pudo enviar el código.';
-      Alert.alert('Aviso', msg);
+      const msg = err instanceof Error ? err.message : t('common.unexpectedError');
+      Alert.alert(t('common.attention'), msg);
     } finally {
       setIsRequestingOtp(false);
     }
@@ -75,7 +79,7 @@ export default function LoginScreen() {
 
   const handleVerifyOtp = async () => {
     if (!phone.trim() || !otpCode.trim()) {
-      Alert.alert('Atención', 'Ingresa tu número de celular y el código recibido.');
+      Alert.alert(t('common.attention'), t('login.missingOtp'));
       return;
     }
     setIsLoading(true);
@@ -84,7 +88,7 @@ export default function LoginScreen() {
       router.replace('/(main)');
     } catch (err) {
       console.error('OTP error', err);
-      Alert.alert('Error', 'Código inválido o vencido. Solicita uno nuevo.');
+      Alert.alert(t('common.error'), t('login.otpInvalid'));
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +111,7 @@ export default function LoginScreen() {
               className="text-neutral-textMuted -mt-4 text-center"
               style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
             >
-              Bienestar y reciprocidad comunitaria
+              {t('brand.subtitle')}
             </Text>
           </View>
 
@@ -116,12 +120,12 @@ export default function LoginScreen() {
               className="text-neutral-textMain mb-4"
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 20 }}
             >
-              {mode === 'password' ? 'Iniciar Sesión' : 'Acceso con WhatsApp'}
+              {mode === 'password' ? t('login.title') : t('login.otpTitle')}
             </Text>
 
             <Input
-              label="Número de celular"
-              placeholder="Ej: 998877665"
+              label={t('login.phone')}
+              placeholder={t('login.phonePlaceholder')}
               keyboardType="phone-pad"
               autoCapitalize="none"
               autoCorrect={false}
@@ -132,8 +136,8 @@ export default function LoginScreen() {
             {mode === 'password' ? (
               <>
                 <Input
-                  label="Contraseña"
-                  placeholder="Tu contraseña"
+                  label={t('login.password')}
+                  placeholder={t('login.passwordPlaceholder')}
                   secureTextEntry
                   autoCapitalize="none"
                   value={password}
@@ -141,7 +145,7 @@ export default function LoginScreen() {
                 />
 
                 <Button
-                  title="Ingresar a mi Barrio"
+                  title={t('login.submit')}
                   variant="primary"
                   onPress={handleLogin}
                   isLoading={isLoading}
@@ -154,13 +158,13 @@ export default function LoginScreen() {
                     setOtpSent(false);
                     setOtpCode('');
                   }}
-                  className="mt-4 items-center py-2"
+                  className="mt-4 items-center py-2 min-h-[44px] justify-center"
                 >
                   <Text
                     className="text-primary-emeraldDark"
                     style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
                   >
-                    💬 ¿Olvidaste tu contraseña? Entrar con WhatsApp
+                    {t('login.forgotPassword')}
                   </Text>
                 </TouchableOpacity>
               </>
@@ -168,8 +172,8 @@ export default function LoginScreen() {
               <>
                 {otpSent && (
                   <Input
-                    label="Código recibido por WhatsApp"
-                    placeholder="Ej: 12345678"
+                    label={t('login.otpCode')}
+                    placeholder={t('login.otpCodePlaceholder')}
                     keyboardType="number-pad"
                     autoCapitalize="none"
                     value={otpCode}
@@ -179,7 +183,7 @@ export default function LoginScreen() {
 
                 {otpSent ? (
                   <Button
-                    title="Verificar e Ingresar"
+                    title={t('login.verifyOtp')}
                     variant="primary"
                     onPress={handleVerifyOtp}
                     isLoading={isLoading}
@@ -187,7 +191,7 @@ export default function LoginScreen() {
                   />
                 ) : (
                   <Button
-                    title="Enviar código por WhatsApp"
+                    title={t('login.sendOtp')}
                     variant="primary"
                     onPress={handleRequestOtp}
                     isLoading={isRequestingOtp}
@@ -199,38 +203,38 @@ export default function LoginScreen() {
                   <TouchableOpacity
                     onPress={handleRequestOtp}
                     disabled={isRequestingOtp}
-                    className="mt-3 items-center py-1.5"
+                    className="mt-3 items-center py-1.5 min-h-[44px] justify-center"
                   >
                     <Text
                       className="text-neutral-textMuted"
-                      style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
+                      style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
                     >
-                      {isRequestingOtp ? 'Reenviando...' : '¿No llegó? Reenviar código'}
+                      {isRequestingOtp ? t('login.resending') : t('login.resendOtp')}
                     </Text>
                   </TouchableOpacity>
                 )}
 
                 <TouchableOpacity
                   onPress={() => setMode('password')}
-                  className="mt-4 items-center py-2 border-t border-neutral-border/60"
+                  className="mt-4 items-center py-2 border-t border-neutral-border/60 min-h-[44px] justify-center"
                 >
                   <Text
                     className="text-neutral-textMuted"
                     style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
                   >
-                    ← Volver a inicio con contraseña
+                    {t('login.backToPassword')}
                   </Text>
                 </TouchableOpacity>
               </>
             )}
           </Card>
 
-          <View className="items-center">
+          <View className="items-center mb-6">
             <Text
               className="text-neutral-textMuted mb-2.5"
               style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14 }}
             >
-              ¿Aún no has registrado tu hogar?
+              {t('login.noAccount')}
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/(auth)/register')}
@@ -240,10 +244,15 @@ export default function LoginScreen() {
                 className="text-neutral-textMain"
                 style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
               >
-                Crear cuenta y registrar domicilio
+                {t('login.createAccount')}
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Selector de idioma */}
+          <Card className="p-4">
+            <LanguageToggle />
+          </Card>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useI18n } from '../../i18n';
 
 export interface HeaderProps {
   title: string;
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
 
   const handleBack = () => {
     if (onBack) {
@@ -53,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
           {showBack && (
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityLabel="Regresar"
+              accessibilityLabel={t('common.back')}
               onPress={handleBack}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               className={`h-10 w-10 rounded-2xl items-center justify-center mr-3 ${

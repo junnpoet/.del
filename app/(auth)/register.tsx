@@ -14,10 +14,12 @@ import { Input } from '../../src/components/ui/Input';
 import { Card } from '../../src/components/ui/Card';
 import { Header } from '../../src/components/ui/Header';
 import { useAuth } from '../../src/services/auth';
+import { useI18n } from '../../src/i18n';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { signUp } = useAuth();
+  const { t } = useI18n();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -61,10 +63,7 @@ export default function RegisterScreen() {
       const Location = await import('expo-location');
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Permiso de Ubicación',
-          'Usaremos la ubicación referencial del sector para continuar con el registro.'
-        );
+        Alert.alert(t('register.locationPermTitle'), t('register.locationPerm'));
         setCoords({ latitude: -12.0125, longitude: -77.0815 });
         setIsLocating(false);
         return;
@@ -103,31 +102,29 @@ export default function RegisterScreen() {
   };
 
   const handleRegister = async () => {
+    const missing = t('register.missingTitle');
     if (!fullName.trim()) {
-      Alert.alert('Faltan Datos', 'Por favor ingresa tus nombres y apellidos.');
+      Alert.alert(missing, t('register.missingName'));
       return;
     }
     if (email.trim() && !email.includes('@')) {
-      Alert.alert('Faltan Datos', 'Ingresa un correo electrónico válido o déjalo en blanco.');
+      Alert.alert(missing, t('register.invalidEmailOptional'));
       return;
     }
     if (password.length < 6) {
-      Alert.alert('Faltan Datos', 'La contraseña debe tener al menos 6 caracteres.');
+      Alert.alert(missing, t('register.missingPassword'));
       return;
     }
     if (!phone.trim()) {
-      Alert.alert('Faltan Datos', 'Ingresa tu número de teléfono celular.');
+      Alert.alert(missing, t('register.missingPhone'));
       return;
     }
     if (!homeAddress.trim()) {
-      Alert.alert('Faltan Datos', 'Ingresa la dirección exacta de tu residencia.');
+      Alert.alert(missing, t('register.missingAddress'));
       return;
     }
     if (!coords) {
-      Alert.alert(
-        'Ubicación Requerida',
-        'Debes fijar la geolocalización de tu hogar para calcular distancias a pie y validar tu barrio.'
-      );
+      Alert.alert(t('register.locationRequiredTitle'), t('register.locationRequired'));
       return;
     }
 
@@ -143,27 +140,24 @@ export default function RegisterScreen() {
         longitude: coords.longitude,
         pushToken,
       });
-      Alert.alert(
-        '¡Bienvenido a Sumayni!',
-        'Tu hogar ha sido georreferenciado con éxito en tu comunidad.'
-      );
+      Alert.alert(t('register.welcomeTitle'), t('register.welcome'));
       router.replace('/(main)');
     } catch (err) {
       console.error('Registration error', err);
       const message = err instanceof Error ? err.message : '';
-      let text = 'No se pudo guardar el registro del hogar.';
+      let text = t('register.errGeneric');
       if (/already registered/i.test(message)) {
-        text = 'Ese correo ya está registrado. Inicia sesión.';
+        text = t('register.errExists');
       } else if (message === 'CONFIRM_EMAIL') {
-        text = 'El proyecto exige confirmar el correo. Desactiva "Confirm email" en Supabase.';
+        text = t('register.errConfirm');
       } else if (/row-level security policy/i.test(message)) {
-        text = 'Supabase bloqueó la creación del perfil. Verifica que el usuario haya iniciado sesión y que la política INSERT de profiles esté aplicada.';
+        text = t('register.errRls');
       } else if (/parse|geometry|geo/i.test(message)) {
-        text = 'La ubicación del domicilio no tiene un formato válido. Vuelve a fijar tu ubicación e inténtalo otra vez.';
+        text = t('register.errGeo');
       } else if (message) {
-        text = `No se pudo completar el registro: ${message}`;
+        text = t('register.errWith', { message });
       }
-      Alert.alert('Error', text);
+      Alert.alert(t('common.error'), text);
     } finally {
       setIsSubmitting(false);
     }
@@ -171,7 +165,7 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} className="flex-1 bg-neutral-background">
-      <Header title="Registro de Hogar" showBack />
+      <Header title={t('register.title')} showBack />
 
       <ScrollView contentContainerClassName="p-4 pb-12">
         <View className="bg-neutral-mutedBg p-3.5 rounded-2xl mb-4">
@@ -179,22 +173,21 @@ export default function RegisterScreen() {
             className="text-neutral-textMuted leading-5"
             style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
           >
-            Para garantizar la confianza y reciprocidad vecinal, cada cuenta se
-            vincula a un domicilio georreferenciado en el sector.
+            {t('register.intro')}
           </Text>
         </View>
 
         <Card className="p-4 mb-4">
           <Input
-            label="Nombres y Apellidos"
-            placeholder="Ej: Carmen Rosa Mamani"
+            label={t('register.fullName')}
+            placeholder={t('register.fullNamePlaceholder')}
             value={fullName}
             onChangeText={setFullName}
           />
 
           <Input
-            label="Correo electrónico (opcional)"
-            placeholder="Opcional: tu@correo.com"
+            label={t('register.emailOptional')}
+            placeholder={t('register.emailOptionalPlaceholder')}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -203,8 +196,8 @@ export default function RegisterScreen() {
           />
 
           <Input
-            label="Contraseña (mínimo 6 caracteres)"
-            placeholder="Crea una contraseña"
+            label={t('register.password')}
+            placeholder={t('register.passwordPlaceholder')}
             secureTextEntry
             autoCapitalize="none"
             value={password}
@@ -212,16 +205,16 @@ export default function RegisterScreen() {
           />
 
           <Input
-            label="Teléfono Móvil (WhatsApp)"
-            placeholder="Ej: 998877665"
+            label={t('register.phone')}
+            placeholder={t('register.phonePlaceholder')}
             keyboardType="phone-pad"
             value={phone}
             onChangeText={setPhone}
           />
 
           <Input
-            label="Dirección de Residencia"
-            placeholder="Ej: Jr. Los Jazmines 340, Mz. D Lt. 12"
+            label={t('register.address')}
+            placeholder={t('register.addressPlaceholder')}
             value={homeAddress}
             onChangeText={setHomeAddress}
           />
@@ -232,7 +225,7 @@ export default function RegisterScreen() {
               className="text-neutral-textMain mb-1.5"
               style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
             >
-              Punto GPS Fijo del Domicilio
+              {t('register.gps')}
             </Text>
 
             <TouchableOpacity
@@ -263,9 +256,7 @@ export default function RegisterScreen() {
                     }
                     style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
                   >
-                    {coords
-                      ? 'Ubicación fijada con éxito'
-                      : 'Fijar mi ubicación actual'}
+                    {coords ? t('register.gpsSet') : t('register.gpsCta')}
                   </Text>
                   <Text
                     className="text-neutral-textLight mt-0.5"
@@ -273,7 +264,7 @@ export default function RegisterScreen() {
                   >
                     {coords
                       ? `Lat: ${coords.latitude.toFixed(4)}, Lng: ${coords.longitude.toFixed(4)}`
-                      : 'Pulsa para georreferenciar tu hogar'}
+                      : t('register.gpsHint')}
                   </Text>
                 </View>
               </View>
@@ -287,7 +278,7 @@ export default function RegisterScreen() {
           </View>
 
           <Button
-            title="Registrar y Unirme a mi Barrio"
+            title={t('register.submit')}
             variant="primary"
             onPress={handleRegister}
             isLoading={isSubmitting}

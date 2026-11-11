@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Mic } from 'lucide-react-native';
+import { useI18n } from '../../i18n';
 
 export interface InputProps extends TextInputProps {
   label: string;
@@ -25,6 +26,7 @@ export const Input: React.FC<InputProps> = ({
   className = '',
   ...props
 }) => {
+  const { t } = useI18n();
   const borderColor = error
     ? 'border border-emergency-alert'
     : 'border border-neutral-border/80 focus:border-primary';
@@ -41,7 +43,7 @@ export const Input: React.FC<InputProps> = ({
         {onVoiceInput && (
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="Dictar por voz"
+            accessibilityLabel={t('common.dictate')}
             onPress={onVoiceInput}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             className={`min-h-[34px] px-3 flex-row items-center rounded-xl ${
@@ -60,7 +62,7 @@ export const Input: React.FC<InputProps> = ({
               }`}
               style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
             >
-              {isVoiceRecording ? 'Grabando...' : 'Voz'}
+              {isVoiceRecording ? t('common.recording') : t('common.voice')}
             </Text>
           </TouchableOpacity>
         )}

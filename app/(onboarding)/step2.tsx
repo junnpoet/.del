@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Mic, ArrowRight } from 'lucide-react-native';
 import { Button } from '../../src/components/ui/Button';
+import { useI18n } from '../../src/i18n';
 
 export default function OnboardingStep2() {
   const router = useRouter();
+  const { t } = useI18n();
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-background justify-between p-6">
@@ -22,7 +24,7 @@ export default function OnboardingStep2() {
           className="text-neutral-textMuted py-2 px-1"
           style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
         >
-          Saltar
+          {t('common.skip')}
         </Text>
       </View>
 
@@ -36,22 +38,21 @@ export default function OnboardingStep2() {
           className="text-neutral-textMain text-center mb-3"
           style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 26 }}
         >
-          Publica en 3 pasos
+          {t('onboarding.s2.title')}
         </Text>
 
         <Text
           className="text-neutral-textMuted text-center leading-6"
           style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 15 }}
         >
-          ¿Prefieres dictar? Graba una nota de voz y nuestra IA organizará tu pedido
-          de auxilio o servicio en segundos.
+          {t('onboarding.s2.body')}
         </Text>
       </View>
 
       {/* Bottom Action */}
       <View className="pb-4">
         <Button
-          title="Siguiente"
+          title={t('common.next')}
           variant="secondary"
           onPress={() => router.push('/(onboarding)/step3')}
           icon={<ArrowRight size={18} color="#1A1D20" strokeWidth={2} />}

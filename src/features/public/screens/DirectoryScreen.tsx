@@ -17,6 +17,7 @@ import { Header } from '../../../components/ui/Header';
 import { Chip } from '../../../components/ui/Chip';
 import { useDirectory } from '../hooks/useDirectory';
 import { ServiceCard } from '../components/ServiceCard';
+import { useI18n } from '../../../i18n';
 import { useAuth } from '../../../services/auth';
 import { supabase } from '../../../services/supabase';
 import { EmergencyBanner } from '../../emergency/components/EmergencyBanner';
@@ -51,6 +52,7 @@ function NativeMap({
   locations: ReturnType<typeof useDirectory>['locations'];
   onSelectService: (service: ReturnType<typeof useDirectory>['services'][number]) => void;
 }) {
+  const { t } = useI18n();
   if (Platform.OS === 'web') {
     return (
       <View className="flex-1 items-center justify-center bg-[#E8F0EC] px-8">
@@ -59,13 +61,13 @@ function NativeMap({
           className="mt-3 text-center text-neutral-textMain"
           style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 }}
         >
-          El mapa interactivo está disponible en Expo Go
+          {t('directory.mapWebTitle')}
         </Text>
         <Text
           className="mt-2 text-center text-neutral-textMuted"
           style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
         >
-          En web puedes consultar el directorio en modo lista.
+          {t('directory.mapWebBody')}
         </Text>
       </View>
     );
@@ -90,7 +92,7 @@ function NativeMap({
       {/* Home Pin (Primary Green) */}
       <maps.Marker
         coordinate={{ latitude, longitude }}
-        title="Tu hogar registrado"
+        title={t('directory.yourLocation')}
         description="Centro de cálculo del radio caminable"
         pinColor="#1E5E45"
       />
@@ -128,6 +130,7 @@ export default function DirectoryScreen() {
   const [openingChatId, setOpeningChatId] = useState<string | null>(null);
 
   const directory = useDirectory(radius);
+  const { t, tCategory } = useI18n();
 
   const filteredServices = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -215,7 +218,7 @@ export default function DirectoryScreen() {
   if (!directory.hasLocation) {
     return (
       <View className="flex-1 bg-neutral-background">
-        <Header title="Directorio barrial" subtitle="Oficios cerca de tu hogar" />
+        <Header title={t('directory.title')} subtitle={t('directory.subtitle')} />
         <View className="flex-1 items-center justify-center px-8">
           <View className="h-16 w-16 items-center justify-center rounded-3xl bg-primary/10">
             <Home size={32} color="#1E5E45" />
@@ -224,13 +227,13 @@ export default function DirectoryScreen() {
             className="mt-4 text-center text-neutral-textMain"
             style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 17 }}
           >
-            Necesitamos la ubicación de tu hogar
+            {t('directory.needLocation')}
           </Text>
           <Text
             className="mt-2 text-center text-neutral-textMuted"
             style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 14, lineHeight: 21 }}
           >
-            Registra tu domicilio de residencia para calcular la distancia caminable a cada oficio.
+            {t('directory.needLocationBody')}
           </Text>
         </View>
       </View>
@@ -239,15 +242,15 @@ export default function DirectoryScreen() {
 
   return (
     <View className="flex-1 bg-neutral-background">
-      <Header title="Directorio barrial" subtitle="Oficios cerca de tu hogar" />
+      <Header title={t('directory.title')} subtitle={t('directory.subtitle')} />
       <EmergencyBanner />
       <View className="border-b border-neutral-border/60 bg-neutral-surface px-4 pb-2 pt-3">
         <View className="flex-row items-center rounded-2xl bg-neutral-mutedBg px-3 min-h-[44px]">
           <Search size={18} color="#6C727A" />
           <TextInput
-            accessibilityLabel="Buscar oficio o vecino"
+            accessibilityLabel={t('directory.search')}
             className="ml-2 flex-1 py-2 text-neutral-textMain"
-            placeholder="Buscar oficio o vecino"
+            placeholder={t('directory.search')}
             placeholderTextColor="#9EA3AE"
             value={query}
             onChangeText={setQuery}
@@ -268,7 +271,7 @@ export default function DirectoryScreen() {
           {CATEGORIES.map((item) => (
             <Chip
               key={item}
-              label={item}
+              label={tCategory(item)}
               isActive={category === item}
               onPress={() => setCategory(item)}
             />
@@ -278,7 +281,7 @@ export default function DirectoryScreen() {
           <View className="flex-row rounded-xl bg-neutral-mutedBg p-1">
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityLabel="Ver lista de tarjetas"
+              accessibilityLabel={t('directory.viewList')}
               accessibilityState={{ selected: view === 'list' }}
               onPress={() => setView('list')}
               className={`h-10 w-11 items-center justify-center rounded-lg ${
@@ -289,7 +292,7 @@ export default function DirectoryScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityLabel="Ver mapa interactivo"
+              accessibilityLabel={t('directory.viewMap')}
               accessibilityState={{ selected: view === 'map' }}
               onPress={() => setView('map')}
               className={`h-10 w-11 items-center justify-center rounded-lg ${
@@ -340,9 +343,7 @@ export default function DirectoryScreen() {
                 className="mt-3 text-center text-neutral-textMuted"
                 style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 15 }}
               >
-                {directory.isError
-                  ? 'No pudimos cargar los oficios. Desliza para reintentar.'
-                  : 'No encontramos oficios con estos filtros en el radio seleccionado.'}
+                {directory.isError ? t('directory.loadError') : t('directory.empty')}
               </Text>
             </View>
           }

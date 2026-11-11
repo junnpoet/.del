@@ -7,6 +7,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { X } from 'lucide-react-native';
+import { useI18n } from '../../i18n';
 
 export interface ModalProps {
   visible: boolean;
@@ -21,6 +22,7 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   children,
 }) => {
+  const { t } = useI18n();
   return (
     <RNModal
       visible={visible}
@@ -41,7 +43,7 @@ export const Modal: React.FC<ModalProps> = ({
                 </Text>
                 <TouchableOpacity
                   accessibilityRole="button"
-                  accessibilityLabel="Cerrar modal"
+                  accessibilityLabel={t('common.closeModal')}
                   onPress={onClose}
                   hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                   className="h-9 w-9 rounded-full bg-neutral-mutedBg items-center justify-center"
