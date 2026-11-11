@@ -5,6 +5,8 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -167,8 +169,19 @@ export default function RegisterScreen() {
     <SafeAreaView edges={['bottom', 'left', 'right']} className="flex-1 bg-neutral-background">
       <Header title={t('register.title')} showBack />
 
-      <ScrollView contentContainerClassName="p-4 pb-12">
-        <View className="bg-neutral-mutedBg p-3.5 rounded-2xl mb-4">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
+        className="flex-1"
+      >
+        <ScrollView
+          contentContainerClassName="p-4 pb-20"
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="bg-neutral-mutedBg p-3.5 rounded-2xl mb-4">
           <Text
             className="text-neutral-textMuted leading-5"
             style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
@@ -286,6 +299,7 @@ export default function RegisterScreen() {
           />
         </Card>
       </ScrollView>
-    </SafeAreaView>
-  );
+    </KeyboardAvoidingView>
+  </SafeAreaView>
+);
 }

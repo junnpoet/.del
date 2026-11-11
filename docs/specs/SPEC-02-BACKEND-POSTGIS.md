@@ -475,3 +475,116 @@ Mauro configurará la publicación de eventos en tiempo real para:
 - [x] Trigger de actualización de rating promedio probado tras insertar una reseña.
 - [x] Políticas de §4.1 probadas: registro, Visto Bueno, padrinos, noticias, cierre de emergencias y SOS protegido.
 - [x] Archivo `src/types/database.ts` generado y entregado al equipo con las interfaces de TypeScript.
+
+---
+
+## 7. Diseño de Pantallas y Dinámicas de Acceso (Auth, Registro y Recuperación)
+
+Esta sección formaliza la integración entre los contratos de base de datos de la **SPEC-02** y las pantallas de autenticación de la aplicación móvil.
+
+### 7.1. Arquitectura del Flujo de Acceso
+
+```mermaid
+flowchart TD
+    Start([Vecino abre la App]) --> HasAccount{¿Tiene cuenta?}
+    
+    %% Flujo Registro
+    HasAccount -- No --> RegScreen["Pantalla de Registro<br/>(register.tsx)"]
+    RegScreen --> FillData["Ingresa Nombres, Celular, Clave<br/>y Dirección fija de casa"]
+    FillData --> CaptureGPS["Fija ubicación GPS del Hogar<br/>(expo-location)"]
+    CaptureGPS --> SubmitReg["signUp() en Supabase<br/>1. auth.users (celular@sumayni.pe)<br/>2. profiles (GIST Point 4326)"]
+    SubmitReg --> EnterApp([Ingreso directo a la Capa Pública])
+    
+    %% Flujo Login
+    HasAccount -- Sí --> LoginScreen["Pantalla de Login<br/>(login.tsx)"]
+    LoginScreen --> ModeChoice{¿Recuerda su clave?}
+    
+    %% Con Contraseña
+    ModeChoice -- Sí --> EnterCreds["Ingresa Celular y Contraseña"]
+    EnterCreds --> AuthCall["signInWithPassword()<br/>Normaliza a celular@sumayni.pe"]
+    AuthCall --> FetchProfile["fetchProfile()<br/>Carga home_location y rol"]
+    FetchProfile --> EnterApp
+    
+    %% Olvido de Contraseña
+    ModeChoice -- No --> OTPFlow["Toca: ¿Olvidaste tu contraseña?<br/>Entrar con WhatsApp"]
+    OTPFlow --> RequestOTP["Llama a Edge Function send-whatsapp-otp"]
+    RequestOTP --> MetaDispatch["Meta Cloud API envía OTP de 8 dígitos<br/>al WhatsApp del vecino"]
+    MetaDispatch --> EnterOTP["Ingresa código en la pantalla"]
+    EnterOTP --> VerifyOTP["verifyOtp(type: magiclink)<br/>Crea sesión oficial JWT"]
+    VerifyOTP --> FetchProfile
+```
+
+### 7.2. Pantalla de Registro y Georreferenciación (`app/(auth)/register.tsx`)
+
+El registro es de carácter **individual y de autoservicio**; no requiere aprobación previa de dirigentes para acceder a la capa pública (directorio de oficios).
+
+| Campo / Control | Tipo | Destino en Base de Datos | Validación / Comportamiento |
+| :--- | :--- | :--- | :--- |
+| **Nombres y Apellidos** | Texto libre | `profiles.full_name` | Obligatorio ($\ge 3$ caracteres). |
+| **Teléfono Celular** | Teléfono (`phone-pad`) | `profiles.phone` y alias `auth.users` | 9 dígitos nacionales. Se normaliza a `<celular>@sumayni.pe`. |
+| **Correo (Opcional)** | Email | `auth.users.email` (si se provee) | Opcional; si se omite, se usa el alias del celular. |
+| **Contraseña** | Texto seguro | `auth.users.encrypted_password` | Mínimo 6 caracteres (hasheada con bcrypt). |
+| **Dirección de Hogar** | Texto | `profiles.home_address` | Dirección descriptiva (calle, número, manzana, lote). |
+| **Punto GPS del Hogar** | Selector / Geolocalización | `profiles.home_location` | Coordenadas obligatorias (`GEOGRAPHY(Point, 4326)`). Define el centro de geocercas caminables. |
+| **Push Token** | Automático | `profiles.push_token` | Token Expo capturado en segundo plano para alertas críticas. |
+
+* **Garantía RLS:** La inserción en `profiles` se ejecuta protegida por la política:
+  ```sql
+  CREATE POLICY "Usuario crea su propio perfil" ON profiles FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = id AND role = 'vecino' AND group_id IS NULL);
+  ```
+  Ningún usuario nuevo puede auto-asignarse el rol de `dirigente` ni agregarse a un `neighborhood_group` privado sin pasar por la aprobación formal (`approve_join_request`).
+
+---
+
+### 7.3. Pantalla de Inicio de Sesión (`app/(auth)/login.tsx`)
+
+Diseñada para **máxima simplicidad y accesibilidad**, minimizando la fricción cognitiva para vecinos y adultos mayores.
+
+| Componente | Función Técnica | Enlace con Backend |
+| :--- | :--- | :--- |
+| **Input Celular** | Captura los 9 dígitos del teléfono | Normalizado mediante `phoneToAuthEmail(phone)`. |
+| **Input Contraseña** | Clave del usuario | Verificada mediante `supabase.auth.signInWithPassword`. |
+| **Botón Ingresar** | Dispara autenticación y carga de perfil | Consulta `fetchProfile(userId)` para hidratar el contexto global `AuthContext`. |
+| **Enlace WhatsApp** | Conmuta la tarjeta al modo OTP | Cambia el estado local `mode` de `'password'` a `'otp'`. |
+| **Botón Crear Cuenta** | Navegación a registro | Redirige a `/(auth)/register`. |
+
+---
+
+### 7.4. Dinámica de Recuperación y Acceso Alternativo vía WhatsApp OTP
+
+Para erradicar la frustración por contraseñas olvidadas sin depender de SMS de pago (Twilio) ni de correos electrónicos que los adultos mayores no revisan, se integra el canal de **WhatsApp**:
+
+```
+[ Usuario ingresa Celular ] 
+            │
+            ▼
+[ Edge Function: send-whatsapp-otp ]
+            ├── 1. Valida que el celular exista en profiles
+            ├── 2. Genera OTP oficial mediante supabase.auth.admin.generateLink({ type: 'magiclink' })
+            └── 3. Despacha mensaje por Meta WhatsApp Cloud API (+51 9XXXXXXXX)
+            │
+            ▼
+[ Mensaje WhatsApp recibido en el móvil: "🔐 Sumayni: Tu código temporal es XXXXXXXX" ]
+            │
+            ▼
+[ Usuario ingresa los dígitos en la App ]
+            │
+            ▼
+[ supabase.auth.verifyOtp({ email, token, type: 'magiclink' }) ]
+            │
+            ▼
+[ Sesión JWT válida y persistida en AsyncStorage sin contraseña ]
+```
+
+---
+
+### 7.5. Matriz de Estados de Membresía y Permisos
+
+| Estado de Usuario | `role` | `group_id` | Acceso Capa Pública | Acceso Capa Privada | Capa de Cuidados (Padrinos) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Vecino No Afiliado** | `'vecino'` | `NULL` |  Directorio, Noticias y Visto Bueno | 🔒 Candado (Botón de Solicitud de Ingreso) | ❌ Bloqueado por RLS |
+| **Vecino Miembro** | `'vecino'` | `UUID` |  Directorio, Noticias y Visto Bueno |  Muro Solidario y Faenas | ❌ Bloqueado por RLS |
+| **Adulto Mayor Vulnerable** | `'vecino'` (`is_vulnerable = TRUE`) | `UUID` |  Directorio |  Muro y Modo Asistido Adaptativo | 📍 Su hogar es monitoreado |
+| **Padrino Vecinal** | `'padrino'` | `UUID` |  Directorio y Oficios |  Muro Solidario |  Visualiza hogares vulnerables asignados |
+| **Dirigente Barrial** | `'dirigente'` | `UUID` |  Directorio y Gestión |  Panel de Gestión, Aprobación de Ingresos y Cierre de Alertas |  Visualiza y asigna toda la red de cuidados |

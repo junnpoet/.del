@@ -98,9 +98,16 @@ export default function LoginScreen() {
     <SafeAreaView className="flex-1 bg-neutral-background">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         className="flex-1"
       >
-        <ScrollView contentContainerClassName="p-6 justify-center flex-grow">
+        <ScrollView
+          contentContainerClassName="p-6 justify-center flex-grow"
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          showsVerticalScrollIndicator={false}
+        >
           <View className="mb-6 items-center">
             <Image
               source={require('../../assets/images/logo-with-text.png')}
