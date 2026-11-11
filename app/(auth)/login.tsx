@@ -97,15 +97,16 @@ export default function LoginScreen() {
   return (
     <SafeAreaView className="flex-1 bg-neutral-background">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         className="flex-1"
       >
         <ScrollView
           contentContainerClassName="p-6 justify-center flex-grow"
+          contentContainerStyle={{ paddingBottom: 160 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          automaticallyAdjustKeyboardInsets={true}
           showsVerticalScrollIndicator={false}
         >
           <View className="mb-6 items-center">

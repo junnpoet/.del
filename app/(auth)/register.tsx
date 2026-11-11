@@ -170,15 +170,16 @@ export default function RegisterScreen() {
       <Header title={t('register.title')} showBack />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
         className="flex-1"
       >
         <ScrollView
-          contentContainerClassName="p-4 pb-20"
+          contentContainerClassName="p-4"
+          contentContainerStyle={{ paddingBottom: 160 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          automaticallyAdjustKeyboardInsets={true}
           showsVerticalScrollIndicator={false}
         >
           <View className="bg-neutral-mutedBg p-3.5 rounded-2xl mb-4">
