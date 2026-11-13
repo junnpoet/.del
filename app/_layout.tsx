@@ -19,6 +19,7 @@ import { DemoProvider } from '../src/services/demoStore';
 import { AuthProvider } from '../src/services/auth';
 import { LanguageProvider } from '../src/i18n';
 import { useEmergencyGlobalMutation } from '../src/features/emergency/hooks/useEmergencyRealtime';
+import { SosEmergencyAlertModal } from '../src/features/emergency/components/SosEmergencyAlertModal';
 
 function RootContent() {
   const segments = useSegments();
@@ -46,6 +47,7 @@ function RootContent() {
       </Stack>
       {/* Quick 3-click Publish Floating Action Button only on main tab views */}
       {isMainTab && <QuickPublishFAB />}
+      <SosEmergencyAlertModal />
     </View>
   );
 }

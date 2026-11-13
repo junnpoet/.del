@@ -17,6 +17,7 @@
       "bundleIdentifier": "com.sumayni.app"
     },
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#F8F9FA"

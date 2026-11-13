@@ -114,6 +114,21 @@ export default function SolidaryFeedScreen() {
   const canSeeCareLayer = isLeader || isPadrino || care.assignments.length > 0;
   const pendingRequests = requests.data?.length ?? 0;
 
+  const { data: activeSosRows = [] } = useQuery({
+    queryKey: ['active-sos-alerts-modal', profile?.id, profile?.role],
+    enabled: canSeeCareLayer && Boolean(profile?.id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sos_alerts')
+        .select('id')
+        .eq('status', 'ACTIVE');
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const hasActiveSos =
+    activeSosRows.length > 0 || care.assignments.some((a) => Boolean(a.activeSosAt));
+
   // Filtrado en memoria: activas en el muro y resueltas en Archivo.
   const posts = useMemo(() => {
     const all = feed.data ?? [];
@@ -348,13 +363,20 @@ export default function SolidaryFeedScreen() {
               accessibilityRole="button"
               accessibilityLabel={t('care.title')}
               onPress={() => router.push('/care-network')}
-              className="flex-1 min-h-[44px] flex-row items-center justify-center rounded-2xl border border-neutral-border bg-neutral-surface px-3 py-2"
+              className={`flex-1 min-h-[44px] flex-row items-center justify-center rounded-2xl border px-3 py-2 ${
+                hasActiveSos
+                  ? 'border-red-700 bg-red-600'
+                  : 'border-neutral-border bg-neutral-surface'
+              }`}
             >
-              <HeartHandshake size={16} color="#1E5E45" />
+              <HeartHandshake size={16} color={hasActiveSos ? '#FFFFFF' : '#1E5E45'} />
               <Text
                 numberOfLines={1}
-                className="ml-2 text-neutral-textMain"
-                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12.5 }}
+                className={`ml-2 ${hasActiveSos ? 'text-white' : 'text-neutral-textMain'}`}
+                style={{
+                  fontFamily: hasActiveSos ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_600SemiBold',
+                  fontSize: 12.5,
+                }}
               >
                 {t('care.title')}
               </Text>

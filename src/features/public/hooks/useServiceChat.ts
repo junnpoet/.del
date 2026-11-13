@@ -10,8 +10,8 @@ export type ChatConversation = Database['public']['Tables']['chat_conversations'
     id: string;
     title: string;
     category: string;
-    rating_avg: number | null;
-    reviews_total: number | null;
+    rating_average: number | null;
+    reviews_count: number | null;
   } | null;
   provider?: {
     id: string;
@@ -46,7 +46,7 @@ export function useServiceChat(conversationId: string) {
         .from('chat_conversations')
         .select(`
           *,
-          service:services(id, title, category, rating_avg, reviews_total),
+          service:services(id, title, category, rating_average, reviews_count),
           provider:profiles!chat_conversations_provider_id_fkey(id, full_name, phone),
           client:profiles!chat_conversations_client_id_fkey(id, full_name, phone)
         `)
@@ -142,18 +142,27 @@ export function useServiceChat(conversationId: string) {
 
       try {
         setIsSending(true);
-        const { error } = await supabase.from('chat_messages').insert({
-          conversation_id: conversationId,
-          sender_id: userId,
-          content: trimmed,
-          is_review_request: false,
-        });
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .insert({
+            conversation_id: conversationId,
+            sender_id: userId,
+            content: trimmed,
+            is_review_request: false,
+          })
+          .select('*')
+          .single();
         if (error) throw error;
+        if (data) {
+          queryClient.setQueryData<ChatMessage[]>(messagesQueryKey, (old = []) =>
+            old.some((m) => m.id === data.id) ? old : [...old, data]
+          );
+        }
       } finally {
         setIsSending(false);
       }
     },
-    [conversationId, userId]
+    [conversationId, messagesQueryKey, queryClient, userId]
   );
 
   // 6. Request Visto Bueno Vecinal (Provider only)
@@ -162,17 +171,26 @@ export function useServiceChat(conversationId: string) {
 
     try {
       setIsSending(true);
-      const { error } = await supabase.from('chat_messages').insert({
-        conversation_id: conversationId,
-        sender_id: userId,
-        content: 'He solicitado el Visto Bueno Vecinal para este servicio.',
-        is_review_request: true,
-      });
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: userId,
+          content: 'He solicitado el Visto Bueno Vecinal para este servicio.',
+          is_review_request: true,
+        })
+        .select('*')
+        .single();
       if (error) throw error;
+      if (data) {
+        queryClient.setQueryData<ChatMessage[]>(messagesQueryKey, (old = []) =>
+          old.some((m) => m.id === data.id) ? old : [...old, data]
+        );
+      }
     } finally {
       setIsSending(false);
     }
-  }, [conversationId, userId]);
+  }, [conversationId, messagesQueryKey, queryClient, userId]);
 
   // 7. Submit Visto Bueno (Client only)
   const submitReview = useCallback(
@@ -193,19 +211,29 @@ export function useServiceChat(conversationId: string) {
         if (error) throw error;
 
         // Also post a confirmation message in the chat
-        await supabase.from('chat_messages').insert({
-          conversation_id: conversationId,
-          sender_id: userId,
-          content: `Visto Bueno Vecinal otorgado (${rating}/5).`,
-          is_review_request: false,
-        });
+        const { data: confirmMsg } = await supabase
+          .from('chat_messages')
+          .insert({
+            conversation_id: conversationId,
+            sender_id: userId,
+            content: `Visto Bueno Vecinal otorgado (${rating}/5).`,
+            is_review_request: false,
+          })
+          .select('*')
+          .single();
+
+        if (confirmMsg) {
+          queryClient.setQueryData<ChatMessage[]>(messagesQueryKey, (old = []) =>
+            old.some((m) => m.id === confirmMsg.id) ? old : [...old, confirmMsg]
+          );
+        }
 
         await queryClient.invalidateQueries({ queryKey: reviewQueryKey });
       } finally {
         setIsSubmittingReview(false);
       }
     },
-    [conversation?.service_id, conversationId, queryClient, reviewQueryKey, userId]
+    [conversation?.service_id, conversationId, messagesQueryKey, queryClient, reviewQueryKey, userId]
   );
 
   const isProvider = Boolean(userId && conversation?.provider_id === userId);

@@ -29,12 +29,12 @@ export function LanguageToggle({ large = false }: { large?: boolean }) {
               accessibilityRole="radio"
               accessibilityState={{ checked: active }}
               onPress={() => setLanguage(option)}
-              className={`flex-1 items-center justify-center rounded-xl ${
+              className={`flex-1 items-center justify-center px-2 py-1.5 rounded-xl ${
                 large ? 'min-h-[56px]' : 'min-h-[42px]'
               } ${active ? 'bg-neutral-surface' : ''}`}
             >
               <Text
-                className={active ? 'text-neutral-textMain' : 'text-neutral-textMuted'}
+                className={`text-center ${active ? 'text-neutral-textMain' : 'text-neutral-textMuted'}`}
                 style={{
                   fontFamily: active ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
                   fontSize: large ? 17 : 14,

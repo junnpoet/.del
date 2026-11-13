@@ -1,7 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Text,
@@ -211,6 +213,15 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
   const [inputText, setInputText] = useState('');
   const [reportModalVisible, setReportModalVisible] = useState(false);
 
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 60);
+    });
+    return () => showSub.remove();
+  }, []);
+
   const {
     conversation,
     messages,
@@ -236,7 +247,24 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
     if (!inputText.trim() || isSending) return;
     const text = inputText;
     setInputText('');
-    await sendMessage(text);
+    try {
+      await sendMessage(text);
+    } catch (err) {
+      setInputText(text);
+      Alert.alert('Error', err instanceof Error ? err.message : 'No se pudo enviar el mensaje.');
+    }
+  };
+
+  const handleRequestReview = async () => {
+    if (isSending) return;
+    try {
+      await requestReview();
+    } catch (err) {
+      Alert.alert(
+        'Error',
+        err instanceof Error ? err.message : 'No se pudo enviar la solicitud de Visto Bueno.'
+      );
+    }
   };
 
   if (isLoading) {
@@ -308,7 +336,7 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel={tp('chat.requestReviewA11y')}
-            onPress={requestReview}
+            onPress={handleRequestReview}
             disabled={isSending}
             className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-primary px-4 shadow-xs"
           >
@@ -325,15 +353,18 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
 
       {/* Message List */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        behavior="padding"
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 60 : 0}
       >
         <FlatList
           ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
+          className="flex-1"
+          style={{ flex: 1 }}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ padding: 16, paddingBottom: 20, flexGrow: 1 }}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           renderItem={({ item }: { item: ChatMessage }) => {
             const isMe = item.sender_id === currentUserId;
@@ -399,8 +430,8 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
 
         {/* Input Bar */}
         <View
-          className="border-t border-neutral-border/60 bg-neutral-surface px-4 py-2.5"
-          style={{ paddingBottom: Math.max(insets.bottom, 12) }}
+          className="z-10 border-t border-neutral-border/60 bg-neutral-surface px-4 py-2.5"
+          style={{ paddingBottom: Math.max(insets.bottom, 12), flexShrink: 0 }}
         >
           <View className="flex-row items-center rounded-2xl bg-neutral-mutedBg pl-3 pr-1.5 py-1">
             <TextInput
@@ -410,7 +441,7 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
               placeholder={tp('chat.inputPlaceholder')}
               placeholderTextColor="#9EA3AE"
               className="min-h-[48px] flex-1 py-2 text-neutral-textMain"
-              style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 14 }}
+              style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 14, maxHeight: 110 }}
               multiline
             />
             <TouchableOpacity

@@ -250,6 +250,22 @@ async function fetchMyPostsReply(
   return reply;
 }
 
+function formatAlreadyMemberGreeting(
+  firstName: string,
+  groupName: string,
+  sectorName: string,
+  prefix = ''
+): string {
+  return (
+    `${prefix}👋 ¡Hola ${firstName}! Ya detecté que tu número está registrado en la app y perteneces a *${groupName}* (${sectorName}). 🏘️✅\n\n` +
+    `Ya *no es necesario* autenticarte ni unirte a una comunidad cercana. Puedes usar el bot directamente para:\n` +
+    `🔍 *Buscar oficios o recursos*: ej. _"¿Alguien tendrá medicamentos?"_ o _"Necesito un gasfitero"_.\n` +
+    `📋 *Ver tus publicaciones*: ej. _"¿Qué publicaciones he hecho?"_.\n` +
+    `🎙️ *Enviar una nota de voz*: cuéntame qué necesitas o qué ofreces (primero buscaré si alguien ya lo ofrece).\n` +
+    `📝 *Publicar por texto*: escribe _"Publicar: necesito..."_ para pedir apoyo a tus vecinos.`
+  );
+}
+
 Deno.serve(async (req: Request) => {
   const url = new URL(req.url);
 
@@ -291,9 +307,15 @@ Deno.serve(async (req: Request) => {
       // Verificar si el vecino ya está registrado en profiles
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, full_name, group_id, phone')
+        .select('id, full_name, group_id, phone, neighborhood_groups(name, sector_name)')
         .or(`phone.eq.${fromPhone},phone.eq.${nationalPhone}`)
         .maybeSingle();
+
+      // @ts-ignore joined relation
+      const memberGroupName: string = profile?.neighborhood_groups?.name || 'tu comunidad';
+      // @ts-ignore joined relation
+      const memberSectorName: string = profile?.neighborhood_groups?.sector_name || 'tu sector';
+      const memberFirstName: string = profile?.full_name?.split(/\s+/)[0] || contactName;
 
       // CASO A: Onboarding y Admisión para vecinos sin grupo asignado
       if (!profile || !profile.group_id) {
@@ -471,6 +493,20 @@ Deno.serve(async (req: Request) => {
         }
       }
 
+      // Si ya pertenece a una comunidad y comparte ubicación, confirmarle que ya está activo
+      if (message.type === 'location' && message.location) {
+        await sendWhatsAppText(
+          fromPhone,
+          formatAlreadyMemberGreeting(
+            memberFirstName,
+            memberGroupName,
+            memberSectorName,
+            '📍 ¡Recibí tu ubicación!\n\n'
+          )
+        );
+        return new Response('EVENT_RECEIVED', { status: 200 });
+      }
+
       // CASO B: Nota de voz recibida (Publicación asistida por IA Gemini)
       if (message.type === 'audio' && message.audio) {
         await sendWhatsAppText(fromPhone, '🎙️ ¡Audio recibido! Estoy procesando tu nota de voz con Inteligencia Artificial...');
@@ -505,8 +541,12 @@ Deno.serve(async (req: Request) => {
           if (interpreted.intent === 'GREETING_HELP') {
             await sendWhatsAppText(
               fromPhone,
-              `🎙️ Escuché: _"${transcript}"_\n\n` +
-              `👋 ¡Hola ${profile?.full_name?.split(/\s+/)[0] || contactName}! Puedes enviarme un audio o texto para buscar medicamentos, oficios, consultar tus publicaciones o publicar un pedido en el Muro Barrial. 🏘️`
+              formatAlreadyMemberGreeting(
+                memberFirstName,
+                memberGroupName,
+                memberSectorName,
+                `🎙️ Escuché: _"${transcript}"_\n\n`
+              )
             );
             return new Response('EVENT_RECEIVED', { status: 200 });
           }
@@ -684,12 +724,7 @@ Deno.serve(async (req: Request) => {
         if (interpreted.intent === 'GREETING_HELP') {
           await sendWhatsAppText(
             fromPhone,
-            `👋 ¡Hola ${profile?.full_name?.split(/\s+/)[0] || contactName}! Qué gusto saludarte. 🏘️\n\n` +
-            `Puedes escribirme o enviarme un audio para:\n` +
-            `🔍 *Buscar oficios o recursos*: ej. _"¿Alguien tendrá medicamentos?"_ o _"Necesito un gasfitero"_.\n` +
-            `📋 *Ver tus publicaciones*: ej. _"¿Qué publicaciones he hecho?"_.\n` +
-            `🎙️ *Enviar una nota de voz*: cuéntame qué necesitas o qué ofreces y lo publico en el Muro Barrial.\n` +
-            `📝 *Publicar por texto*: escribe _"Publicar: necesito..."_ para pedir apoyo a tus vecinos.`
+            formatAlreadyMemberGreeting(memberFirstName, memberGroupName, memberSectorName)
           );
           return new Response('EVENT_RECEIVED', { status: 200 });
         }
