@@ -51,19 +51,21 @@ function buildPickerHtml(initial: Coordinates): string {
       var initial = ${initialJson};
       var map = L.map('map', {
         zoomControl: false,
-        attributionControl: false
+        attributionControl: false,
+        maxZoom: 20
       }).setView([initial.latitude, initial.longitude], 17);
 
       var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
+        maxNativeZoom: 19,
+        maxZoom: 20
       });
       var arcgis = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
         maxNativeZoom: 17,
-        maxZoom: 19
+        maxZoom: 20
       });
-      var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxNativeZoom: 17,
-        maxZoom: 19
+      var satellite = L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        subdomains: ['0', '1', '2', '3'],
+        maxZoom: 20
       });
       var useArcgisStreet = false;
       osm.on('tileerror', function () {
