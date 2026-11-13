@@ -562,50 +562,8 @@ export default function DirectoryScreen() {
           </View>
         </View>
 
-        {/* Row 2: Radius & Favorites strip filling full width */}
-        <View pointerEvents="box-none" className="mt-2.5 flex-row flex-wrap items-center gap-2">
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={cycleRadius}
-            className="min-h-[40px] flex-grow flex-row items-center justify-center rounded-full border border-neutral-border bg-neutral-mutedBg px-3.5"
-          >
-            <MapPin size={14} color="#1E5E45" />
-            <Text
-              className="ml-1 text-neutral-textMain"
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
-            >
-              {currentRadiusLabel}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityState={{ selected: onlyFavorites }}
-            onPress={() => setOnlyFavorites((prev) => !prev)}
-            className={`min-h-[40px] flex-grow flex-row items-center justify-center rounded-full border px-3.5 ${
-              onlyFavorites
-                ? 'border-emergency-alert bg-[#FEE2E2]'
-                : 'border-neutral-border bg-neutral-surface'
-            }`}
-          >
-            <Heart
-              size={14}
-              color={onlyFavorites ? '#D90429' : '#6C727A'}
-              fill={onlyFavorites ? '#D90429' : 'none'}
-            />
-            <Text
-              className={`ml-1.5 ${
-                onlyFavorites ? 'text-emergency-alert' : 'text-neutral-textMain'
-              }`}
-              style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
-            >
-              {tp('public.favoritesChip')} ({directory.favorites.length})
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Row 3: Quick type selectors (Servicios / Productos / Auxilio) */}
-        <View pointerEvents="box-none" className="mt-2 flex-row items-center gap-2">
+        {/* Row 2: Single row with Servicios / Productos / Auxilio + compact Favorites */}
+        <View pointerEvents="box-none" className="mt-2.5 flex-row items-center gap-1.5">
           {LISTING_TYPES.map((typeKey) => {
             const active = listingTypeFilter === typeKey;
             const meta = LISTING_TYPE_META[typeKey];
@@ -627,10 +585,10 @@ export default function DirectoryScreen() {
                 <Icon size={14} color={active ? '#FFFFFF' : meta.color} />
                 <Text
                   numberOfLines={1}
-                  className="ml-1.5"
+                  className="ml-1"
                   style={{
                     fontFamily: 'PlusJakartaSans_700Bold',
-                    fontSize: 12.5,
+                    fontSize: 12,
                     color: active ? '#FFFFFF' : meta.color,
                   }}
                 >
@@ -639,6 +597,32 @@ export default function DirectoryScreen() {
               </TouchableOpacity>
             );
           })}
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={tp('public.favoritesChip')}
+            accessibilityState={{ selected: onlyFavorites }}
+            onPress={() => setOnlyFavorites((prev) => !prev)}
+            className={`min-h-[38px] flex-row items-center justify-center rounded-full border px-2.5 ${
+              onlyFavorites
+                ? 'border-emergency-alert bg-[#FEE2E2]'
+                : 'border-neutral-border bg-neutral-surface'
+            }`}
+          >
+            <Heart
+              size={14}
+              color={onlyFavorites ? '#D90429' : '#6C727A'}
+              fill={onlyFavorites ? '#D90429' : 'none'}
+            />
+            <Text
+              className={`ml-1 ${
+                onlyFavorites ? 'text-emergency-alert' : 'text-neutral-textMain'
+              }`}
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+            >
+              ({directory.favorites.length})
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
