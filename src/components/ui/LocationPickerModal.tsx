@@ -83,7 +83,9 @@ function buildPickerHtml(initial: Coordinates): string {
       };
 
       window.__recenterMap = function (lat, lng) {
+        map.stop();
         map.setView([lat, lng], 17, { animate: true });
+        notifyCenter();
       };
 
       function notifyCenter() {
@@ -117,12 +119,19 @@ export function LocationPickerModal({
   const webViewRef = useRef<{ injectJavaScript: (script: string) => void } | null>(null);
   const [selectedCoords, setSelectedCoords] = useState<Coordinates>(initialCoords);
   const [isRecentering, setIsRecentering] = useState(false);
+  const htmlRef = useRef<string>('');
+  const prevVisibleRef = useRef(false);
+
+  if (visible && !prevVisibleRef.current) {
+    htmlRef.current = buildPickerHtml(initialCoords);
+  }
+  prevVisibleRef.current = visible;
 
   useEffect(() => {
     if (visible) {
       setSelectedCoords(initialCoords);
     }
-  }, [visible, initialCoords]);
+  }, [visible, initialCoords.latitude, initialCoords.longitude]);
 
   useEffect(() => {
     if (!visible) return;
@@ -132,14 +141,22 @@ export function LocationPickerModal({
   }, [visible, gpsCoords.latitude, gpsCoords.longitude]);
 
   const handleReturnToGps = async () => {
+    // Recenter immediately to the known GPS coordinates for instant feedback
+    setSelectedCoords(gpsCoords);
+    webViewRef.current?.injectJavaScript(
+      `window.__setGpsMarker && window.__setGpsMarker(${gpsCoords.latitude}, ${gpsCoords.longitude}); window.__recenterMap && window.__recenterMap(${gpsCoords.latitude}, ${gpsCoords.longitude}); true;`
+    );
+
+    if (!onRecenterGps) return;
     setIsRecentering(true);
     try {
-      const fresh = onRecenterGps ? await onRecenterGps() : null;
-      const target = fresh ?? gpsCoords;
-      setSelectedCoords(target);
-      webViewRef.current?.injectJavaScript(
-        `window.__setGpsMarker && window.__setGpsMarker(${target.latitude}, ${target.longitude}); window.__recenterMap && window.__recenterMap(${target.latitude}, ${target.longitude}); true;`
-      );
+      const fresh = await onRecenterGps();
+      if (fresh) {
+        setSelectedCoords(fresh);
+        webViewRef.current?.injectJavaScript(
+          `window.__setGpsMarker && window.__setGpsMarker(${fresh.latitude}, ${fresh.longitude}); window.__recenterMap && window.__recenterMap(${fresh.latitude}, ${fresh.longitude}); true;`
+        );
+      }
     } finally {
       setIsRecentering(false);
     }
@@ -196,7 +213,7 @@ export function LocationPickerModal({
               ref={webViewRef as any}
               originWhitelist={['*']}
               source={{
-                html: buildPickerHtml(initialCoords),
+                html: htmlRef.current,
                 baseUrl: 'https://sumayni.app',
               }}
               javaScriptEnabled

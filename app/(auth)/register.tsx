@@ -147,7 +147,40 @@ export default function RegisterScreen() {
   const handleCaptureLocation = async () => {
     setIsLocating(true);
     try {
-      await fetchCurrentGpsCoords();
+      const Location = await import('expo-location');
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(t('register.locationPermTitle'), t('register.locationPerm'));
+        setGpsCoords((prev) => prev ?? { latitude: -12.0125, longitude: -77.0815 });
+        setPickerOpen(true);
+        return;
+      }
+
+      const lastKnown = await Location.getLastKnownPositionAsync().catch(() => null);
+      if (lastKnown) {
+        setGpsCoords({
+          latitude: lastKnown.coords.latitude,
+          longitude: lastKnown.coords.longitude,
+        });
+      } else {
+        setGpsCoords((prev) => prev ?? coords ?? { latitude: -12.0125, longitude: -77.0815 });
+      }
+
+      // Open the map modal immediately without waiting for a slow fresh GPS fix.
+      setPickerOpen(true);
+
+      // Refresh live GPS in the background so the blue dot and "Mi GPS" stay accurate.
+      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
+        .then((loc) => {
+          setGpsCoords({
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+          });
+        })
+        .catch(() => undefined);
+    } catch (err) {
+      console.warn('GPS fallback activated:', err);
+      setGpsCoords((prev) => prev ?? { latitude: -12.0125, longitude: -77.0815 });
       setPickerOpen(true);
     } finally {
       setIsLocating(false);
