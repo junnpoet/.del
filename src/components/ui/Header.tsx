@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AlertTriangle, ChevronLeft } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../../i18n';
 import { useZoneEmergency } from '../../features/emergency/hooks/useEmergencyRealtime';
+import { PublicEmergencyInfoModal } from '../../features/emergency/components/PublicEmergencyInfoModal';
+import { useMembership } from '../../features/community/hooks/useMembership';
 
 export interface HeaderProps {
   title: string;
@@ -29,6 +31,8 @@ export const Header: React.FC<HeaderProps> = ({
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
   const { zoneEmergency } = useZoneEmergency();
+  const membership = useMembership();
+  const [emergencyInfoOpen, setEmergencyInfoOpen] = useState(false);
   const effectiveEmergency = isEmergency || Boolean(zoneEmergency);
 
   const handleBack = () => {
@@ -89,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {title}
             </Text>
-            {subtitle && (
+            {subtitle && !zoneEmergency && (
               <Text
                 className={`mt-0.5 ${subtitleStyles}`}
                 style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
@@ -105,16 +109,29 @@ export const Header: React.FC<HeaderProps> = ({
       </View>
 
       {zoneEmergency && (
-        <View className="mt-1.5 flex-row items-center rounded-xl bg-red-600 px-2.5 py-1 self-start">
+        <TouchableOpacity
+          accessibilityRole="button"
+          activeOpacity={0.85}
+          onPress={() => setEmergencyInfoOpen(true)}
+          className="mt-1.5 flex-row items-center rounded-xl bg-red-600 px-2.5 py-1 self-start"
+        >
           <AlertTriangle size={12} color="#FFFFFF" />
           <Text
-            className="ml-1.5 uppercase tracking-wider text-white"
-            style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 10.5 }}
+            className="ml-1.5 text-white"
+            style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 11 }}
           >
-            Modo Emergencia · {zoneEmergency.event_type}
+            Info Emergencia...
           </Text>
-        </View>
+        </TouchableOpacity>
       )}
+
+      <PublicEmergencyInfoModal
+        visible={emergencyInfoOpen}
+        onClose={() => setEmergencyInfoOpen(false)}
+        eventType={zoneEmergency?.event_type}
+        description={zoneEmergency?.description}
+        isMember={membership.state === 'MIEMBRO'}
+      />
     </View>
   );
 };
