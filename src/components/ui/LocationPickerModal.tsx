@@ -1,7 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, Platform, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  Easing,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, Home, Layers, LocateFixed, X } from 'lucide-react-native';
+import { ArrowLeft, Check, Home, Layers, LocateFixed, MapPin, X } from 'lucide-react-native';
 
 export interface Coordinates {
   latitude: number;
@@ -12,7 +25,7 @@ export interface LocationPickerModalProps {
   visible: boolean;
   initialCoords: Coordinates;
   gpsCoords: Coordinates;
-  onConfirm: (coords: Coordinates) => void;
+  onConfirm: (coords: Coordinates, address: string) => void;
   onClose: () => void;
   onRecenterGps?: () => Promise<Coordinates | null>;
 }
@@ -141,6 +154,12 @@ export function LocationPickerModal({
   const [selectedCoords, setSelectedCoords] = useState<Coordinates>(initialCoords);
   const [isRecentering, setIsRecentering] = useState(false);
   const [satellite, setSatellite] = useState(false);
+  const [confirmCardOpen, setConfirmCardOpen] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [streetLine, setStreetLine] = useState('');
+  const [reference, setReference] = useState('');
+  const [district, setDistrict] = useState('');
+  const cardSlideY = useRef(new Animated.Value(420)).current;
   const htmlRef = useRef<string>('');
   const prevVisibleRef = useRef(false);
 
@@ -152,8 +171,10 @@ export function LocationPickerModal({
   useEffect(() => {
     if (visible) {
       setSelectedCoords(initialCoords);
+      setConfirmCardOpen(false);
+      cardSlideY.setValue(420);
     }
-  }, [visible, initialCoords.latitude, initialCoords.longitude]);
+  }, [visible, initialCoords.latitude, initialCoords.longitude, cardSlideY]);
 
   useEffect(() => {
     if (!visible) return;
@@ -190,6 +211,66 @@ export function LocationPickerModal({
     } finally {
       setIsRecentering(false);
     }
+  };
+
+  const handleOpenAddressCard = async () => {
+    setConfirmCardOpen(true);
+    cardSlideY.setValue(420);
+    Animated.timing(cardSlideY, {
+      toValue: 0,
+      duration: 190,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+
+    setIsGeocoding(true);
+    try {
+      const Location = await import('expo-location');
+      const reverse = await Location.reverseGeocodeAsync({
+        latitude: selectedCoords.latitude,
+        longitude: selectedCoords.longitude,
+      }).catch(() => []);
+
+      if (reverse.length > 0) {
+        const item = reverse[0];
+        const streetParts = [item.street, item.streetNumber || item.name]
+          .filter((v): v is string => Boolean(v && v.trim()))
+          .join(' ')
+          .trim();
+        const districtPart = (item.district || item.subregion || item.city || '').trim();
+        setStreetLine(streetParts);
+        setDistrict(districtPart);
+      } else {
+        setStreetLine('');
+        setDistrict('');
+      }
+    } catch {
+      setStreetLine('');
+      setDistrict('');
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
+  const handleCloseAddressCard = () => {
+    Animated.timing(cardSlideY, {
+      toValue: 420,
+      duration: 150,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) setConfirmCardOpen(false);
+    });
+  };
+
+  const handleConfirmAddress = () => {
+    const formatted = [streetLine.trim(), reference.trim(), district.trim()]
+      .filter(Boolean)
+      .join(', ');
+    const finalAddress =
+      formatted ||
+      `Lat ${selectedCoords.latitude.toFixed(5)}, Lng ${selectedCoords.longitude.toFixed(5)}`;
+    onConfirm(selectedCoords, finalAddress);
   };
 
   if (!visible) return null;
@@ -356,7 +437,7 @@ export function LocationPickerModal({
           </Text>
           <TouchableOpacity
             accessibilityRole="button"
-            onPress={() => onConfirm(selectedCoords)}
+            onPress={handleOpenAddressCard}
             activeOpacity={0.9}
             className="min-h-[50px] flex-row items-center justify-center rounded-2xl bg-primary px-4"
           >
@@ -369,6 +450,156 @@ export function LocationPickerModal({
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Bottom Address Verification Card */}
+        {confirmCardOpen && (
+          <View className="absolute inset-0 justify-end">
+            <Pressable
+              onPress={handleCloseAddressCard}
+              className="absolute inset-0 bg-black/40"
+            />
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
+              <Animated.View
+                style={{
+                  transform: [{ translateY: cardSlideY }],
+                  paddingBottom: Math.max(insets.bottom + 14, 24),
+                }}
+                className="rounded-t-3xl bg-neutral-surface px-5 pt-4 shadow-2xl"
+              >
+                <View className="mb-3 flex-row items-center justify-between">
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={handleCloseAddressCard}
+                    className="flex-row items-center rounded-full bg-neutral-mutedBg px-3 py-1.5"
+                  >
+                    <ArrowLeft size={14} color="#1E5E45" strokeWidth={2.3} />
+                    <Text
+                      className="ml-1 text-primary"
+                      style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+                    >
+                      Cambiar punto
+                    </Text>
+                  </TouchableOpacity>
+                  <Text
+                    className="text-neutral-textMuted"
+                    style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11.5 }}
+                  >
+                    {selectedCoords.latitude.toFixed(5)}, {selectedCoords.longitude.toFixed(5)}
+                  </Text>
+                </View>
+
+                <View className="mb-3 flex-row items-start">
+                  <View className="mr-2.5 mt-0.5 h-9 w-9 items-center justify-center rounded-xl bg-[#EDF5F1]">
+                    <MapPin size={18} color="#1E5E45" strokeWidth={2.3} />
+                  </View>
+                  <View className="flex-1">
+                    <Text
+                      className="text-neutral-textMain"
+                      style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 }}
+                    >
+                      ¿Esta dirección corresponde al punto marcado?
+                    </Text>
+                    <Text
+                      className="mt-0.5 text-neutral-textMuted"
+                      style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 12.5 }}
+                    >
+                      Si no es exacta, ajusta las partes de tu dirección antes de confirmar.
+                    </Text>
+                  </View>
+                </View>
+
+                {isGeocoding ? (
+                  <View className="items-center justify-center py-6">
+                    <ActivityIndicator size="small" color="#1E5E45" />
+                    <Text
+                      className="mt-2 text-neutral-textMuted"
+                      style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12.5 }}
+                    >
+                      Obteniendo dirección del punto marcado...
+                    </Text>
+                  </View>
+                ) : (
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    style={{ maxHeight: 280 }}
+                  >
+                    <View className="mb-3">
+                      <Text
+                        className="mb-1 text-neutral-textMain"
+                        style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12.5 }}
+                      >
+                        Calle / Jirón / Av. y número
+                      </Text>
+                      <TextInput
+                        value={streetLine}
+                        onChangeText={setStreetLine}
+                        placeholder="Ej: Jr. Los Jazmines 340"
+                        placeholderTextColor="#9EA3AE"
+                        className="min-h-[44px] rounded-xl border border-neutral-border bg-neutral-mutedBg px-3.5 text-neutral-textMain"
+                        style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 14 }}
+                      />
+                    </View>
+
+                    <View className="mb-3">
+                      <Text
+                        className="mb-1 text-neutral-textMain"
+                        style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12.5 }}
+                      >
+                        Mz. / Lote / Dpto. o referencia (opcional)
+                      </Text>
+                      <TextInput
+                        value={reference}
+                        onChangeText={setReference}
+                        placeholder="Ej: Mz. D Lt. 12, frente al parque"
+                        placeholderTextColor="#9EA3AE"
+                        className="min-h-[44px] rounded-xl border border-neutral-border bg-neutral-mutedBg px-3.5 text-neutral-textMain"
+                        style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 14 }}
+                      />
+                    </View>
+
+                    <View className="mb-4">
+                      <Text
+                        className="mb-1 text-neutral-textMain"
+                        style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12.5 }}
+                      >
+                        Distrito / Zona
+                      </Text>
+                      <TextInput
+                        value={district}
+                        onChangeText={setDistrict}
+                        placeholder="Ej: San Martín de Porres"
+                        placeholderTextColor="#9EA3AE"
+                        className="min-h-[44px] rounded-xl border border-neutral-border bg-neutral-mutedBg px-3.5 text-neutral-textMain"
+                        style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 14 }}
+                      />
+                    </View>
+                  </ScrollView>
+                )}
+
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={handleConfirmAddress}
+                  disabled={isGeocoding}
+                  activeOpacity={0.9}
+                  className={`min-h-[50px] flex-row items-center justify-center rounded-2xl px-4 ${
+                    isGeocoding ? 'bg-primary/60' : 'bg-primary'
+                  }`}
+                >
+                  <Check size={18} color="#FFFFFF" strokeWidth={2.5} />
+                  <Text
+                    className="ml-2 text-white"
+                    style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
+                  >
+                    Confirmar dirección
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </KeyboardAvoidingView>
+          </View>
+        )}
       </View>
     </Modal>
   );

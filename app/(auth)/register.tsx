@@ -187,30 +187,10 @@ export default function RegisterScreen() {
     }
   };
 
-  const handleConfirmPickedLocation = async (picked: Coordinates) => {
+  const handleConfirmPickedLocation = (picked: Coordinates, address: string) => {
     setCoords(picked);
+    setHomeAddress(address);
     setPickerOpen(false);
-    if (homeAddress.trim()) return;
-
-    try {
-      const Location = await import('expo-location');
-      const reverse = await Location.reverseGeocodeAsync({
-        latitude: picked.latitude,
-        longitude: picked.longitude,
-      }).catch(() => []);
-
-      if (reverse.length > 0) {
-        const item = reverse[0];
-        const suggested = `${item.street || ''} ${item.name || ''}, ${item.district || item.subregion || ''}`.trim();
-        if (suggested) {
-          setHomeAddress(suggested);
-          return;
-        }
-      }
-      setHomeAddress('Jr. Los Jazmines 340, San Martín de Porres');
-    } catch {
-      setHomeAddress('Jr. Los Jazmines 340, San Martín de Porres');
-    }
   };
 
   const handleNextFromStep1 = () => {
@@ -492,11 +472,12 @@ export default function RegisterScreen() {
               </View>
 
               <Input
-                label={t('register.address')}
-                placeholder={t('register.addressPlaceholder')}
+                label={`${t('register.address')} (referencial)`}
+                placeholder="Se completará desde el mapa"
                 value={homeAddress}
-                onChangeText={setHomeAddress}
-                returnKeyType="done"
+                editable={false}
+                helperText="Solo se define o modifica desde el modal del mapa."
+                className="bg-neutral-mutedBg/70 text-neutral-textMuted"
               />
 
               <Button
