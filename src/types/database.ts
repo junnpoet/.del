@@ -777,6 +777,10 @@ export type Database = {
         Args: { buddy_id: string; vulnerable_id: string }
         Returns: boolean
       }
+      remove_group_member: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

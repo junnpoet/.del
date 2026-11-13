@@ -10,7 +10,9 @@ import {
   Megaphone,
   Smartphone,
   Siren,
+  UserMinus,
   UserPlus,
+  Users,
   X,
 } from 'lucide-react-native';
 import { Header } from '../../../components/ui/Header';
@@ -18,6 +20,7 @@ import { Card } from '../../../components/ui/Card';
 import { Chip } from '../../../components/ui/Chip';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
+import { useAuth } from '../../../services/auth';
 import { useI18n, type TranslationKey } from '../../../i18n';
 import { useMembership } from '../hooks/useMembership';
 import { useCareNetwork, type CareAssignment } from '../hooks/useCareNetwork';
@@ -27,13 +30,14 @@ import { StateMessage } from '../components/StateMessage';
 import { SlideToActivate } from '../../emergency/components/SlideToActivate';
 import { confirmAction, errorMessage, showMessage, timeAgo } from '../utils';
 
-type Section = 'requests' | 'reports' | 'padrinos' | 'news';
+type Section = 'requests' | 'members' | 'reports' | 'padrinos' | 'news';
 
-const SECTIONS: { key: Section; label: TranslationKey }[] = [
-  { key: 'requests', label: 'leader.tab.requests' },
-  { key: 'reports', label: 'leader.tab.reports' },
-  { key: 'padrinos', label: 'leader.tab.padrinos' },
-  { key: 'news', label: 'leader.tab.news' },
+const SECTIONS: { key: Section; labelKey?: TranslationKey; fallbackLabel?: string }[] = [
+  { key: 'requests', labelKey: 'leader.tab.requests' },
+  { key: 'members', fallbackLabel: 'Miembros' },
+  { key: 'reports', labelKey: 'leader.tab.reports' },
+  { key: 'padrinos', labelKey: 'leader.tab.padrinos' },
+  { key: 'news', labelKey: 'leader.tab.news' },
 ];
 
 function SectionTitle({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
@@ -66,6 +70,7 @@ function Badge({ label, color, bg, icon }: { label: string; color: string; bg: s
 /** Panel de Gestión del Dirigente Barrial (SPEC-04 §2.5). */
 export default function LeaderDashboardScreen() {
   const router = useRouter();
+  const { session } = useAuth();
   const { t, tCategory } = useI18n();
   const { isLeader, state } = useMembership();
   const dashboard = useLeaderDashboard(isLeader);
@@ -106,8 +111,23 @@ export default function LeaderDashboardScreen() {
   }
 
   const requests = dashboard.joinRequests.data ?? [];
+  const members = dashboard.members.data ?? [];
   const reports = dashboard.reports.data ?? [];
   const people = dashboard.people.data;
+
+  const removeMember = async (id: string, name: string) => {
+    const ok = await confirmAction(
+      'Retirar miembro',
+      `¿Seguro que deseas retirar a ${name} de la comunidad? Pasará a la capa pública.`,
+      'Retirar',
+      true
+    );
+    if (!ok) return;
+    dashboard.removeMember.mutate(id, {
+      onSuccess: () => showMessage('Miembro retirado', `${name} fue retirado de la comunidad.`),
+      onError: (error) => showMessage('No se pudo retirar', errorMessage(error)),
+    });
+  };
 
   const approve = (id: string, name: string | null) =>
     dashboard.approveRequest.mutate(id, {
@@ -198,6 +218,7 @@ export default function LeaderDashboardScreen() {
 
   const counts: Record<Section, number | null> = {
     requests: requests.length,
+    members: members.length,
     reports: reports.length,
     padrinos: null,
     news: null,
@@ -215,14 +236,17 @@ export default function LeaderDashboardScreen() {
 
       <View className="px-4 pt-3">
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {SECTIONS.map((item) => (
-            <Chip
-              key={item.key}
-              label={counts[item.key] ? `${t(item.label)} (${counts[item.key]})` : t(item.label)}
-              isActive={section === item.key}
-              onPress={() => setSection(item.key)}
-            />
-          ))}
+          {SECTIONS.map((item) => {
+            const baseLabel = item.labelKey ? t(item.labelKey) : (item.fallbackLabel ?? '');
+            return (
+              <Chip
+                key={item.key}
+                label={counts[item.key] ? `${baseLabel} (${counts[item.key]})` : baseLabel}
+                isActive={section === item.key}
+                onPress={() => setSection(item.key)}
+              />
+            );
+          })}
         </ScrollView>
       </View>
 
@@ -327,7 +351,95 @@ export default function LeaderDashboardScreen() {
           </>
         )}
 
-        {/* 2. Denuncias */}
+        {/* 2. Gestión de miembros */}
+        {section === 'members' && (
+          <>
+            <SectionTitle
+              icon={<Users size={18} color="#1E5E45" />}
+              title="Miembros de la comunidad"
+              subtitle="Vecinos integrados actualmente a tu junta vecinal."
+            />
+            {dashboard.members.isLoading ? (
+              <StateMessage loading title="Cargando miembros..." />
+            ) : dashboard.members.isError ? (
+              <StateMessage title={t('leader.loadError')} message={errorMessage(dashboard.members.error)} />
+            ) : members.length === 0 ? (
+              <StateMessage title="Sin miembros registrados" message="Aún no hay vecinos integrados en este grupo." />
+            ) : (
+              members.map((member) => {
+                const isSelf = member.id === session?.user.id || member.role === 'dirigente';
+                const busy =
+                  dashboard.removeMember.isPending && dashboard.removeMember.variables === member.id;
+                return (
+                  <Card key={member.id} className="p-4 mb-3">
+                    <View className="flex-row items-start justify-between">
+                      <View className="flex-1 pr-3">
+                        <View className="flex-row flex-wrap items-center mb-1">
+                          <Badge
+                            label={member.role === 'dirigente' ? 'Dirigente' : 'Vecino'}
+                            color={member.role === 'dirigente' ? '#1E5E45' : '#0284C7'}
+                            bg={member.role === 'dirigente' ? '#EDF5F1' : '#E0F2FE'}
+                          />
+                          {member.is_vulnerable && (
+                            <Badge label="Vulnerable" color="#D97706" bg="#FEF3C7" />
+                          )}
+                        </View>
+                        <Text
+                          className="text-neutral-textMain"
+                          style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 }}
+                        >
+                          {member.full_name}
+                        </Text>
+                        <View className="flex-row items-center mt-0.5">
+                          <MapPin size={13} color="#6C727A" />
+                          <Text
+                            className="text-neutral-textMuted ml-1 flex-1"
+                            style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
+                          >
+                            {member.home_address}
+                          </Text>
+                        </View>
+                        {Boolean(member.phone) && (
+                          <Text
+                            className="text-neutral-textLight mt-0.5"
+                            style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 12 }}
+                          >
+                            Tel: {member.phone}
+                          </Text>
+                        )}
+                      </View>
+
+                      {!isSelf && (
+                        <TouchableOpacity
+                          accessibilityRole="button"
+                          disabled={busy}
+                          onPress={() => removeMember(member.id, member.full_name)}
+                          className="min-h-[42px] px-3 rounded-xl border border-red-200 bg-red-50 flex-row items-center justify-center"
+                        >
+                          {busy ? (
+                            <ActivityIndicator size="small" color="#DC2626" />
+                          ) : (
+                            <>
+                              <UserMinus size={15} color="#DC2626" />
+                              <Text
+                                className="ml-1.5 text-red-700"
+                                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12.5 }}
+                              >
+                                Retirar
+                              </Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </Card>
+                );
+              })
+            )}
+          </>
+        )}
+
+        {/* 3. Denuncias */}
         {section === 'reports' && (
           <>
             <SectionTitle

@@ -10,6 +10,7 @@ import { tr } from '../../../i18n';
 const JOIN_REQUESTS_KEY = ['leader', 'join-requests'] as const;
 const REPORTS_KEY = ['leader', 'service-reports'] as const;
 const PEOPLE_KEY = ['leader', 'people'] as const;
+const MEMBERS_KEY = ['leader', 'members'] as const;
 const GROUP_KEY = ['leader', 'group'] as const;
 
 const REPORT_REASONS = ['COBRO_ABUSIVO', 'INCUMPLIMIENTO', 'PERFIL_FALSO', 'FALTA_RESPETO', 'OTRO'] as const;
@@ -72,7 +73,11 @@ export function useJoinRequests(enabled: boolean) {
       const { error } = await supabase.rpc('approve_join_request', { request_id: requestId });
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: JOIN_REQUESTS_KEY }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: JOIN_REQUESTS_KEY });
+      queryClient.invalidateQueries({ queryKey: MEMBERS_KEY });
+      queryClient.invalidateQueries({ queryKey: PEOPLE_KEY });
+    },
   });
 
   const rejectRequest = useMutation({
@@ -218,11 +223,42 @@ export function useLeaderDashboard(enabled: boolean) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: NEWS_QUERY_KEY }),
   });
 
+  // 5. Miembros actuales de la comunidad.
+  const members = useQuery({
+    queryKey: [...MEMBERS_KEY, userId, group.data?.id],
+    enabled: active && Boolean(group.data?.id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, phone, home_address, role, is_vulnerable')
+        .eq('group_id', group.data!.id)
+        .order('full_name');
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const removeMember = useMutation({
+    mutationFn: async (targetUserId: string) => {
+      const { error } = await supabase.rpc('remove_group_member', {
+        target_user_id: targetUserId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: MEMBERS_KEY });
+      queryClient.invalidateQueries({ queryKey: PEOPLE_KEY });
+      queryClient.invalidateQueries({ queryKey: CARE_NETWORK_KEY });
+    },
+  });
+
   return {
     group: group.data ?? null,
     joinRequests,
     approveRequest,
     rejectRequest,
+    members,
+    removeMember,
     reports,
     resolveReport,
     people,
