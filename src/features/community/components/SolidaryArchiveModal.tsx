@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Archive, CheckCircle2, ChevronRight, Pin, X } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { SolidaryPost } from '../hooks/useSolidaryFeed';
 import type { EmergencyEventRow } from '../../emergency/hooks/useEmergencyRealtime';
 import { SolidaryPostCard } from './SolidaryPostCard';
@@ -31,6 +32,7 @@ export function SolidaryArchiveModal({
   onCoordinate,
   onToggleVolunteer,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<'posts' | 'emergencies'>('posts');
   const [selectedEmergency, setSelectedEmergency] = useState<EmergencyEventRow | null>(null);
 
@@ -38,7 +40,8 @@ export function SolidaryArchiveModal({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable className="flex-1 bg-black/45 justify-end" onPress={onClose}>
         <Pressable
-          className="bg-neutral-background rounded-t-3xl h-[85%] p-5"
+          className="bg-neutral-background rounded-t-3xl h-[85%] px-5 pt-5"
+          style={{ paddingBottom: Math.max(insets.bottom + 12, 20) }}
           onPress={(e) => e.stopPropagation()}
         >
           <View className="flex-row items-center justify-between mb-4">

@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronLeft,
   ChevronRight,
@@ -102,6 +103,7 @@ export function EmergencySupportGroupsModal({
   readOnly = false,
 }: Props) {
   const { profile } = useAuth();
+  const insets = useSafeAreaInsets();
   const [activeGroup, setActiveGroup] = useState<SupportGroupDef | null>(null);
   const [messagesByGroup, setMessagesByGroup] = useState<Record<string, GroupChatMessage[]>>({});
   const [draft, setDraft] = useState('');
@@ -163,7 +165,10 @@ export function EmergencySupportGroupsModal({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <Pressable className="flex-1" onPress={onClose} />
-        <View className="bg-neutral-surface rounded-t-3xl h-[86%] p-5">
+        <View
+          className="bg-neutral-surface rounded-t-3xl h-[86%] px-5 pt-5"
+          style={{ paddingBottom: Math.max(insets.bottom + 12, 20) }}
+        >
           {!activeGroup ? (
             <>
               <View className="flex-row items-center justify-between mb-3">
