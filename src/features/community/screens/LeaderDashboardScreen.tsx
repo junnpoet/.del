@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Check,
+  ChevronDown,
+  ChevronUp,
   Flag,
   HeartHandshake,
   Lock,
@@ -76,6 +87,7 @@ function Badge({ label, color, bg, icon }: { label: string; color: string; bg: s
 /** Panel de Gestión del Dirigente Barrial (SPEC-04 §2.5). */
 export default function LeaderDashboardScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { session } = useAuth();
   const { t, tCategory } = useI18n();
   const { isLeader, state } = useMembership();
@@ -83,6 +95,8 @@ export default function LeaderDashboardScreen() {
   const { activeEvent, resolveEmergency } = useActiveEmergency(dashboard.group?.id);
   const care = useCareNetwork(isLeader);
   const [section, setSection] = useState<Section>('requests');
+  const [sectionMenuOpen, setSectionMenuOpen] = useState(false);
+  const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
 
   const [vulnerableId, setVulnerableId] = useState<string | null>(null);
   const [buddyId, setBuddyId] = useState<string | null>(null);
@@ -241,103 +255,140 @@ export default function LeaderDashboardScreen() {
         showBack
       />
 
-      <View className="px-4 pt-3 pb-1">
-        <View className="flex-row flex-wrap gap-2">
-          {SECTIONS.map((item) => {
-            const active = section === item.key;
-            const baseLabel = item.labelKey ? t(item.labelKey) : (item.fallbackLabel ?? '');
-            const count = counts[item.key];
-            const Icon = item.Icon;
-            return (
-              <TouchableOpacity
-                key={item.key}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-                onPress={() => setSection(item.key)}
-                className={`flex-row items-center rounded-2xl border px-3 py-2 ${
-                  active
-                    ? 'border-emerald-300 bg-emerald-50'
-                    : 'border-neutral-border bg-neutral-surface'
-                }`}
-              >
-                <Icon size={15} color={active ? '#065F46' : '#6C727A'} strokeWidth={2.1} />
-                <Text
-                  className={`ml-1.5 ${active ? 'text-[#065F46]' : 'text-neutral-textMain'}`}
-                  style={{
-                    fontFamily: active ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
-                    fontSize: 13,
-                  }}
+      <View className="px-4 pt-3 pb-2">
+        <View className="flex-row items-center gap-2">
+          <View className="flex-1">
+            {(() => {
+              const currentItem = SECTIONS.find((s) => s.key === section) ?? SECTIONS[0];
+              const CurrentIcon = currentItem.Icon;
+              const currentLabel = currentItem.labelKey
+                ? t(currentItem.labelKey)
+                : (currentItem.fallbackLabel ?? '');
+              const currentCount = counts[currentItem.key];
+              return (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: sectionMenuOpen }}
+                  onPress={() => setSectionMenuOpen((prev) => !prev)}
+                  className="min-h-[46px] flex-row items-center justify-between rounded-2xl border border-neutral-border bg-neutral-surface px-3 py-2"
                 >
-                  {baseLabel}
-                </Text>
-                {count !== null && count > 0 && (
-                  <View
-                    className={`ml-1.5 px-1.5 py-0.5 rounded-full ${
-                      active ? 'bg-emerald-200' : 'bg-neutral-mutedBg'
-                    }`}
-                  >
+                  <View className="flex-row items-center flex-1 mr-2">
+                    <View className="w-8 h-8 rounded-xl bg-emerald-50 items-center justify-center mr-2.5">
+                      <CurrentIcon size={16} color="#065F46" strokeWidth={2.2} />
+                    </View>
                     <Text
-                      className={active ? 'text-[#065F46]' : 'text-neutral-textMuted'}
-                      style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}
+                      numberOfLines={1}
+                      className="text-neutral-textMain flex-shrink"
+                      style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13.5 }}
                     >
-                      {count}
+                      {currentLabel}
                     </Text>
+                    {currentCount !== null && currentCount > 0 && (
+                      <View className="ml-2 px-1.5 py-0.5 rounded-full bg-emerald-100">
+                        <Text
+                          className="text-[#065F46]"
+                          style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}
+                        >
+                          {currentCount}
+                        </Text>
+                      </View>
+                    )}
                   </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
+                  {sectionMenuOpen ? (
+                    <ChevronUp size={18} color="#6C727A" />
+                  ) : (
+                    <ChevronDown size={18} color="#6C727A" />
+                  )}
+                </TouchableOpacity>
+              );
+            })()}
+          </View>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Gobernanza de Emergencia"
+            onPress={() => {
+              setSectionMenuOpen(false);
+              setEmergencyModalOpen(true);
+            }}
+            className={`min-h-[46px] px-3.5 rounded-2xl border flex-row items-center justify-center ${
+              activeEvent
+                ? 'border-red-300 bg-red-600'
+                : 'border-red-200 bg-[#FFF1F2]'
+            }`}
+          >
+            <Siren size={17} color={activeEvent ? '#FFFFFF' : '#B91C1C'} strokeWidth={2.1} />
+            <Text
+              className={`ml-1.5 ${activeEvent ? 'text-white' : 'text-[#991B1B]'}`}
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12.5 }}
+            >
+              {activeEvent ? 'En curso' : 'Emergencia'}
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        {sectionMenuOpen && (
+          <View className="mt-1.5 rounded-2xl border border-neutral-border bg-neutral-surface p-1.5 shadow-sm">
+            {SECTIONS.map((item) => {
+              const active = section === item.key;
+              const Icon = item.Icon;
+              const baseLabel = item.labelKey ? t(item.labelKey) : (item.fallbackLabel ?? '');
+              const count = counts[item.key];
+              return (
+                <TouchableOpacity
+                  key={item.key}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  onPress={() => {
+                    setSection(item.key);
+                    setSectionMenuOpen(false);
+                  }}
+                  className={`flex-row items-center justify-between rounded-xl px-3 py-2.5 ${
+                    active ? 'bg-emerald-50/70' : ''
+                  }`}
+                >
+                  <View className="flex-row items-center flex-1 mr-2">
+                    <View
+                      className={`w-8 h-8 rounded-xl items-center justify-center mr-2.5 ${
+                        active ? 'bg-emerald-100' : 'bg-neutral-mutedBg'
+                      }`}
+                    >
+                      <Icon size={16} color={active ? '#065F46' : '#6C727A'} strokeWidth={2.1} />
+                    </View>
+                    <Text
+                      numberOfLines={1}
+                      className={active ? 'text-[#065F46]' : 'text-neutral-textMain'}
+                      style={{
+                        fontFamily: active ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
+                        fontSize: 13.5,
+                      }}
+                    >
+                      {baseLabel}
+                    </Text>
+                    {count !== null && count > 0 && (
+                      <View
+                        className={`ml-2 px-1.5 py-0.5 rounded-full ${
+                          active ? 'bg-emerald-200' : 'bg-neutral-mutedBg'
+                        }`}
+                      >
+                        <Text
+                          className={active ? 'text-[#065F46]' : 'text-neutral-textMuted'}
+                          style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}
+                        >
+                          {count}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  {active && <Check size={16} color="#065F46" strokeWidth={2.4} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </View>
 
       <ScrollView contentContainerClassName="p-4 pt-2 pb-16" keyboardShouldPersistTaps="handled">
-        {/* Gobernanza de Emergencia exclusiva para Dirigente (SPEC-05 §2.1) */}
-        <Card className="p-4 mb-4 border-red-200 bg-red-50/40">
-          <SectionTitle
-            icon={<Siren size={20} color="#DC2626" />}
-            title="Gobernanza de Emergencia"
-            subtitle={
-              activeEvent
-                ? `Emergencia activa (${activeEvent.event_type}) en tu sector.`
-                : 'Activa el modo emergencia solo ante contingencias reales en tu sector.'
-            }
-          />
-          {activeEvent ? (
-            <TouchableOpacity
-              accessibilityRole="button"
-              activeOpacity={0.85}
-              onPress={async () => {
-                const ok = await confirmAction(
-                  'Finalizar contingencia',
-                  '¿Confirmas que la emergencia en tu zona ha terminado?',
-                  'Finalizar'
-                );
-                if (ok) {
-                  try {
-                    await resolveEmergency(activeEvent.id);
-                    showMessage('Contingencia finalizada', 'El modo emergencia se ha cerrado.');
-                  } catch (error) {
-                    showMessage('No se pudo finalizar', errorMessage(error));
-                  }
-                }
-              }}
-              className="mt-1 min-h-[48px] rounded-2xl border border-red-300 bg-white items-center justify-center px-4 py-3"
-            >
-              <Text
-                className="text-[#991B1B]"
-                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
-              >
-                Finalizar contingencia
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <SlideToActivate
-              isDirigente={isLeader}
-              groupId={dashboard.group?.id}
-              onActivated={() => router.push('/(main)/community')}
-            />
-          )}
-        </Card>
 
         {/* 1. Solicitudes de unión */}
         {section === 'requests' && (
@@ -701,6 +752,95 @@ export default function LeaderDashboardScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      <Modal
+        visible={emergencyModalOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEmergencyModalOpen(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/45 justify-end"
+          onPress={() => setEmergencyModalOpen(false)}
+        >
+          <Pressable
+            className="bg-neutral-surface rounded-t-3xl px-5 pt-5"
+            style={{ paddingBottom: Math.max(insets.bottom + 14, 24) }}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View className="flex-row items-center justify-between mb-3">
+              <View className="flex-row items-center flex-1 mr-3">
+                <View className="w-10 h-10 rounded-2xl bg-red-100 items-center justify-center mr-3">
+                  <Siren size={20} color="#DC2626" />
+                </View>
+                <View className="flex-1">
+                  <Text
+                    className="text-neutral-textMain"
+                    style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 17 }}
+                  >
+                    Gobernanza de Emergencia
+                  </Text>
+                  <Text
+                    className="text-neutral-textMuted"
+                    style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 12.5 }}
+                  >
+                    {activeEvent
+                      ? `Emergencia activa (${activeEvent.event_type}) en tu sector.`
+                      : 'Activa el modo emergencia solo ante contingencias reales en tu sector.'}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => setEmergencyModalOpen(false)}
+                className="w-10 h-10 rounded-full bg-neutral-mutedBg items-center justify-center"
+              >
+                <X size={20} color="#1A1D20" />
+              </TouchableOpacity>
+            </View>
+
+            {activeEvent ? (
+              <TouchableOpacity
+                accessibilityRole="button"
+                activeOpacity={0.85}
+                onPress={async () => {
+                  const ok = await confirmAction(
+                    'Finalizar contingencia',
+                    '¿Confirmas que la emergencia en tu zona ha terminado?',
+                    'Finalizar'
+                  );
+                  if (ok) {
+                    try {
+                      await resolveEmergency(activeEvent.id);
+                      setEmergencyModalOpen(false);
+                      showMessage('Contingencia finalizada', 'El modo emergencia se ha cerrado.');
+                    } catch (error) {
+                      showMessage('No se pudo finalizar', errorMessage(error));
+                    }
+                  }
+                }}
+                className="mt-2 min-h-[48px] rounded-2xl border border-red-300 bg-[#FFF1F2] items-center justify-center px-4 py-3"
+              >
+                <Text
+                  className="text-[#991B1B]"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
+                >
+                  Finalizar contingencia
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <SlideToActivate
+                isDirigente={isLeader}
+                groupId={dashboard.group?.id}
+                onActivated={() => {
+                  setEmergencyModalOpen(false);
+                  router.push('/(main)/community');
+                }}
+              />
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
