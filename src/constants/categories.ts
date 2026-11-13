@@ -1,6 +1,6 @@
 import type { ListingType, PostType } from '../types';
 
-export type PublishFlowType = 'SERVICIO' | 'AYUDA' | 'SOLIDARIO';
+export type PublishFlowType = 'SERVICIO' | 'PRODUCTO' | 'AYUDA' | 'SOLIDARIO';
 
 export const LISTING_TYPES: readonly ListingType[] = [
   'SERVICIO',
@@ -38,6 +38,15 @@ export const QUICK_PUBLISH_SERVICE_CATEGORIES = [
   'Clases',
 ] as const;
 
+export const QUICK_PUBLISH_PRODUCT_CATEGORIES = [
+  'Panadería',
+  'Comida Casera',
+  'Repuestos',
+  'Bodega',
+  'Artesanía',
+  'Otros',
+] as const;
+
 export const HELP_CATEGORIES = [
   'Medicinas',
   'Herramientas',
@@ -55,6 +64,7 @@ export const SOLIDARY_CATEGORIES = [
 
 export const CATEGORIES_BY_PUBLISH_TYPE: Record<PublishFlowType, readonly string[]> = {
   SERVICIO: QUICK_PUBLISH_SERVICE_CATEGORIES,
+  PRODUCTO: QUICK_PUBLISH_PRODUCT_CATEGORIES,
   AYUDA: HELP_CATEGORIES,
   SOLIDARIO: SOLIDARY_CATEGORIES,
 };

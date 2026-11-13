@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   Animated,
 } from 'react-native';
-import { Plus, X, Wrench, HeartHandshake, HelpCircle, Mic, Square, Check, Lock } from 'lucide-react-native';
+import { Plus, X, Wrench, ShoppingBag, HeartHandshake, HelpCircle, Mic, Square, Check, Lock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDemo } from '../../services/demoStore';
 import { Button } from './Button';
@@ -21,6 +21,7 @@ import type { UrgencyLevel } from '../../types';
 import {
   CATEGORIES_BY_PUBLISH_TYPE,
   SOLIDARY_POST_TYPE_BY_CATEGORY,
+  type PublishFlowType,
 } from '../../constants/categories';
 import { processAudioWithGemini } from '../../services/voicePost';
 import { useCreateSolidaryPost } from '../../features/community/hooks/useSolidaryFeed';
@@ -36,7 +37,7 @@ export interface QuickPublishFABProps {
   zIndex?: number;
   pointerEvents?: 'auto' | 'none' | 'box-none';
   onPublishSuccess?: (data: {
-    type: 'SERVICIO' | 'AYUDA' | 'SOLIDARIO';
+    type: PublishFlowType;
     category: string;
     description: string;
     audioUri?: string | null;
@@ -60,9 +61,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
   const queryClient = useQueryClient();
   const createSolidaryPost = useCreateSolidaryPost();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedType, setSelectedType] = useState<
-    'SERVICIO' | 'AYUDA' | 'SOLIDARIO' | null
-  >(null);
+  const [selectedType, setSelectedType] = useState<PublishFlowType | null>(null);
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
 
@@ -189,13 +188,14 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
         }
       }
 
-      if (selectedType === 'SERVICIO') {
-        // Oficio para el Directorio público (tabla services, SPEC-03).
+      if (selectedType === 'SERVICIO' || selectedType === 'PRODUCTO') {
+        // Oficio o producto para el Directorio público (tabla services, SPEC-03).
         const { error } = await supabase.from('services').insert({
           provider_id: session.user.id,
           title: finalDescription.slice(0, 80),
           category,
           description: finalDescription,
+          listing_type: selectedType,
         });
         if (error) throw error;
         queryClient.invalidateQueries({ queryKey: DIRECTORY_QUERY_KEY });
@@ -308,8 +308,18 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                   {t('fab.question')}
                 </Text>
 
+                <Text
+                  className="text-neutral-textMuted uppercase tracking-wider mb-2"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}
+                >
+                  {t('fab.sectionPublic')}
+                </Text>
+
                 <TouchableOpacity
-                  onPress={() => setSelectedType('SERVICIO')}
+                  onPress={() => {
+                    setSelectedType('SERVICIO');
+                    setCategory('');
+                  }}
                   className="flex-row items-center p-3.5 bg-neutral-mutedBg rounded-2xl mb-2.5 min-h-[64px]"
                 >
                   <View className="w-11 h-11 rounded-xl bg-neutral-surface items-center justify-center mr-3 shadow-xs">
@@ -331,8 +341,43 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                   </View>
                 </TouchableOpacity>
 
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedType('PRODUCTO');
+                    setCategory('');
+                  }}
+                  className="flex-row items-center p-3.5 bg-neutral-mutedBg rounded-2xl mb-3 min-h-[64px]"
+                >
+                  <View className="w-11 h-11 rounded-xl bg-neutral-surface items-center justify-center mr-3 shadow-xs">
+                    <ShoppingBag size={20} color="#0284C7" strokeWidth={2.2} />
+                  </View>
+                  <View className="flex-1">
+                    <Text
+                      className="text-neutral-textMain"
+                      style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
+                    >
+                      {t('fab.product')}
+                    </Text>
+                    <Text
+                      className="text-neutral-textMuted mt-0.5"
+                      style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
+                    >
+                      {t('fab.productBody')}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                <View className="h-[1px] bg-neutral-border/70 mb-3" />
+
+                <Text
+                  className="text-neutral-textMuted uppercase tracking-wider mb-2"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}
+                >
+                  {t('fab.sectionCommunity')}
+                </Text>
+
                 {!isMember && (
-                  <View className="flex-row items-center gap-1.5 px-1 pt-1 pb-2">
+                  <View className="flex-row items-center gap-1.5 px-1 pb-2">
                     <Lock size={13} color="#6C727A" strokeWidth={2.2} />
                     <Text
                       className="text-neutral-textMuted flex-1"
@@ -344,7 +389,10 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                 )}
 
                 <TouchableOpacity
-                  onPress={() => setSelectedType('AYUDA')}
+                  onPress={() => {
+                    setSelectedType('AYUDA');
+                    setCategory('');
+                  }}
                   disabled={!isMember}
                   accessibilityState={{ disabled: !isMember }}
                   className={`flex-row items-center p-3.5 bg-neutral-mutedBg rounded-2xl mb-2.5 min-h-[64px] ${
@@ -371,7 +419,10 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={() => setSelectedType('SOLIDARIO')}
+                  onPress={() => {
+                    setSelectedType('SOLIDARIO');
+                    setCategory('');
+                  }}
                   disabled={!isMember}
                   accessibilityState={{ disabled: !isMember }}
                   className={`flex-row items-center p-3.5 bg-neutral-mutedBg rounded-2xl mb-2 min-h-[64px] ${
@@ -401,16 +452,29 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
               /* Step 2 & 3: Category and Detail / Audio */
               <View className="py-3">
                 <View className="flex-row items-center justify-between mb-3 bg-neutral-mutedBg px-3.5 py-2 rounded-xl">
-                  <Text
-                    className="text-neutral-textMain"
-                    style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
-                  >
-                    {selectedType === 'SERVICIO'
-                      ? t('fab.badgeService')
-                      : selectedType === 'AYUDA'
-                      ? t('fab.badgeHelp')
-                      : t('fab.badgeSolidary')}
-                  </Text>
+                  <View className="flex-row items-center gap-2 flex-1 mr-2">
+                    {selectedType === 'SERVICIO' ? (
+                      <Wrench size={16} color="#1E5E45" strokeWidth={2.2} />
+                    ) : selectedType === 'PRODUCTO' ? (
+                      <ShoppingBag size={16} color="#0284C7" strokeWidth={2.2} />
+                    ) : selectedType === 'AYUDA' ? (
+                      <HelpCircle size={16} color="#DC2626" strokeWidth={2.2} />
+                    ) : (
+                      <HeartHandshake size={16} color="#9A5B32" strokeWidth={2.2} />
+                    )}
+                    <Text
+                      className="text-neutral-textMain"
+                      style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
+                    >
+                      {selectedType === 'SERVICIO'
+                        ? t('fab.badgeService')
+                        : selectedType === 'PRODUCTO'
+                        ? t('fab.badgeProduct')
+                        : selectedType === 'AYUDA'
+                        ? t('fab.badgeHelp')
+                        : t('fab.badgeSolidary')}
+                    </Text>
+                  </View>
                   <TouchableOpacity
                     onPress={() => setSelectedType(null)}
                     className="min-h-[32px] justify-center px-2.5 bg-neutral-surface rounded-lg"
