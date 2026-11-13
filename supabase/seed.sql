@@ -234,7 +234,8 @@ INSERT INTO public.services (id, provider_id, title, category, listing_type, des
 ('22222222-2222-4222-8222-222222222205', '98e3b806-7a3f-4fd9-89d6-8476504fe800', 'Kit de caños, teflón y repuestos PVC', 'Gasfitería', 'PRODUCTO', 'Repuestos básicos de ferretería y gasfitería disponibles al instante en el barrio.'),
 ('22222222-2222-4222-8222-222222222206', 'e75da8d4-4505-4087-bd7d-9c637e6fa608', 'Muebles pequeños y repisas de madera', 'Carpintería', 'PRODUCTO', 'Repisas, banquitos y organizadores hechos a pedido con madera pino.'),
 ('22222222-2222-4222-8222-222222222207', '844c76b1-bf8f-40ee-b5a0-4cae771889c4', 'Botiquín vecinal y toma de presión', 'Cuidado', 'AUXILIO', 'Apoyo rápido con tensiómetro, oxímetro y primeros auxilios básicos en la cuadra.'),
-('22222222-2222-4222-8222-222222222208', '1d6d874a-0cb0-4c64-a3c8-0e2ac0bed653', 'Acompañamiento a citas médicas locales', 'Cuidado', 'AUXILIO', 'Red de apoyo y acompañamiento para vecinos mayores que necesiten ir al centro de salud.');
+('22222222-2222-4222-8222-222222222208', '98e3b806-7a3f-4fd9-89d6-8476504fe800', 'Acompañamiento a citas médicas locales', 'Cuidado', 'AUXILIO', 'Red de apoyo y acompañamiento para vecinos mayores que necesiten ir al centro de salud.'),
+('22222222-2222-4222-8222-222222222209', 'e75da8d4-4505-4087-bd7d-9c637e6fa608', 'Botiquín vecinal de emergencia y curaciones', 'Cuidado', 'AUXILIO', 'Gasas estériles, alcohol, termómetro y vendas disponibles ante cualquier golpe o urgencia en la manzana.');
 
 -- 7. Reseñas y favoritos de Juan López
 INSERT INTO public.reviews (service_id, client_id, rating, comment) VALUES
