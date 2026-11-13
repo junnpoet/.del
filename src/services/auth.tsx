@@ -25,7 +25,6 @@ export interface AuthProfile {
 }
 
 export interface SignUpInput {
-  email?: string;
   password: string;
   fullName: string;
   phone: string;
@@ -37,7 +36,6 @@ export interface SignUpInput {
 
 export interface RequestOtpResult {
   success: boolean;
-  devOtp?: string;
   whatsappSent?: boolean;
 }
 
@@ -53,15 +51,17 @@ interface AuthContextValue {
   refreshProfile: () => Promise<void>;
 }
 
+export function normalizeNationalPhone(phone: string): string {
+  const digits = phone.trim().replace(/\D/g, '');
+  return digits.length === 11 && digits.startsWith('51') ? digits.slice(2) : digits;
+}
+
 export function phoneToAuthEmail(identifier: string): string {
   const trimmed = identifier.trim();
   if (trimmed.includes('@')) {
     return trimmed.toLowerCase();
   }
-  const digits = trimmed.replace(/\D/g, '');
-  const nationalDigits =
-    digits.length === 11 && digits.startsWith('51') ? digits.slice(2) : digits;
-  return `${nationalDigits}@sumayni.pe`;
+  return `${normalizeNationalPhone(trimmed)}@sumayni.pe`;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -136,50 +136,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const requestOtp = useCallback(async (phone: string): Promise<RequestOtpResult> => {
-    const cleanPhone = phone.trim().replace(/\D/g, '');
-    const nationalDigits =
-      cleanPhone.length === 11 && cleanPhone.startsWith('51')
-        ? cleanPhone.slice(2)
-        : cleanPhone;
-    const authEmail = `${nationalDigits}@sumayni.pe`;
+    const nationalDigits = normalizeNationalPhone(phone);
 
-    // 1. Intentar llamar a la Edge Function de Supabase
-    try {
-      const { data, error } = await supabase.functions.invoke('send-whatsapp-otp', {
-        body: { phone: nationalDigits },
-      });
-      if (!error && data?.success) {
-        return {
-          success: true,
-          devOtp: data.devOtp,
-          whatsappSent: data.whatsappSent,
-        };
-      }
-    } catch {
-      // Si la Edge Function aún no está desplegada en el cloud, pasa al fallback
+    const { data, error } = await supabase.functions.invoke('send-whatsapp-otp', {
+      body: { phone: nationalDigits },
+    });
+    if (!error && data?.success) {
+      return {
+        success: true,
+        whatsappSent: data.whatsappSent,
+      };
     }
 
-    // 2. Fallback de desarrollo usando el secret key local
-    const secretKey = process.env.EXPO_PUBLIC_SUPABASE_SERVICE_KEY;
-    if (secretKey) {
-      const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://lzgvbthqceupmyjyhzgo.supabase.co'}/auth/v1/admin/generate_link`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          apikey: secretKey,
-          Authorization: `Bearer ${secretKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'magiclink',
-          email: authEmail,
-        }),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        const devOtp = json?.properties?.email_otp || json?.email_otp;
-        return { success: true, devOtp, whatsappSent: false };
-      }
+    if (data?.error) {
+      throw new Error(String(data.error));
+    }
+    if (error) {
+      throw new Error(error.message || 'No se pudo generar el código OTP.');
     }
 
     throw new Error(
@@ -198,7 +171,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = useCallback(async (input: SignUpInput) => {
-    const email = input.email?.trim() || phoneToAuthEmail(input.phone);
+    const nationalDigits = normalizeNationalPhone(input.phone);
+    const email = phoneToAuthEmail(nationalDigits);
     const { data, error } = await supabase.auth.signUp({
       email,
       password: input.password,
@@ -209,7 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error: profileError } = await supabase.from('profiles').insert({
       id: data.user.id,
       full_name: input.fullName.trim(),
-      phone: input.phone.trim(),
+      phone: nationalDigits,
       home_address: input.homeAddress.trim(),
       home_location: `SRID=4326;POINT(${input.longitude} ${input.latitude})`,
       role: 'vecino',

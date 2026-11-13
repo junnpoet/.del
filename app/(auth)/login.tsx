@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,16 +7,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ScrollViewInstance,
   Image,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { Card } from '../../src/components/ui/Card';
 import { useAuth } from '../../src/services/auth';
 import { useI18n } from '../../src/i18n';
-import { LanguageToggle } from '../../src/i18n/LanguageToggle';
+import { LanguageMenuButton } from '../../src/i18n/LanguageToggle';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -25,11 +28,48 @@ export default function LoginScreen() {
 
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<'password' | 'otp'>('password');
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRequestingOtp, setIsRequestingOtp] = useState(false);
+
+  const scrollViewRef = useRef<ScrollViewInstance>(null);
+  const activeField = useRef<string | null>(null);
+
+  const scrollToField = (field: string) => {
+    activeField.current = field;
+    // Desplazamiento moderado: solo oculta parte del logo para mantener
+    // visible toda la tarjeta (inputs, botón y "¿Olvidaste tu contraseña?")
+    scrollViewRef.current?.scrollTo({
+      y: 80,
+      animated: true,
+    });
+  };
+
+  const handleFocus = (field: string) => {
+    activeField.current = field;
+    setTimeout(() => {
+      scrollToField(field);
+    }, 80);
+  };
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => {
+      if (activeField.current) {
+        scrollToField(activeField.current);
+      }
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      activeField.current = null;
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const handleLogin = async () => {
     if (!phone.trim() || !password) {
@@ -61,14 +101,9 @@ export default function LoginScreen() {
     }
     setIsRequestingOtp(true);
     try {
-      const result = await requestOtp(phone);
+      await requestOtp(phone);
       setOtpSent(true);
-      Alert.alert(
-        t('login.otpGenerated'),
-        result.devOtp
-          ? t('login.otpDevNotice', { code: result.devOtp })
-          : t('login.otpWhatsAppNotice')
-      );
+      Alert.alert(t('login.otpGenerated'), t('login.otpWhatsAppNotice'));
     } catch (err) {
       const msg = err instanceof Error ? err.message : t('common.unexpectedError');
       Alert.alert(t('common.attention'), msg);
@@ -96,14 +131,19 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-background">
+      <View className="items-end px-5 pt-2 z-20">
+        <LanguageMenuButton />
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         className="flex-1"
       >
         <ScrollView
+          ref={scrollViewRef}
           contentContainerClassName="p-6 justify-center flex-grow"
-          contentContainerStyle={{ paddingBottom: 160 }}
+          contentContainerStyle={{ paddingBottom: 220, flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           automaticallyAdjustKeyboardInsets={true}
@@ -139,6 +179,7 @@ export default function LoginScreen() {
               autoCorrect={false}
               value={phone}
               onChangeText={setPhone}
+              onFocus={() => handleFocus('phone')}
             />
 
             {mode === 'password' ? (
@@ -146,10 +187,25 @@ export default function LoginScreen() {
                 <Input
                   label={t('login.password')}
                   placeholder={t('login.passwordPlaceholder')}
-                  secureTextEntry
+                  secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   value={password}
                   onChangeText={setPassword}
+                  onFocus={() => handleFocus('password')}
+                  rightAccessory={
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                      onPress={() => setShowPassword((prev) => !prev)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      {showPassword ? (
+                        <EyeOff size={20} color="#6C727A" />
+                      ) : (
+                        <Eye size={20} color="#6C727A" />
+                      )}
+                    </TouchableOpacity>
+                  }
                 />
 
                 <Button
@@ -186,6 +242,7 @@ export default function LoginScreen() {
                     autoCapitalize="none"
                     value={otpCode}
                     onChangeText={setOtpCode}
+                    onFocus={() => handleFocus('otpCode')}
                   />
                 )}
 
@@ -237,7 +294,7 @@ export default function LoginScreen() {
             )}
           </Card>
 
-          <View className="items-center mb-6">
+          <View className="items-center mb-4">
             <Text
               className="text-neutral-textMuted mb-2.5"
               style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14 }}
@@ -256,11 +313,6 @@ export default function LoginScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-
-          {/* Selector de idioma */}
-          <Card className="p-4">
-            <LanguageToggle />
-          </Card>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
