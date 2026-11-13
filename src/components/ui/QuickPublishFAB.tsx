@@ -63,6 +63,8 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<PublishFlowType | null>(null);
   const [category, setCategory] = useState('');
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
   const [description, setDescription] = useState('');
 
   // Voice recording state using expo-audio with graceful fallback
@@ -73,9 +75,15 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
 
   const categoriesByType = CATEGORIES_BY_PUBLISH_TYPE;
 
-  const handleOpenMenu = () => {
-    setSelectedType(null);
+  const selectPublishType = (type: PublishFlowType | null) => {
+    setSelectedType(type);
     setCategory('');
+    setIsCustomCategory(false);
+    setCustomCategory('');
+  };
+
+  const handleOpenMenu = () => {
+    selectPublishType(null);
     setDescription('');
     setRecordedUri(null);
     setIsOpen(true);
@@ -152,7 +160,8 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       showMessage(t('common.attention'), t('fab.selectType'));
       return;
     }
-    if (!category) {
+    const resolvedCategory = isCustomCategory ? customCategory.trim() : category;
+    if (!resolvedCategory) {
       showMessage(t('common.attention'), t('fab.selectCategory'));
       return;
     }
@@ -164,7 +173,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       showMessage(t('common.attention'), t('fab.loginRequired'));
       return;
     }
-    if (selectedType !== 'SERVICIO' && !isMember) {
+    if (selectedType !== 'SERVICIO' && selectedType !== 'PRODUCTO' && !isMember) {
       showMessage(t('common.attention'), t('fab.communityOnly'));
       return;
     }
@@ -193,7 +202,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
         const { error } = await supabase.from('services').insert({
           provider_id: session.user.id,
           title: finalDescription.slice(0, 80),
-          category,
+          category: resolvedCategory,
           description: finalDescription,
           listing_type: selectedType,
         });
@@ -202,8 +211,11 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       } else {
         // Ayuda o aporte solidario para el Muro Solidario (tabla solidary_posts, SPEC-04).
         await createSolidaryPost.mutateAsync({
-          postType: selectedType === 'AYUDA' ? 'AYUDA' : SOLIDARY_POST_TYPE_BY_CATEGORY[category] ?? 'DONACION',
-          category,
+          postType:
+            selectedType === 'AYUDA'
+              ? 'AYUDA'
+              : SOLIDARY_POST_TYPE_BY_CATEGORY[resolvedCategory] ?? 'DONACION',
+          category: resolvedCategory,
           description: finalDescription,
           urgency: resolvedUrgency,
           isAiVoice: isVoiceSubmission,
@@ -212,7 +224,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
 
       onPublishSuccess?.({
         type: selectedType,
-        category,
+        category: resolvedCategory,
         description: finalDescription,
         audioUri: recordedUri,
       });
@@ -316,10 +328,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                 </Text>
 
                 <TouchableOpacity
-                  onPress={() => {
-                    setSelectedType('SERVICIO');
-                    setCategory('');
-                  }}
+                  onPress={() => selectPublishType('SERVICIO')}
                   className="flex-row items-center p-3.5 bg-neutral-mutedBg rounded-2xl mb-2.5 min-h-[64px]"
                 >
                   <View className="w-11 h-11 rounded-xl bg-neutral-surface items-center justify-center mr-3 shadow-xs">
@@ -342,10 +351,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={() => {
-                    setSelectedType('PRODUCTO');
-                    setCategory('');
-                  }}
+                  onPress={() => selectPublishType('PRODUCTO')}
                   className="flex-row items-center p-3.5 bg-neutral-mutedBg rounded-2xl mb-3 min-h-[64px]"
                 >
                   <View className="w-11 h-11 rounded-xl bg-neutral-surface items-center justify-center mr-3 shadow-xs">
@@ -389,10 +395,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                 )}
 
                 <TouchableOpacity
-                  onPress={() => {
-                    setSelectedType('AYUDA');
-                    setCategory('');
-                  }}
+                  onPress={() => selectPublishType('AYUDA')}
                   disabled={!isMember}
                   accessibilityState={{ disabled: !isMember }}
                   className={`flex-row items-center p-3.5 bg-neutral-mutedBg rounded-2xl mb-2.5 min-h-[64px] ${
@@ -419,10 +422,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={() => {
-                    setSelectedType('SOLIDARIO');
-                    setCategory('');
-                  }}
+                  onPress={() => selectPublishType('SOLIDARIO')}
                   disabled={!isMember}
                   accessibilityState={{ disabled: !isMember }}
                   className={`flex-row items-center p-3.5 bg-neutral-mutedBg rounded-2xl mb-2 min-h-[64px] ${
@@ -476,7 +476,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => setSelectedType(null)}
+                    onPress={() => selectPublishType(null)}
                     className="min-h-[32px] justify-center px-2.5 bg-neutral-surface rounded-lg"
                   >
                     <Text
@@ -500,11 +500,32 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                     <Chip
                       key={cat}
                       label={tCategory(cat)}
-                      isActive={category === cat}
-                      onPress={() => setCategory(cat)}
+                      isActive={!isCustomCategory && category === cat}
+                      onPress={() => {
+                        setIsCustomCategory(false);
+                        setCategory(cat);
+                      }}
                     />
                   ))}
+                  <Chip
+                    label={t('fab.customCategory')}
+                    isActive={isCustomCategory}
+                    onPress={() => {
+                      setIsCustomCategory(true);
+                      setCategory('');
+                    }}
+                  />
                 </View>
+
+                {isCustomCategory && (
+                  <Input
+                    label={t('fab.customCategoryLabel')}
+                    placeholder={t('fab.customCategoryPlaceholder')}
+                    value={customCategory}
+                    onChangeText={setCustomCategory}
+                    maxLength={40}
+                  />
+                )}
 
                 {/* Paso 3: Detalle o Nota de voz */}
                 <Text
