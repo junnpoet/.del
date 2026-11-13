@@ -64,6 +64,7 @@ function NativeMap({
   radius,
   services,
   locations,
+  currentUserId,
   selectedService,
   onSelectMarker,
   onClosePreview,
@@ -78,6 +79,7 @@ function NativeMap({
   radius: number;
   services: NearbyService[];
   locations: Record<string, { latitude: number; longitude: number }>;
+  currentUserId?: string;
   selectedService: NearbyService | null;
   onSelectMarker: (service: NearbyService) => void;
   onClosePreview: () => void;
@@ -137,6 +139,10 @@ function NativeMap({
         ? 'auxilio'
         : 'servicio';
 
+    const isOwnHome = Boolean(
+      currentUserId && items.some((item) => item.provider_id === currentUserId)
+    );
+
     return {
       id: primary.service_id,
       latitude: coord.latitude,
@@ -145,6 +151,7 @@ function NativeMap({
       colors,
       iconType,
       count: items.length,
+      isHome: isOwnHome,
       title: items.length > 1 ? `${primary.provider_name} (${items.length} ofertas)` : primary.title,
       subtitle: `${primary.provider_name} · ${Math.round(primary.distance_meters)} m`,
     };
@@ -735,6 +742,7 @@ export default function DirectoryScreen() {
           radius={radius}
           services={filteredServices}
           locations={directory.locations}
+          currentUserId={session?.user.id}
           selectedService={selectedMapService}
           onSelectMarker={(svc) => setSelectedMapService(svc)}
           onClosePreview={() => setSelectedMapService(null)}

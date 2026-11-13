@@ -10,6 +10,7 @@ export interface LeafletMarkerItem {
   colors?: string[];
   iconType?: 'servicio' | 'producto' | 'auxilio' | 'multi';
   count?: number;
+  isHome?: boolean;
   title: string;
   subtitle?: string;
   badgeText?: string;
@@ -130,6 +131,34 @@ function buildLeafletHtml(initialPayloadJson: string): string {
       align-items: center;
       justify-content: center;
     }
+    .sumayni-home-offer-wrap {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sumayni-home-offer {
+      width: 40px;
+      height: 40px;
+      border-radius: 9999px;
+      border: 3px solid #FFFFFF;
+      box-shadow: 0 0 0 6px rgba(30, 94, 69, 0.24), 0 4px 10px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sumayni-home-core {
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      background: #1E5E45;
+      border: 1.5px solid #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .leaflet-popup-content {
       margin: 8px 12px;
       font-size: 13px;
@@ -209,8 +238,12 @@ function buildLeafletHtml(initialPayloadJson: string): string {
           }).addTo(layerGroup);
         }
 
-        if (payload.showHomePin) {
-          var homeSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>';
+        var homeSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>';
+        var hasMergedHomeMarker = (payload.markers || []).some(function (m) {
+          return Boolean(m.isHome);
+        });
+
+        if (payload.showHomePin && !hasMergedHomeMarker) {
           var homeIcon = L.divIcon({
             className: '',
             html: '<div class="sumayni-home">' + homeSvg + '</div>',
@@ -256,6 +289,21 @@ function buildLeafletHtml(initialPayloadJson: string): string {
             html = '<div class="sumayni-badge-pin" style="background:' + escapeHtml(m.color) + '">' + escapeHtml(m.badgeText) + '</div>';
             iconSize = null;
             iconAnchor = [40, 14];
+          } else if (m.isHome) {
+            var homeHasMulti = Array.isArray(m.colors) && m.colors.length > 1;
+            var homeBg = homeHasMulti ? buildConicGradient(m.colors) : escapeHtml(m.color);
+            var homeCountBadge = m.count && m.count > 1
+              ? '<div class="sumayni-pin-count">' + m.count + '</div>'
+              : '';
+            html =
+              '<div class="sumayni-home-offer-wrap">' +
+                '<div class="sumayni-home-offer" style="background:' + homeBg + '">' +
+                  '<div class="sumayni-home-core">' + homeSvg + '</div>' +
+                '</div>' +
+                homeCountBadge +
+              '</div>';
+            iconSize = [42, 42];
+            iconAnchor = [21, 21];
           } else {
             var hasMultiColors = Array.isArray(m.colors) && m.colors.length > 1;
             var bgStyle = hasMultiColors ? buildConicGradient(m.colors) : escapeHtml(m.color);
@@ -282,7 +330,10 @@ function buildLeafletHtml(initialPayloadJson: string): string {
             iconAnchor: iconAnchor
           });
 
-          var marker = L.marker([m.latitude, m.longitude], { icon: icon }).addTo(layerGroup);
+          var marker = L.marker([m.latitude, m.longitude], {
+            icon: icon,
+            zIndexOffset: m.isHome ? 1000 : 0
+          }).addTo(layerGroup);
           if (payload.showMarkerPopup && m.title) {
             marker.bindPopup(
               '<strong>' + escapeHtml(m.title) + '</strong>' +
