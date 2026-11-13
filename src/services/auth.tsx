@@ -10,6 +10,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { queryClient } from './queryClient';
 import { parseGeoPoint } from './geo';
+import { resolveAvatarUrl } from '../constants/testAvatars';
 import {
   setActiveAccessibleModeUser,
   shouldDefaultToAccessibleMode,
@@ -78,20 +79,43 @@ async function fetchProfile(userId: string): Promise<AuthProfile | null> {
     .select('id, full_name, phone, home_address, role, is_vulnerable, group_id, home_location, avatar_url')
     .eq('id', userId)
     .maybeSingle();
-  if (error) throw error;
-  if (!data) return null;
-  const point = parseGeoPoint(data.home_location);
+
+  let row: {
+    id: string;
+    full_name: string;
+    phone: string;
+    home_address: string;
+    role: string | null;
+    is_vulnerable: boolean | null;
+    group_id: string | null;
+    home_location: unknown;
+    avatar_url?: string | null;
+  } | null = data;
+
+  if (error) {
+    if (error.code !== '42703') throw error;
+    const fallback = await supabase
+      .from('profiles')
+      .select('id, full_name, phone, home_address, role, is_vulnerable, group_id, home_location')
+      .eq('id', userId)
+      .maybeSingle();
+    if (fallback.error) throw fallback.error;
+    row = fallback.data;
+  }
+
+  if (!row) return null;
+  const point = parseGeoPoint(row.home_location);
   return {
-    id: data.id,
-    full_name: data.full_name,
-    phone: data.phone,
-    home_address: data.home_address,
-    role: data.role,
-    is_vulnerable: data.is_vulnerable,
-    group_id: data.group_id,
+    id: row.id,
+    full_name: row.full_name,
+    phone: row.phone,
+    home_address: row.home_address,
+    role: row.role,
+    is_vulnerable: row.is_vulnerable,
+    group_id: row.group_id,
     lat: point?.lat ?? null,
     lng: point?.lng ?? null,
-    avatar_url: data.avatar_url ?? null,
+    avatar_url: resolveAvatarUrl(row.id, row.avatar_url),
   };
 }
 

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
 import { parseGeoPoint } from '../../../services/geo';
+import { resolveAvatarUrl } from '../../../constants/testAvatars';
 import type { PostStatus, PostType, UrgencyLevel } from '../../../types';
 import { channelName } from '../utils';
 import { tr } from '../../../i18n';
@@ -64,20 +65,37 @@ export function useSolidaryFeed(enabled: boolean) {
     queryKey: [...SOLIDARY_FEED_KEY, groupId],
     enabled: enabled && Boolean(session),
     queryFn: async () => {
-      let query = supabase
-        .from('solidary_posts')
-        .select(
-          'id, post_type, category, description, urgency, status, is_from_whatsapp, is_ai_voice, target_volunteers, accepted_helper_id, author_id, whatsapp_sender_name, whatsapp_sender_phone, created_at, author:profiles!solidary_posts_author_id_fkey(full_name, phone, home_location, avatar_url), solidary_comments(id, author_id), volunteers(id, user_id, role_note, created_at, user:profiles!volunteers_user_id_fkey(full_name))'
-        )
-        .order('created_at', { ascending: false })
-        .limit(100);
-      if (groupId) query = query.or(`group_id.eq.${groupId},group_id.is.null`);
+      const buildQuery = (withAvatar: boolean) => {
+        const authorCols = withAvatar
+          ? 'full_name, phone, home_location, avatar_url'
+          : 'full_name, phone, home_location';
+        let query = supabase
+          .from('solidary_posts')
+          .select(
+            `id, post_type, category, description, urgency, status, is_from_whatsapp, is_ai_voice, target_volunteers, accepted_helper_id, author_id, whatsapp_sender_name, whatsapp_sender_phone, created_at, author:profiles!solidary_posts_author_id_fkey(${authorCols}), solidary_comments(id, author_id), volunteers(id, user_id, role_note, created_at, user:profiles!volunteers_user_id_fkey(full_name))`
+          )
+          .order('created_at', { ascending: false })
+          .limit(100);
+        if (groupId) query = query.or(`group_id.eq.${groupId},group_id.is.null`);
+        return query;
+      };
 
-      const { data, error } = await query;
-      if (error) throw error;
+      const initial = await buildQuery(true);
+      let rows = initial.data as typeof initial.data | null;
+      if (initial.error) {
+        if (initial.error.code !== '42703') throw initial.error;
+        const fallback = await buildQuery(false);
+        if (fallback.error) throw fallback.error;
+        rows = fallback.data as unknown as typeof initial.data;
+      }
 
-      return (data ?? []).map((row) => {
-        const author = row.author;
+      return (rows ?? []).map((row) => {
+        const author = row.author as {
+          full_name: string;
+          phone: string;
+          home_location: unknown;
+          avatar_url?: string | null;
+        } | null;
         const point = parseGeoPoint(author?.home_location);
         return {
           id: row.id,
@@ -92,7 +110,9 @@ export function useSolidaryFeed(enabled: boolean) {
           acceptedHelperId: row.accepted_helper_id ?? null,
           authorId: row.author_id,
           authorName: (row.is_from_whatsapp ? row.whatsapp_sender_name : author?.full_name) ?? null,
-          authorAvatarUrl: row.is_from_whatsapp ? null : author?.avatar_url ?? null,
+          authorAvatarUrl: row.is_from_whatsapp
+            ? null
+            : resolveAvatarUrl(row.author_id, author?.avatar_url),
           contactPhone: row.is_from_whatsapp ? row.whatsapp_sender_phone : author?.phone ?? null,
           coordinates: point ? { latitude: point.lat, longitude: point.lng } : null,
           commentsCount: Array.isArray(row.solidary_comments) ? row.solidary_comments.length : 0,

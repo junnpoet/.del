@@ -18,6 +18,7 @@ import type { ListingType } from '../../../types';
 import { useI18n } from '../../../i18n';
 import { usePublicI18n } from '../i18n';
 import { normalizeListingType } from '../hooks/useDirectory';
+import { resolveAvatarUrl } from '../../../constants/testAvatars';
 
 type NearbyService = Database['public']['Functions']['get_nearby_services']['Returns'][number] & {
   provider_avatar_url?: string | null;
@@ -59,7 +60,7 @@ export function ServiceCard({
   const { tp, tpCategory } = usePublicI18n();
   const [avatarError, setAvatarError] = useState(false);
 
-  const avatarUrl = service.provider_avatar_url ?? null;
+  const avatarUrl = resolveAvatarUrl(service.provider_id, service.provider_avatar_url);
   useEffect(() => {
     setAvatarError(false);
   }, [avatarUrl]);
