@@ -503,6 +503,28 @@ export default function DirectoryScreen() {
                 <X size={16} color="#6C727A" />
               </TouchableOpacity>
             )}
+            <View className="mx-1 h-5 w-[1px] bg-neutral-border/70" />
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Filtros"
+              onPress={() => setFiltersOpen(true)}
+              className={`h-9 flex-row items-center justify-center rounded-xl px-2.5 ${
+                activeFilterCount > 0 ? 'bg-[#EDF5F1]' : ''
+              }`}
+            >
+              <SlidersHorizontal
+                size={16}
+                color={activeFilterCount > 0 ? '#1E5E45' : '#6C727A'}
+              />
+              {activeFilterCount > 0 && (
+                <Text
+                  className="ml-1 text-primary"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+                >
+                  {activeFilterCount}
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
 
             <View
@@ -540,32 +562,8 @@ export default function DirectoryScreen() {
           </View>
         </View>
 
-        {/* Row 2: Filter strip filling full width and wrapping if expanded */}
+        {/* Row 2: Radius & Favorites strip filling full width */}
         <View pointerEvents="box-none" className="mt-2.5 flex-row flex-wrap items-center gap-2">
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={() => setFiltersOpen(true)}
-            className={`min-h-[40px] flex-grow flex-row items-center justify-center rounded-full border px-3.5 ${
-              activeFilterCount > 0
-                ? 'border-primary bg-[#EDF5F1]'
-                : 'border-neutral-border bg-neutral-surface'
-            }`}
-          >
-            <SlidersHorizontal
-              size={15}
-              color={activeFilterCount > 0 ? '#1E5E45' : '#6C727A'}
-            />
-            <Text
-              className={`ml-1.5 ${
-                activeFilterCount > 0 ? 'text-primary' : 'text-neutral-textMain'
-              }`}
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
-            >
-              {category !== 'Todos' ? tpCategory(category) : 'Filtros'}
-              {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-            </Text>
-          </TouchableOpacity>
-
           <TouchableOpacity
             accessibilityRole="button"
             onPress={cycleRadius}
