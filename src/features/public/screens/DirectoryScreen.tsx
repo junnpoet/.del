@@ -580,7 +580,10 @@ export default function DirectoryScreen() {
               {tp('public.favoritesChip')} ({directory.favorites.length})
             </Text>
           </TouchableOpacity>
+        </ScrollView>
 
+        {/* Row 3: Quick type selectors (Servicios / Productos / Auxilio) */}
+        <View className="mt-2 flex-row items-center gap-2">
           {LISTING_TYPES.map((typeKey) => {
             const active = listingTypeFilter === typeKey;
             const meta = LISTING_TYPE_META[typeKey];
@@ -593,7 +596,7 @@ export default function DirectoryScreen() {
                 onPress={() =>
                   setListingTypeFilter((prev) => (prev === typeKey ? 'ALL' : typeKey))
                 }
-                className="min-h-[40px] flex-row items-center rounded-full border px-3.5"
+                className="min-h-[38px] flex-1 flex-row items-center justify-center rounded-full border px-2"
                 style={{
                   borderColor: active ? meta.color : '#E5E7EB',
                   backgroundColor: active ? meta.color : meta.bg,
@@ -601,10 +604,11 @@ export default function DirectoryScreen() {
               >
                 <Icon size={14} color={active ? '#FFFFFF' : meta.color} />
                 <Text
+                  numberOfLines={1}
                   className="ml-1.5"
                   style={{
                     fontFamily: 'PlusJakartaSans_700Bold',
-                    fontSize: 13,
+                    fontSize: 12.5,
                     color: active ? '#FFFFFF' : meta.color,
                   }}
                 >
@@ -613,7 +617,7 @@ export default function DirectoryScreen() {
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
+        </View>
       </View>
 
       {view === 'map' ? (
