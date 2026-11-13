@@ -22,6 +22,7 @@ export interface LeafletMapProps {
   homeTitle?: string;
   homeSubtitle?: string;
   markers: LeafletMarkerItem[];
+  showMarkerPopup?: boolean;
   onMarkerPress?: (id: string) => void;
   style?: StyleProp<ViewStyle>;
   webFallback?: React.ReactNode;
@@ -260,7 +261,7 @@ function buildLeafletHtml(initialPayloadJson: string): string {
           });
 
           var marker = L.marker([m.latitude, m.longitude], { icon: icon }).addTo(layerGroup);
-          if (m.title) {
+          if (payload.showMarkerPopup && m.title) {
             marker.bindPopup(
               '<strong>' + escapeHtml(m.title) + '</strong>' +
               (m.subtitle ? '<br/><span>' + escapeHtml(m.subtitle) + '</span>' : '')
@@ -291,12 +292,14 @@ export function LeafletMap({
   homeTitle,
   homeSubtitle,
   markers,
+  showMarkerPopup,
   onMarkerPress,
   style,
   webFallback,
 }: LeafletMapProps) {
   const webViewRef = useRef<{ injectJavaScript: (script: string) => void } | null>(null);
   const resolvedZoom = zoom ?? radiusToZoom(radiusMeters);
+  const resolvedShowMarkerPopup = showMarkerPopup ?? !onMarkerPress;
 
   const payload = useMemo(
     () => ({
@@ -307,8 +310,18 @@ export function LeafletMap({
       homeTitle,
       homeSubtitle,
       markers,
+      showMarkerPopup: resolvedShowMarkerPopup,
     }),
-    [center, radiusMeters, resolvedZoom, showHomePin, homeTitle, homeSubtitle, markers]
+    [
+      center,
+      radiusMeters,
+      resolvedZoom,
+      showHomePin,
+      homeTitle,
+      homeSubtitle,
+      markers,
+      resolvedShowMarkerPopup,
+    ]
   );
 
   // Keep initial HTML stable so the WebView doesn't reload on filter/radius changes.
