@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Modal,
   Animated,
 } from 'react-native';
 import { Plus, X, Wrench, HeartHandshake, HelpCircle, Mic, Square, Check } from 'lucide-react-native';
@@ -12,6 +11,7 @@ import { useDemo } from '../../services/demoStore';
 import { Button } from './Button';
 import { Input } from './Input';
 import { Chip } from './Chip';
+import { BottomSheetModal } from './BottomSheetModal';
 import type { AudioRecorder } from 'expo-audio';
 import { useQueryClient } from '@tanstack/react-query';
 import { useI18n } from '../../i18n';
@@ -261,19 +261,14 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       </Animated.View>
 
       {/* 3-Click Funnel Modal */}
-      <Modal
+      <BottomSheetModal
         visible={isOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={handleClose}
+        onClose={handleClose}
+        maxHeight="92%"
+        backdropColor="rgba(0,0,0,0.5)"
       >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View
-            className="bg-neutral-surface rounded-t-3xl px-5 pt-5 max-h-[92%]"
-            style={{ paddingBottom: Math.max(insets.bottom + 16, 24) }}
-          >
-            {/* Modal Header */}
-            <View className="flex-row items-center justify-between pb-3 border-b border-neutral-border/60">
+        {/* Modal Header */}
+        <View className="flex-row items-center justify-between pb-3 border-b border-neutral-border/60">
               <View className="flex-1 pr-2">
                 <Text
                   className="text-neutral-textMain"
@@ -507,9 +502,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                 />
               </View>
             )}
-          </View>
-        </View>
-      </Modal>
+      </BottomSheetModal>
     </>
   );
 };

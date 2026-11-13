@@ -2,12 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Animated,
-  Easing,
   FlatList,
-  Modal,
   Platform,
-  Pressable,
   RefreshControl,
   ScrollView,
   Text,
@@ -15,7 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Flag,
@@ -34,6 +29,7 @@ import {
 } from 'lucide-react-native';
 import { Header } from '../../../components/ui/Header';
 import { Chip } from '../../../components/ui/Chip';
+import { BottomSheetModal } from '../../../components/ui/BottomSheetModal';
 import { LeafletMap, type LeafletMarkerItem } from '../../../components/ui/LeafletMap';
 import {
   normalizeListingType,
@@ -287,49 +283,6 @@ export default function DirectoryScreen() {
   const [selectedMapService, setSelectedMapService] = useState<NearbyService | null>(null);
   const [reportingService, setReportingService] = useState<NearbyService | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const insets = useSafeAreaInsets();
-  const sheetHeightRef = React.useRef(560);
-  const backdropOpacity = React.useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = React.useRef(new Animated.Value(560)).current;
-
-  const openFilters = () => {
-    const offscreen = sheetHeightRef.current + 32;
-    backdropOpacity.setValue(0);
-    sheetTranslateY.setValue(offscreen);
-    setFiltersOpen(true);
-    Animated.parallel([
-      Animated.timing(backdropOpacity, {
-        toValue: 1,
-        duration: 140,
-        useNativeDriver: true,
-      }),
-      Animated.timing(sheetTranslateY, {
-        toValue: 0,
-        duration: 170,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const closeFilters = () => {
-    const offscreen = sheetHeightRef.current + 32;
-    Animated.parallel([
-      Animated.timing(backdropOpacity, {
-        toValue: 0,
-        duration: 120,
-        useNativeDriver: true,
-      }),
-      Animated.timing(sheetTranslateY, {
-        toValue: offscreen,
-        duration: 150,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start(({ finished }) => {
-      if (finished) setFiltersOpen(false);
-    });
-  };
 
   const activeFilterCount =
     (listingTypeFilter !== 'ALL' ? 1 : 0) +
@@ -567,7 +520,7 @@ export default function DirectoryScreen() {
         >
           <TouchableOpacity
             accessibilityRole="button"
-            onPress={openFilters}
+            onPress={() => setFiltersOpen(true)}
             className={`min-h-[40px] flex-row items-center rounded-full border px-3.5 ${
               activeFilterCount > 0
                 ? 'border-primary bg-[#EDF5F1]'
@@ -726,129 +679,91 @@ export default function DirectoryScreen() {
       )}
 
       {/* Filters Bottom Sheet Modal */}
-      <Modal
-        transparent
-        visible={filtersOpen}
-        animationType="none"
-        statusBarTranslucent
-        onRequestClose={closeFilters}
-      >
-        <View className="flex-1 justify-end">
-          <Animated.View
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              backgroundColor: 'rgba(0,0,0,0.4)',
-              opacity: backdropOpacity,
-            }}
+      <BottomSheetModal visible={filtersOpen} onClose={() => setFiltersOpen(false)}>
+        <View className="mb-4 flex-row items-center justify-between">
+          <Text
+            className="text-neutral-textMain"
+            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
           >
-            <Pressable className="flex-1" onPress={closeFilters} />
-          </Animated.View>
-
-          <Animated.View
-            onLayout={(e) => {
-              const h = e.nativeEvent.layout.height;
-              if (h > 0) sheetHeightRef.current = h;
-            }}
-            style={{
-              transform: [{ translateY: sheetTranslateY }],
-              maxHeight: '85%',
-            }}
+            Filtros del directorio
+          </Text>
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={() => setFiltersOpen(false)}
+            className="h-10 w-10 items-center justify-center rounded-full bg-neutral-mutedBg"
           >
-            <View
-              className="rounded-t-3xl bg-neutral-surface px-5 pt-5"
-              style={{ paddingBottom: Math.max(insets.bottom + 16, 28) }}
-            >
-              <View className="mb-4 flex-row items-center justify-between">
-                <Text
-                  className="text-neutral-textMain"
-                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
-                >
-                  Filtros del directorio
-                </Text>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={closeFilters}
-                  className="h-10 w-10 items-center justify-center rounded-full bg-neutral-mutedBg"
-                >
-                  <X size={18} color="#6C727A" />
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-                <Text
-                  className="mb-2 text-neutral-textMuted"
-                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
-                >
-                  RADIO CAMINABLE
-                </Text>
-                <View className="mb-4 flex-row flex-wrap gap-2">
-                  {RADII.map((item) => (
-                    <Chip
-                      key={item.label}
-                      label={item.label}
-                      isActive={radius === item.value}
-                      onPress={() => setRadius(item.value)}
-                    />
-                  ))}
-                </View>
-
-                <Text
-                  className="mb-2 text-neutral-textMuted"
-                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
-                >
-                  CATEGORÍA
-                </Text>
-                <View className="mb-5 flex-row flex-wrap gap-1.5">
-                  {CATEGORIES.map((item) => (
-                    <Chip
-                      key={item}
-                      label={item === 'Todos' ? tp('public.type.ALL') : tpCategory(item)}
-                      isActive={category === item}
-                      onPress={() => setCategory(item)}
-                    />
-                  ))}
-                </View>
-              </ScrollView>
-
-              <View className="flex-row gap-3 pt-2">
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setListingTypeFilter('ALL');
-                    setCategory('Todos');
-                    setRadius(500);
-                    setOnlyFavorites(false);
-                  }}
-                  className="min-h-[48px] flex-1 items-center justify-center rounded-2xl border border-neutral-border"
-                >
-                  <Text
-                    className="text-neutral-textMain"
-                    style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
-                  >
-                    Limpiar
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={closeFilters}
-                  className="min-h-[48px] flex-1 items-center justify-center rounded-2xl bg-primary"
-                >
-                  <Text
-                    className="text-white"
-                    style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
-                  >
-                    Ver resultados ({filteredServices.length})
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Animated.View>
+            <X size={18} color="#6C727A" />
+          </TouchableOpacity>
         </View>
-      </Modal>
+
+        <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+          <Text
+            className="mb-2 text-neutral-textMuted"
+            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+          >
+            RADIO CAMINABLE
+          </Text>
+          <View className="mb-4 flex-row flex-wrap gap-2">
+            {RADII.map((item) => (
+              <Chip
+                key={item.label}
+                label={item.label}
+                isActive={radius === item.value}
+                onPress={() => setRadius(item.value)}
+              />
+            ))}
+          </View>
+
+          <Text
+            className="mb-2 text-neutral-textMuted"
+            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+          >
+            CATEGORÍA
+          </Text>
+          <View className="mb-5 flex-row flex-wrap gap-1.5">
+            {CATEGORIES.map((item) => (
+              <Chip
+                key={item}
+                label={item === 'Todos' ? tp('public.type.ALL') : tpCategory(item)}
+                isActive={category === item}
+                onPress={() => setCategory(item)}
+              />
+            ))}
+          </View>
+        </ScrollView>
+
+        <View className="flex-row gap-3 pt-2">
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={() => {
+              setListingTypeFilter('ALL');
+              setCategory('Todos');
+              setRadius(500);
+              setOnlyFavorites(false);
+            }}
+            className="min-h-[48px] flex-1 items-center justify-center rounded-2xl border border-neutral-border"
+          >
+            <Text
+              className="text-neutral-textMain"
+              style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
+            >
+              Limpiar
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={() => setFiltersOpen(false)}
+            className="min-h-[48px] flex-1 items-center justify-center rounded-2xl bg-primary"
+          >
+            <Text
+              className="text-white"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
+            >
+              Ver resultados ({filteredServices.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </BottomSheetModal>
     </View>
   );
 }
