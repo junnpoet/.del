@@ -153,12 +153,12 @@ export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolve
         <TouchableOpacity
           accessibilityRole="button"
           onPress={() => onCoordinate(post)}
-          className="h-12 flex-1 flex-row items-center justify-center rounded-2xl bg-primary px-4"
+          className="h-12 flex-1 flex-row items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-4"
         >
-          <MessageCircle size={18} color="#FFFFFF" />
+          <MessageCircle size={18} color="#065F46" />
           <Text
             numberOfLines={1}
-            className="ml-2 text-white"
+            className="ml-2 text-[#065F46]"
             style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13.5 }}
           >
             {t('post.coordinate', { n: post.commentsCount })}
