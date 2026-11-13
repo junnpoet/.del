@@ -319,9 +319,10 @@ function NativeMap({
             <TouchableOpacity
               accessibilityRole="button"
               onPress={() => onViewMore(selectedService)}
-              className="min-h-[48px] flex-1 items-center justify-center rounded-2xl border border-neutral-border bg-neutral-mutedBg px-3"
+              className="min-h-[48px] items-center justify-center rounded-2xl border border-neutral-border bg-neutral-mutedBg px-4"
             >
               <Text
+                numberOfLines={1}
                 className="text-neutral-textMain"
                 style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13.5 }}
               >
@@ -339,7 +340,8 @@ function NativeMap({
             >
               <MessageCircle size={18} color="#FFFFFF" />
               <Text
-                className="ml-2 text-white"
+                numberOfLines={1}
+                className="ml-2 text-center text-white"
                 style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
               >
                 {t('service.consult')}
