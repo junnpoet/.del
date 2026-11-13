@@ -26,19 +26,17 @@ Todos los usuarios residen en **Urbanización Bellamar (Nuevo Chimbote)**, alred
 
 ---
 
-## 2. Gadiel Zúñiga (Vecino Nuevo — Solo Capa Pública)
+## 2. Gadiel Zúñiga (Miembro Verificado y Oferente Activo)
 * **Teléfono Celular:** `971825787`
 * **Contraseña:** `123456`
 * **Domicilio Georreferenciado:** Calle 22 Mz. M - Lt. 4, Urbanización Bellamar
-* **Estado de Membresía:** `NO_SOLICITADO`
+* **Estado de Membresía:** `MIEMBRO` (Integrado a *Junta Vecinal Urb. Bellamar*)
 * **¿Qué probar con este usuario?**
-  1. **Capa Pública (Pestaña "Directorio"):**
-     - Explora la lista y el mapa interactivo (vista mapa y vista satélite) con pines de vecinos cercanos ofreciendo **Servicios**, **Productos** y **Auxilio** (incluido el pin multicolor de Brandon Mauricio).
+  1. **Capa Pública y Pin Multicolor (Pestaña "Directorio"):**
+     - Ofrece **Servicios** (*Cerrajería 24h*, *Refuerzo escolar*), **Producto** (*Muebles y repisas de madera*) y **Auxilio** (*Botiquín vecinal y toma de presión*, *Botiquín de emergencia y curaciones*), generando un pin combinado de los 3 colores en el mapa.
      - Abre **Chats** para ver su conversación activa con *Juan López*.
-  2. **Publicación Rápida (`+`):**
-     - Verás habilitada **Ofrecer un Servicio** y bloqueadas las opciones privadas (*Pedir Ayuda* y *Aporte Solidario*) por no pertenecer aún a la comunidad.
-  3. **Control de Acceso a Capa Privada (Pestaña "Comunidad"):**
-     - Verás la pantalla de bloqueo con candado y el botón **`Solicitar Ingreso a la Junta Vecinal`**.
+  2. **Capa Privada y Publicación Rápida (`+`):**
+     - Acceso completo al **Muro Solidario** (tiene publicada una donación de víveres/frazadas) y a las 3 opciones de **`+` Publicar**.
 
 ---
 
@@ -70,14 +68,14 @@ Todos los usuarios residen en **Urbanización Bellamar (Nuevo Chimbote)**, alred
 
 ---
 
-## 5. Ronaldinho Villanueva (Vecino con Solicitud Pendiente)
+## 5. Ronaldinho Villanueva (Vecino Nuevo con Solicitud Pendiente)
 * **Teléfono Celular:** `947646767`
 * **Contraseña:** `123456`
 * **Domicilio Georreferenciado:** Jr. Los Cipreses Mz. L - Lt. 3, Urbanización Bellamar
 * **Estado de Membresía:** `PENDIENTE` (Solicitud enviada a *Junta Vecinal Urb. Bellamar*)
 * **¿Qué probar con este usuario?**
-  1. **Capa Pública Activa:**
-     - Ofrece un **Servicio** (*Refuerzo escolar y matemáticas*) y un **Producto** (*Muebles pequeños y repisas de madera*) visibles para todo el barrio.
+  1. **Capa Pública:**
+     - Explora el Directorio y puede publicar un servicio público desde **`+` Publicar** (con las opciones privadas bloqueadas hasta ser aprobado).
   2. **Estado Pendiente en Comunidad:**
      - Al entrar a la pestaña **Comunidad**, verá la pantalla de **"Confirmando tu Residencia"** hasta que *Juan López* lo apruebe desde el panel de dirigencia.
 
