@@ -535,8 +535,8 @@ export default function SolidaryFeedScreen() {
                 const hasParticipated = Boolean(
                   profile?.id &&
                     (post.acceptedHelperId === profile.id ||
-                      post.volunteers.some((v) => v.userId === profile.id) ||
-                      post.commenterIds.includes(profile.id))
+                      post.volunteers?.some((v) => v.userId === profile.id) ||
+                      post.commenterIds?.includes(profile.id))
                 );
                 const canResolve = Boolean(
                   isLeader || (profile?.id && post.authorId === profile.id) || hasParticipated
