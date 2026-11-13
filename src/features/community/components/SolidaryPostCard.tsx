@@ -162,7 +162,7 @@ export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolve
             style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13.5 }}
           >
             {post.postType === 'PRESTAMO'
-              ? `Requerir apoyo (${post.commentsCount})`
+              ? `Solicitar préstamo (${post.commentsCount})`
               : t('post.coordinate', { n: post.commentsCount })}
           </Text>
         </TouchableOpacity>
