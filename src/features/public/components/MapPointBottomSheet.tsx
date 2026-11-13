@@ -23,6 +23,8 @@ import {
   X,
 } from 'lucide-react-native';
 import { supabase } from '../../../services/supabase';
+import { useDemo } from '../../../services/demoStore';
+import { QuickPublishFAB } from '../../../components/ui/QuickPublishFAB';
 import { useI18n } from '../../../i18n';
 import { usePublicI18n } from '../i18n';
 import { LISTING_TYPE_META } from './ServiceCard';
@@ -66,6 +68,7 @@ export function MapPointBottomSheet({
   onReport,
 }: MapPointBottomSheetProps) {
   const { height: windowHeight } = useWindowDimensions();
+  const { setHideGlobalFAB } = useDemo();
   const { t } = useI18n();
   const { tp, tpCategory } = usePublicI18n();
 
@@ -73,6 +76,13 @@ export function MapPointBottomSheet({
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    setHideGlobalFAB(rendered && Boolean(service));
+    return () => {
+      setHideGlobalFAB(false);
+    };
+  }, [rendered, service, setHideGlobalFAB]);
 
   const hasMultipleAtPoint = pointServices.length > 1;
   const expandedHeight = Math.min(Math.round(windowHeight * 0.76), 600);
@@ -263,9 +273,26 @@ export function MapPointBottomSheet({
     extrapolate: 'clamp',
   });
 
+  const safePeekOffsetForFab = Math.max(peekOffset, 40);
+  const capOffsetForFab = Math.max(16, Math.round(safePeekOffsetForFab * 0.3));
+  const capFabLift = -(expandedHeight - capOffsetForFab - 2);
+  const peekFabLift = -(peekHeight - 2);
+  const fabTranslateY = translateY.interpolate({
+    inputRange: [0, capOffsetForFab, safePeekOffsetForFab, closedOffset],
+    outputRange: [capFabLift, capFabLift, peekFabLift, 0],
+    extrapolate: 'clamp',
+  });
+
   return (
-    <Animated.View
-      style={{
+    <>
+      <QuickPublishFAB
+        baseBottom={16}
+        animatedTranslateY={fabTranslateY}
+        zIndex={35}
+        pointerEvents={isExpanded ? 'none' : 'auto'}
+      />
+      <Animated.View
+        style={{
         position: 'absolute',
         left: 0,
         right: 0,
@@ -629,5 +656,6 @@ export function MapPointBottomSheet({
         </Animated.View>
       </Animated.View>
     </Animated.View>
+    </>
   );
 }
