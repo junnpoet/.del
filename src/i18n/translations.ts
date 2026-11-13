@@ -279,6 +279,7 @@ const es = {
   'fab.successTitle': '¡Publicado con éxito!',
   'fab.success': 'Tu aviso ya está visible para los vecinos de tu sector.',
   'fab.loginRequired': 'Inicia sesión para publicar en tu barrio.',
+  'fab.communityOnly': 'Disponibles para miembros de la comunidad vecinal',
   'fab.failed': 'No se pudo publicar',
 
   // --- Muro Solidario ---
@@ -816,6 +817,7 @@ const qu: Record<TranslationKey, string> = {
   'fab.successTitle': '¡Allintam willakusqa!',
   'fab.success': 'Willakuyniykitaqa llaqtamasikunañam rikunku.',
   'fab.loginRequired': 'Yaykuy llaqtaykipi willakunaykipaq.',
+  'fab.communityOnly': 'Llaqta huñupi kaqkunallapaq',
   'fab.failed': 'Mana willakuyta atikurqanchu',
 
   // --- Muro Solidario ---

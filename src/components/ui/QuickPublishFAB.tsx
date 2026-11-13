@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   Animated,
 } from 'react-native';
-import { Plus, X, Wrench, HeartHandshake, HelpCircle, Mic, Square, Check } from 'lucide-react-native';
+import { Plus, X, Wrench, HeartHandshake, HelpCircle, Mic, Square, Check, Lock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDemo } from '../../services/demoStore';
 import { Button } from './Button';
@@ -24,6 +24,7 @@ import {
 } from '../../constants/categories';
 import { processAudioWithGemini } from '../../services/voicePost';
 import { useCreateSolidaryPost } from '../../features/community/hooks/useSolidaryFeed';
+import { useMembership } from '../../features/community/hooks/useMembership';
 import { DIRECTORY_QUERY_KEY } from '../../features/public/hooks/useDirectory';
 import { errorMessage, showMessage } from '../../features/community/utils';
 
@@ -55,6 +56,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
   const { fabOffset, hideGlobalFAB } = useDemo();
   const { t, tCategory } = useI18n();
   const { session } = useAuth();
+  const { isMember } = useMembership();
   const queryClient = useQueryClient();
   const createSolidaryPost = useCreateSolidaryPost();
   const [isOpen, setIsOpen] = useState(false);
@@ -161,6 +163,10 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
     }
     if (!session) {
       showMessage(t('common.attention'), t('fab.loginRequired'));
+      return;
+    }
+    if (selectedType !== 'SERVICIO' && !isMember) {
+      showMessage(t('common.attention'), t('fab.communityOnly'));
       return;
     }
 
@@ -325,9 +331,25 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                   </View>
                 </TouchableOpacity>
 
+                {!isMember && (
+                  <View className="flex-row items-center gap-1.5 px-1 pt-1 pb-2">
+                    <Lock size={13} color="#6C727A" strokeWidth={2.2} />
+                    <Text
+                      className="text-neutral-textMuted flex-1"
+                      style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
+                    >
+                      {t('fab.communityOnly')}
+                    </Text>
+                  </View>
+                )}
+
                 <TouchableOpacity
                   onPress={() => setSelectedType('AYUDA')}
-                  className="flex-row items-center p-3.5 bg-neutral-mutedBg rounded-2xl mb-2.5 min-h-[64px]"
+                  disabled={!isMember}
+                  accessibilityState={{ disabled: !isMember }}
+                  className={`flex-row items-center p-3.5 bg-neutral-mutedBg rounded-2xl mb-2.5 min-h-[64px] ${
+                    !isMember ? 'opacity-45' : ''
+                  }`}
                 >
                   <View className="w-11 h-11 rounded-xl bg-neutral-surface items-center justify-center mr-3 shadow-xs">
                     <HelpCircle size={20} color="#DC2626" strokeWidth={2.2} />
@@ -350,7 +372,11 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
 
                 <TouchableOpacity
                   onPress={() => setSelectedType('SOLIDARIO')}
-                  className="flex-row items-center p-3.5 bg-neutral-mutedBg rounded-2xl mb-2 min-h-[64px]"
+                  disabled={!isMember}
+                  accessibilityState={{ disabled: !isMember }}
+                  className={`flex-row items-center p-3.5 bg-neutral-mutedBg rounded-2xl mb-2 min-h-[64px] ${
+                    !isMember ? 'opacity-45' : ''
+                  }`}
                 >
                   <View className="w-11 h-11 rounded-xl bg-neutral-surface items-center justify-center mr-3 shadow-xs">
                     <HeartHandshake size={20} color="#9A5B32" strokeWidth={2.2} />
