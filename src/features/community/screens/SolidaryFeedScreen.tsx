@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  AlertTriangle,
   CheckCircle,
   Clock,
   HeartHandshake,
@@ -11,7 +10,7 @@ import {
   LogIn,
   Map as MapIcon,
   Megaphone,
-  ShieldCheck,
+  Settings,
 } from 'lucide-react-native';
 import { Header } from '../../../components/ui/Header';
 import { Chip } from '../../../components/ui/Chip';
@@ -37,7 +36,6 @@ import {
 import { useCareNetwork } from '../hooks/useCareNetwork';
 import { useJoinRequests } from '../hooks/useLeaderDashboard';
 import { useActiveEmergency, useZoneEmergency } from '../../emergency/hooks/useEmergencyRealtime';
-import { PublicEmergencyInfoModal } from '../../emergency/components/PublicEmergencyInfoModal';
 import { SolidaryPostCard } from '../components/SolidaryPostCard';
 import { CommunityActionCard } from '../components/CommunityActionCard';
 import { CareVolunteerCard } from '../components/CareVolunteerCard';
@@ -64,7 +62,6 @@ export default function SolidaryFeedScreen() {
   const [view, setView] = useState<'feed' | 'map'>('feed');
   const [filter, setFilter] = useState<FeedFilter>('TODOS');
   const [newsOpen, setNewsOpen] = useState(false);
-  const [emergencyInfoOpen, setEmergencyInfoOpen] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   const feed = useSolidaryFeed(isMember);
@@ -128,45 +125,40 @@ export default function SolidaryFeedScreen() {
     }
   };
 
-  const headerActions = isMember ? (
-    <View className="flex-row items-center">
-      {canSeeCareLayer && (
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel={t('care.title')}
-          onPress={() => router.push('/care-network')}
-          className="min-h-[48px] min-w-[48px] rounded-2xl bg-neutral-mutedBg items-center justify-center"
-        >
-          <HeartHandshake size={20} color="#1E5E45" />
-        </TouchableOpacity>
-      )}
-      {isLeader && (
+  const headerActions =
+    isMember && isLeader ? (
+      <View className="flex-row items-center gap-2">
+        {zoneEmergency && (
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={async () => {
+              const ok = await confirmAction(
+                'Finalizar contingencia',
+                '¿Confirmas que la emergencia en tu zona ha terminado?',
+                'Finalizar'
+              );
+              if (ok) await resolveEmergency(zoneEmergency.id);
+            }}
+            className="min-h-[44px] rounded-2xl border border-red-300 bg-white px-3 items-center justify-center"
+          >
+            <Text
+              className="text-[#991B1B]"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12.5 }}
+            >
+              Finalizar
+            </Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel={t('leader.title')}
           onPress={() => router.push('/leader-dashboard')}
-          className="min-h-[48px] min-w-[48px] rounded-2xl bg-primary items-center justify-center ml-2"
+          className="min-h-[44px] min-w-[44px] rounded-2xl border border-emerald-200 bg-emerald-50 items-center justify-center"
         >
-          <ShieldCheck size={20} color="#FFFFFF" />
+          <Settings size={20} color="#065F46" />
         </TouchableOpacity>
-      )}
-      <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityLabel={t('feed.newsButtonA11y')}
-        onPress={handleOpenNews}
-        className="min-h-[48px] min-w-[48px] rounded-2xl bg-neutral-mutedBg items-center justify-center ml-2 relative"
-      >
-        <Megaphone size={20} color="#1E5E45" />
-        {unreadCount > 0 && (
-          <View className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-emergency-alert items-center justify-center">
-            <Text className="text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}>
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </Text>
-          </View>
-        )}
-      </TouchableOpacity>
-    </View>
-  ) : undefined;
+      </View>
+    ) : undefined;
 
   /* ---------- Estados previos a la membresía ---------- */
   if (!isMember) {
@@ -246,11 +238,11 @@ export default function SolidaryFeedScreen() {
         <TouchableOpacity
           accessibilityRole="button"
           onPress={() => router.push('/leader-dashboard')}
-          className="mx-4 mt-3 bg-neutral-surface p-3.5 rounded-2xl border border-primary/20 flex-row items-center justify-between"
+          className="mx-4 mt-3 bg-neutral-surface p-3.5 rounded-2xl border border-emerald-200 flex-row items-center justify-between"
         >
           <View className="flex-1 mr-3">
             <View className="flex-row items-center">
-              <ShieldCheck size={16} color="#1E5E45" strokeWidth={2.2} />
+              <Settings size={16} color="#065F46" strokeWidth={2.2} />
               <Text className="text-neutral-textMain ml-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}>
                 {t('leader.title')}
               </Text>
@@ -261,8 +253,8 @@ export default function SolidaryFeedScreen() {
                 : t('community.leaderBanner', { n: pendingRequests })}
             </Text>
           </View>
-          <View className="bg-primary px-3 py-2 rounded-xl">
-            <Text className="text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}>
+          <View className="bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl">
+            <Text className="text-[#065F46]" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}>
               {t('community.review', { n: pendingRequests })}
             </Text>
           </View>
@@ -270,73 +262,48 @@ export default function SolidaryFeedScreen() {
       )}
 
       <View className="px-4 pt-4 flex-1">
-        {zoneEmergency && (
-          <View className="mb-3 rounded-2xl border border-red-200 bg-[#FFF1F2] p-3.5">
-            <View className="flex-row items-center justify-between">
-              <TouchableOpacity
-                accessibilityRole="button"
-                activeOpacity={0.85}
-                onPress={() => setEmergencyInfoOpen(true)}
-                className="flex-1 flex-row items-center pr-3"
+        {/* Accesos comunitarios: Red de Cuidado Vecinal y Anuncios */}
+        <View className="flex-row gap-2 mb-3">
+          {canSeeCareLayer && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={t('care.title')}
+              onPress={() => router.push('/care-network')}
+              className="flex-1 min-h-[44px] flex-row items-center justify-center rounded-2xl border border-neutral-border bg-neutral-surface px-3 py-2"
+            >
+              <HeartHandshake size={16} color="#1E5E45" />
+              <Text
+                numberOfLines={1}
+                className="ml-2 text-neutral-textMain"
+                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12.5 }}
               >
-                <View className="mr-3 rounded-xl bg-red-100 p-2">
-                  <AlertTriangle size={20} color="#B91C1C" />
-                </View>
-                <View className="flex-1">
-                  <Text
-                    className="uppercase tracking-wider text-[#991B1B]"
-                    style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 12 }}
-                  >
-                    Emergencia activa · {zoneEmergency.event_type}
-                  </Text>
-                  <Text
-                    numberOfLines={2}
-                    className="mt-0.5 text-[#7F1D1D]"
-                    style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
-                  >
-                    Coordina aquí en el muro. Toca para ver información pública.
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              <View className="flex-row items-center gap-2">
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={() => setEmergencyInfoOpen(true)}
-                  className="rounded-xl bg-red-600 px-3 py-2"
-                >
-                  <Text
-                    className="text-white"
-                    style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
-                  >
-                    Ver info
-                  </Text>
-                </TouchableOpacity>
-                {isLeader && (
-                  <TouchableOpacity
-                    accessibilityRole="button"
-                    onPress={async () => {
-                      if (!zoneEmergency) return;
-                      const ok = await confirmAction(
-                        'Finalizar contingencia',
-                        '¿Confirmas que la emergencia en tu zona ha terminado?',
-                        'Finalizar'
-                      );
-                      if (ok) await resolveEmergency(zoneEmergency.id);
-                    }}
-                    className="rounded-xl border border-red-300 bg-white px-2.5 py-2"
-                  >
-                    <Text
-                      className="text-[#991B1B]"
-                      style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
-                    >
-                      Finalizar
-                    </Text>
-                  </TouchableOpacity>
-                )}
+                {t('care.title')}
+              </Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('feed.newsButtonA11y')}
+            onPress={handleOpenNews}
+            className={`${canSeeCareLayer ? 'px-4' : 'flex-1'} min-h-[44px] flex-row items-center justify-center rounded-2xl border border-neutral-border bg-neutral-surface py-2 relative`}
+          >
+            <Megaphone size={16} color="#1E5E45" />
+            <Text
+              numberOfLines={1}
+              className="ml-2 text-neutral-textMain"
+              style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12.5 }}
+            >
+              Anuncios
+            </Text>
+            {unreadCount > 0 && (
+              <View className="ml-1.5 min-w-[20px] h-5 px-1.5 rounded-full bg-emergency-alert items-center justify-center">
+                <Text className="text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Text>
               </View>
-            </View>
-          </View>
-        )}
+            )}
+          </TouchableOpacity>
+        </View>
 
         {/* Selector [ Muro Feed | Mapa Barrial ] */}
         <View className="flex-row bg-neutral-mutedBg p-1 rounded-2xl mb-3">
@@ -490,13 +457,6 @@ export default function SolidaryFeedScreen() {
       </View>
 
       <NeighborhoodNewsModal visible={newsOpen} onClose={() => setNewsOpen(false)} />
-      <PublicEmergencyInfoModal
-        visible={emergencyInfoOpen}
-        onClose={() => setEmergencyInfoOpen(false)}
-        eventType={zoneEmergency?.event_type}
-        description={zoneEmergency?.description}
-        isMember
-      />
       <SolidaryActionSheet
         post={selectedPost}
         currentUserId={profile?.id ?? null}
