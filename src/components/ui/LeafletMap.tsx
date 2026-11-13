@@ -11,6 +11,7 @@ export interface LeafletMarkerItem {
   iconType?: 'servicio' | 'producto' | 'auxilio' | 'multi';
   count?: number;
   isHome?: boolean;
+  selected?: boolean;
   title: string;
   subtitle?: string;
   badgeText?: string;
@@ -18,6 +19,7 @@ export interface LeafletMarkerItem {
 
 export interface LeafletMapProps {
   center: { latitude: number; longitude: number };
+  focus?: { latitude: number; longitude: number } | null;
   radiusMeters?: number;
   zoom?: number;
   showHomePin?: boolean;
@@ -159,6 +161,29 @@ function buildLeafletHtml(initialPayloadJson: string): string {
       align-items: center;
       justify-content: center;
     }
+    .sumayni-pin-wrap.is-selected {
+      transform: scale(1.24);
+      transform-origin: center bottom;
+    }
+    .sumayni-pin-wrap.is-selected .sumayni-pin {
+      border: 3px solid #111827;
+      box-shadow: 0 0 0 4px rgba(30, 94, 69, 0.35), 0 6px 14px rgba(0,0,0,0.38);
+    }
+    .sumayni-pin-wrap.is-selected .sumayni-pin-tail {
+      border-top-color: #111827;
+    }
+    .sumayni-home-offer-wrap.is-selected {
+      transform: scale(1.2);
+    }
+    .sumayni-home-offer-wrap.is-selected .sumayni-home-offer {
+      border: 3px solid #111827;
+      box-shadow: 0 0 0 5px rgba(30, 94, 69, 0.35), 0 6px 14px rgba(0,0,0,0.38);
+    }
+    .sumayni-badge-pin.is-selected {
+      transform: scale(1.12);
+      border-color: #111827;
+      box-shadow: 0 0 0 4px rgba(30, 94, 69, 0.3), 0 4px 10px rgba(0,0,0,0.35);
+    }
     .leaflet-popup-content {
       margin: 8px 12px;
       font-size: 13px;
@@ -212,6 +237,8 @@ function buildLeafletHtml(initialPayloadJson: string): string {
       };
 
       var layerGroup = L.layerGroup().addTo(map);
+      var lastCenterKey = null;
+      var lastFocusKey = null;
 
       function escapeHtml(str) {
         return String(str || '')
@@ -284,9 +311,10 @@ function buildLeafletHtml(initialPayloadJson: string): string {
           var html;
           var iconSize;
           var iconAnchor;
+          var selectedClass = m.selected ? ' is-selected' : '';
 
           if (m.badgeText) {
-            html = '<div class="sumayni-badge-pin" style="background:' + escapeHtml(m.color) + '">' + escapeHtml(m.badgeText) + '</div>';
+            html = '<div class="sumayni-badge-pin' + selectedClass + '" style="background:' + escapeHtml(m.color) + '">' + escapeHtml(m.badgeText) + '</div>';
             iconSize = null;
             iconAnchor = [40, 14];
           } else if (m.isHome) {
@@ -296,7 +324,7 @@ function buildLeafletHtml(initialPayloadJson: string): string {
               ? '<div class="sumayni-pin-count">' + m.count + '</div>'
               : '';
             html =
-              '<div class="sumayni-home-offer-wrap">' +
+              '<div class="sumayni-home-offer-wrap' + selectedClass + '">' +
                 '<div class="sumayni-home-offer" style="background:' + homeBg + '">' +
                   '<div class="sumayni-home-core">' + homeSvg + '</div>' +
                 '</div>' +
@@ -314,7 +342,7 @@ function buildLeafletHtml(initialPayloadJson: string): string {
               ? '<div class="sumayni-pin-count">' + m.count + '</div>'
               : '';
             html =
-              '<div class="sumayni-pin-wrap">' +
+              '<div class="sumayni-pin-wrap' + selectedClass + '">' +
                 '<div class="sumayni-pin" style="background:' + bgStyle + '">' + inner + '</div>' +
                 '<div class="sumayni-pin-tail"></div>' +
                 countBadge +
@@ -332,7 +360,7 @@ function buildLeafletHtml(initialPayloadJson: string): string {
 
           var marker = L.marker([m.latitude, m.longitude], {
             icon: icon,
-            zIndexOffset: m.isHome ? 1000 : 0
+            zIndexOffset: m.selected ? 2000 : (m.isHome ? 1000 : 0)
           }).addTo(layerGroup);
           if (payload.showMarkerPopup && m.title) {
             marker.bindPopup(
@@ -347,7 +375,21 @@ function buildLeafletHtml(initialPayloadJson: string): string {
           });
         });
 
-        map.setView([lat, lng], payload.zoom || 15, { animate: true });
+        var nextCenterKey = lat.toFixed(6) + ',' + lng.toFixed(6) + '@' + (payload.zoom || 15);
+        if (nextCenterKey !== lastCenterKey) {
+          lastCenterKey = nextCenterKey;
+          map.setView([lat, lng], payload.zoom || 15, { animate: true });
+        }
+
+        if (payload.focus && typeof payload.focus.latitude === 'number' && typeof payload.focus.longitude === 'number') {
+          var nextFocusKey = payload.focus.latitude.toFixed(6) + ',' + payload.focus.longitude.toFixed(6);
+          if (nextFocusKey !== lastFocusKey) {
+            lastFocusKey = nextFocusKey;
+            map.panTo([payload.focus.latitude, payload.focus.longitude], { animate: true });
+          }
+        } else {
+          lastFocusKey = null;
+        }
       };
 
       window.__updateSumayniMap(initial);
@@ -359,6 +401,7 @@ function buildLeafletHtml(initialPayloadJson: string): string {
 
 export function LeafletMap({
   center,
+  focus = null,
   radiusMeters,
   zoom,
   showHomePin = false,
@@ -378,6 +421,7 @@ export function LeafletMap({
   const payload = useMemo(
     () => ({
       center,
+      focus,
       radiusMeters,
       zoom: resolvedZoom,
       showHomePin,
@@ -388,6 +432,7 @@ export function LeafletMap({
     }),
     [
       center,
+      focus,
       radiusMeters,
       resolvedZoom,
       showHomePin,

@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import {
   Camera,
+  Flag,
+  Heart,
   MapPin,
   MessageCircle,
   ShieldCheck,
@@ -33,15 +35,25 @@ interface ReviewItem {
 export interface ServiceDetailModalProps {
   visible: boolean;
   service: NearbyService | null;
+  pointServices?: NearbyService[];
+  onSelectService?: (service: NearbyService) => void;
   onClose: () => void;
   onConsult: (service: NearbyService) => void;
+  isFavorite?: (serviceId: string) => boolean;
+  onToggleFavorite?: (serviceId: string) => void;
+  onReport?: (service: NearbyService) => void;
 }
 
 export function ServiceDetailModal({
   visible,
   service,
+  pointServices = [],
+  onSelectService,
   onClose,
   onConsult,
+  isFavorite,
+  onToggleFavorite,
+  onReport,
 }: ServiceDetailModalProps) {
   const { t } = useI18n();
   const { tp, tpCategory } = usePublicI18n();
@@ -116,17 +128,94 @@ export function ServiceDetailModal({
           </Text>
         </View>
 
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel="Cerrar detalle"
-          onPress={onClose}
-          className="h-10 w-10 items-center justify-center rounded-full bg-neutral-mutedBg"
-        >
-          <X size={18} color="#6C727A" />
-        </TouchableOpacity>
+        <View className="flex-row items-center gap-1.5">
+          {onReport && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={tp('public.reportA11y', { name: service.provider_name })}
+              onPress={() => {
+                onClose();
+                onReport(service);
+              }}
+              className="h-10 w-10 items-center justify-center rounded-full bg-neutral-mutedBg"
+            >
+              <Flag size={17} color="#6C727A" />
+            </TouchableOpacity>
+          )}
+          {isFavorite && onToggleFavorite && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={
+                isFavorite(service.service_id) ? t('service.favRemove') : t('service.favAdd')
+              }
+              onPress={() => onToggleFavorite(service.service_id)}
+              className="h-10 w-10 items-center justify-center rounded-full bg-neutral-mutedBg"
+            >
+              <Heart
+                size={17}
+                color={isFavorite(service.service_id) ? '#D90429' : '#6C727A'}
+                fill={isFavorite(service.service_id) ? '#D90429' : 'none'}
+              />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar detalle"
+            onPress={onClose}
+            className="h-10 w-10 items-center justify-center rounded-full bg-neutral-mutedBg"
+          >
+            <X size={18} color="#6C727A" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 440 }}>
+      {pointServices.length > 1 && onSelectService && (
+        <View className="mb-3">
+          <Text
+            className="mb-1.5 text-neutral-textMuted"
+            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11.5 }}
+          >
+            OFRECIDO EN ESTE PUNTO ({pointServices.length})
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {pointServices.map((item) => {
+              const active = item.service_id === service.service_id;
+              const itemType = normalizeListingType(item.listing_type);
+              const itemMeta = LISTING_TYPE_META[itemType];
+              const ItemIcon = itemMeta.Icon;
+              return (
+                <TouchableOpacity
+                  key={item.service_id}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  onPress={() => onSelectService(item)}
+                  className="mr-2 flex-row items-center rounded-full border px-3 py-1.5"
+                  style={{
+                    borderColor: active ? itemMeta.color : '#E5E7EB',
+                    backgroundColor: active ? itemMeta.bg : '#F9FAFB',
+                    maxWidth: 210,
+                  }}
+                >
+                  <ItemIcon size={13} color={itemMeta.color} />
+                  <Text
+                    numberOfLines={1}
+                    className="ml-1.5"
+                    style={{
+                      fontFamily: active ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
+                      fontSize: 12,
+                      color: active ? itemMeta.color : '#374151',
+                    }}
+                  >
+                    {item.title}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
+
+      <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }}>
         <Text
           className="text-neutral-textMain"
           style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 19 }}

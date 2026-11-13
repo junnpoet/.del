@@ -67,12 +67,6 @@ function NativeMap({
   currentUserId,
   selectedService,
   onSelectMarker,
-  onClosePreview,
-  onConsult,
-  onViewMore,
-  onReport,
-  isFavorite,
-  onToggleFavorite,
 }: {
   latitude: number;
   longitude: number;
@@ -81,16 +75,10 @@ function NativeMap({
   locations: Record<string, { latitude: number; longitude: number }>;
   currentUserId?: string;
   selectedService: NearbyService | null;
-  onSelectMarker: (service: NearbyService) => void;
-  onClosePreview: () => void;
-  onConsult: (service: NearbyService) => void;
-  onViewMore: (service: NearbyService) => void;
-  onReport: (service: NearbyService) => void;
-  isFavorite: (serviceId: string) => boolean;
-  onToggleFavorite: (serviceId: string) => void;
+  onSelectMarker: (service: NearbyService, pointItems: NearbyService[]) => void;
 }) {
   const { t } = useI18n();
-  const { tp, tpCategory } = usePublicI18n();
+  const { tp } = usePublicI18n();
 
   if (Platform.OS === 'web') {
     return (
@@ -125,7 +113,12 @@ function NativeMap({
     }
   }
 
-  const mapMarkers: LeafletMarkerItem[] = Array.from(groupedByHome.values()).map(({ coord, items }) => {
+  const selectedCoord = selectedService ? locations[selectedService.service_id] : undefined;
+  const selectedHomeKey = selectedCoord
+    ? `${selectedCoord.latitude.toFixed(5)},${selectedCoord.longitude.toFixed(5)}`
+    : null;
+
+  const mapMarkers: LeafletMarkerItem[] = Array.from(groupedByHome.entries()).map(([key, { coord, items }]) => {
     const primary = items[0];
     const uniqueTypes = Array.from(new Set(items.map((item) => normalizeListingType(item.listing_type))));
     const colors = uniqueTypes.map((typeKey) => LISTING_TYPE_META[typeKey].color);
@@ -152,30 +145,17 @@ function NativeMap({
       iconType,
       count: items.length,
       isHome: isOwnHome,
+      selected: selectedHomeKey === key,
       title: items.length > 1 ? `${primary.provider_name} (${items.length} ofertas)` : primary.title,
       subtitle: `${primary.provider_name} · ${Math.round(primary.distance_meters)} m`,
     };
   });
 
-  const selectedCoord = selectedService ? locations[selectedService.service_id] : undefined;
-  const selectedHomeKey = selectedCoord
-    ? `${selectedCoord.latitude.toFixed(5)},${selectedCoord.longitude.toFixed(5)}`
-    : null;
-  const selectedHomeItems = selectedHomeKey ? groupedByHome.get(selectedHomeKey)?.items ?? [] : [];
-  const selectedHomeIndex = selectedService
-    ? selectedHomeItems.findIndex((s) => s.service_id === selectedService.service_id)
-    : -1;
-
-  const selectedType = selectedService
-    ? normalizeListingType(selectedService.listing_type)
-    : null;
-  const selectedMeta = selectedType ? LISTING_TYPE_META[selectedType] : null;
-  const SelectedIcon = selectedMeta?.Icon;
-
   return (
     <View className="flex-1 relative">
       <LeafletMap
         center={{ latitude, longitude }}
+        focus={selectedCoord ?? null}
         radiusMeters={radius}
         showHomePin
         homeTitle={tp('public.homePinTitle')}
@@ -185,178 +165,11 @@ function NativeMap({
           const found = services.find((service) => service.service_id === id);
           if (!found) return;
           const coord = locations[found.service_id];
-          if (coord && selectedService) {
-            const key = `${coord.latitude.toFixed(5)},${coord.longitude.toFixed(5)}`;
-            const group = groupedByHome.get(key)?.items ?? [];
-            const currentIdx = group.findIndex((s) => s.service_id === selectedService.service_id);
-            if (currentIdx >= 0 && group.length > 1) {
-              onSelectMarker(group[(currentIdx + 1) % group.length]);
-              return;
-            }
-          }
-          onSelectMarker(found);
+          const key = coord ? `${coord.latitude.toFixed(5)},${coord.longitude.toFixed(5)}` : null;
+          const group = (key ? groupedByHome.get(key)?.items : null) ?? [found];
+          onSelectMarker(found, group);
         }}
       />
-
-      {/* Map Floating Preview Card */}
-      {selectedService && selectedMeta && selectedType && SelectedIcon && (
-        <View className="absolute bottom-24 left-4 right-4 rounded-3xl border border-neutral-border bg-neutral-surface p-4 shadow-xl">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-2">
-              <View
-                className="flex-row items-center rounded-full px-3 py-1"
-                style={{ backgroundColor: selectedMeta.bg }}
-              >
-                <SelectedIcon size={14} color={selectedMeta.color} />
-                <Text
-                  className="ml-1.5"
-                  style={{
-                    fontFamily: 'PlusJakartaSans_700Bold',
-                    fontSize: 12,
-                    color: selectedMeta.color,
-                  }}
-                >
-                  {tp(`public.type.${selectedType}`)}
-                </Text>
-              </View>
-
-              {selectedHomeItems.length > 1 && (
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={() => {
-                    const nextIdx = (selectedHomeIndex + 1) % selectedHomeItems.length;
-                    onSelectMarker(selectedHomeItems[nextIdx]);
-                  }}
-                  className="rounded-full border border-neutral-border bg-neutral-mutedBg px-2.5 py-1"
-                >
-                  <Text
-                    className="text-neutral-textMain"
-                    style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11.5 }}
-                  >
-                    {selectedHomeIndex + 1}/{selectedHomeItems.length} · Siguiente
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <View className="flex-row items-center gap-1">
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel={tp('public.reportA11y', {
-                  name: selectedService.provider_name,
-                })}
-                onPress={() => onReport(selectedService)}
-                className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
-              >
-                <Flag size={18} color="#6C727A" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isFavorite(selectedService.service_id)
-                    ? t('service.favRemove')
-                    : t('service.favAdd')
-                }
-                onPress={() => onToggleFavorite(selectedService.service_id)}
-                className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
-              >
-                <Heart
-                  size={18}
-                  color={isFavorite(selectedService.service_id) ? '#D90429' : '#6C727A'}
-                  fill={isFavorite(selectedService.service_id) ? '#D90429' : 'none'}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel={tp('public.mapClosePreview')}
-                onPress={onClosePreview}
-                className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
-              >
-                <X size={18} color="#6C727A" />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <Text
-            numberOfLines={1}
-            className="mt-2 text-neutral-textMain"
-            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 }}
-          >
-            {selectedService.title}
-          </Text>
-          <Text
-            numberOfLines={1}
-            className="mt-0.5 text-neutral-textMuted"
-            style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
-          >
-            {selectedService.provider_name} · {tpCategory(selectedService.category)}
-          </Text>
-
-          <View className="mt-2.5 flex-row flex-wrap items-center">
-            <View className="mr-3 flex-row items-center">
-              <ShieldCheck size={15} color="#1E5E45" />
-              <Text
-                className="ml-1 text-primary"
-                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}
-              >
-                {t('service.seal')}
-              </Text>
-            </View>
-            <View className="mr-3 flex-row items-center">
-              <Star size={14} color="#EAB308" fill="#EAB308" />
-              <Text
-                className="ml-1 text-neutral-textMain"
-                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
-              >
-                {selectedService.rating_avg?.toFixed(1) ?? '0.0'} ({selectedService.reviews_total ?? 0})
-              </Text>
-            </View>
-            <View className="flex-row items-center">
-              <MapPin size={14} color="#6C727A" />
-              <Text
-                className="ml-1 text-neutral-textMuted"
-                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}
-              >
-                {t('service.distance', { n: Math.round(selectedService.distance_meters) })}
-              </Text>
-            </View>
-          </View>
-
-          <View className="mt-3 flex-row items-center gap-2">
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={() => onViewMore(selectedService)}
-              className="min-h-[48px] items-center justify-center rounded-2xl border border-neutral-border bg-neutral-mutedBg px-4"
-            >
-              <Text
-                numberOfLines={1}
-                className="text-neutral-textMain"
-                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13.5 }}
-              >
-                Ver más
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={t('service.consultA11y', {
-                name: selectedService.provider_name,
-              })}
-              onPress={() => onConsult(selectedService)}
-              className="min-h-[48px] flex-1 flex-row items-center justify-center rounded-2xl bg-primary px-4"
-            >
-              <MessageCircle size={18} color="#FFFFFF" />
-              <Text
-                numberOfLines={1}
-                className="ml-2 text-center text-white"
-                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
-              >
-                {t('service.consult')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
     </View>
   );
 }
@@ -374,6 +187,7 @@ export default function DirectoryScreen() {
   const [openingChatId, setOpeningChatId] = useState<string | null>(null);
   const [selectedMapService, setSelectedMapService] = useState<NearbyService | null>(null);
   const [detailService, setDetailService] = useState<NearbyService | null>(null);
+  const [detailPointServices, setDetailPointServices] = useState<NearbyService[]>([]);
   const [reportingService, setReportingService] = useState<NearbyService | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -744,13 +558,11 @@ export default function DirectoryScreen() {
           locations={directory.locations}
           currentUserId={session?.user.id}
           selectedService={selectedMapService}
-          onSelectMarker={(svc) => setSelectedMapService(svc)}
-          onClosePreview={() => setSelectedMapService(null)}
-          onConsult={handleConsult}
-          onViewMore={(svc) => setDetailService(svc)}
-          onReport={(svc) => setReportingService(svc)}
-          isFavorite={directory.isFavorite}
-          onToggleFavorite={directory.toggleFavorite}
+          onSelectMarker={(svc, pointItems) => {
+            setSelectedMapService(svc);
+            setDetailService(svc);
+            setDetailPointServices(pointItems);
+          }}
         />
       ) : (
         <FlatList
@@ -762,7 +574,10 @@ export default function DirectoryScreen() {
               isFavorite={directory.favorites.includes(item.service_id)}
               onToggleFavorite={() => directory.toggleFavorite(item.service_id)}
               onConsult={() => handleConsult(item)}
-              onViewMore={() => setDetailService(item)}
+              onViewMore={() => {
+                setDetailPointServices([]);
+                setDetailService(item);
+              }}
               onReport={() => setReportingService(item)}
               isTogglingFavorite={directory.isTogglingFavorite}
             />
@@ -804,8 +619,22 @@ export default function DirectoryScreen() {
       <ServiceDetailModal
         visible={Boolean(detailService)}
         service={detailService}
-        onClose={() => setDetailService(null)}
+        pointServices={detailPointServices}
+        onSelectService={(svc) => {
+          setDetailService(svc);
+          if (view === 'map') {
+            setSelectedMapService(svc);
+          }
+        }}
+        onClose={() => {
+          setDetailService(null);
+          setDetailPointServices([]);
+          setSelectedMapService(null);
+        }}
         onConsult={handleConsult}
+        isFavorite={directory.isFavorite}
+        onToggleFavorite={directory.toggleFavorite}
+        onReport={(svc) => setReportingService(svc)}
       />
 
       {/* Filters Bottom Sheet Modal */}
