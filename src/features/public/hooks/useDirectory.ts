@@ -70,6 +70,22 @@ export function useDirectory(radiusMeters: number) {
     },
   });
 
+  const searchZone = useQuery<Record<string, unknown> | null>({
+    queryKey: [...DIRECTORY_QUERY_KEY, 'zone', session?.user.id, radiusMeters, coordinateKey],
+    enabled: Boolean(session && hasLocation),
+    networkMode: 'offlineFirst',
+    queryFn: async () => {
+      if (!homeCoordinates) return null;
+      const { data, error } = await supabase.rpc('get_search_zone_geojson', {
+        radius_meters: radiusMeters,
+        user_home_lat: homeCoordinates.latitude,
+        user_home_lng: homeCoordinates.longitude,
+      });
+      if (error) return null;
+      return (data as Record<string, unknown> | null) ?? null;
+    },
+  });
+
   // Wave 0: get_nearby_services ya incluye provider_lat y provider_lng
   const locations = useMemo(() => {
     const map: Record<string, { latitude: number; longitude: number }> = {};
@@ -101,6 +117,7 @@ export function useDirectory(radiusMeters: number) {
     toggleFavorite: favoritesManager.toggleFavorite,
     isTogglingFavorite: favoritesManager.isTogglingFavorite,
     locations,
+    searchZoneGeoJson: searchZone.data ?? null,
     hasLocation,
     coordinates: homeCoordinates,
   };

@@ -21,6 +21,7 @@ export interface LeafletMapProps {
   center: { latitude: number; longitude: number };
   focus?: { latitude: number; longitude: number } | null;
   radiusMeters?: number;
+  searchZoneGeoJson?: Record<string, unknown> | null;
   zoom?: number;
   showHomePin?: boolean;
   homeTitle?: string;
@@ -255,7 +256,16 @@ function buildLeafletHtml(initialPayloadJson: string): string {
         var lat = payload.center.latitude;
         var lng = payload.center.longitude;
 
-        if (payload.radiusMeters) {
+        if (payload.searchZoneGeoJson) {
+          L.geoJSON(payload.searchZoneGeoJson, {
+            style: {
+              color: '#1E5E45',
+              weight: 2,
+              fillColor: '#1E5E45',
+              fillOpacity: 0.12
+            }
+          }).addTo(layerGroup);
+        } else if (payload.radiusMeters) {
           L.circle([lat, lng], {
             radius: payload.radiusMeters,
             color: '#1E5E45',
@@ -403,6 +413,7 @@ export function LeafletMap({
   center,
   focus = null,
   radiusMeters,
+  searchZoneGeoJson = null,
   zoom,
   showHomePin = false,
   homeTitle,
@@ -423,6 +434,7 @@ export function LeafletMap({
       center,
       focus,
       radiusMeters,
+      searchZoneGeoJson,
       zoom: resolvedZoom,
       showHomePin,
       homeTitle,
@@ -434,6 +446,7 @@ export function LeafletMap({
       center,
       focus,
       radiusMeters,
+      searchZoneGeoJson,
       resolvedZoom,
       showHomePin,
       homeTitle,

@@ -764,6 +764,14 @@ export type Database = {
           title: string
         }[]
       }
+      get_search_zone_geojson: {
+        Args: {
+          radius_meters: number
+          user_home_lat: number
+          user_home_lng: number
+        }
+        Returns: Json | null
+      }
       is_dirigente: { Args: { user_id: string }; Returns: boolean }
       is_padrino_of: {
         Args: { buddy_id: string; vulnerable_id: string }

@@ -63,6 +63,7 @@ function NativeMap({
   latitude,
   longitude,
   radius,
+  searchZoneGeoJson,
   services,
   locations,
   currentUserId,
@@ -72,6 +73,7 @@ function NativeMap({
   latitude: number;
   longitude: number;
   radius: number;
+  searchZoneGeoJson?: Record<string, unknown> | null;
   services: NearbyService[];
   locations: Record<string, { latitude: number; longitude: number }>;
   currentUserId?: string;
@@ -158,6 +160,7 @@ function NativeMap({
         center={{ latitude, longitude }}
         focus={selectedCoord ?? null}
         radiusMeters={radius}
+        searchZoneGeoJson={searchZoneGeoJson}
         showHomePin
         homeTitle={tp('public.homePinTitle')}
         homeSubtitle={tp('public.homePinDesc')}
@@ -559,6 +562,7 @@ export default function DirectoryScreen() {
           latitude={directory.coordinates!.latitude}
           longitude={directory.coordinates!.longitude}
           radius={radius}
+          searchZoneGeoJson={directory.searchZoneGeoJson}
           services={filteredServices}
           locations={directory.locations}
           currentUserId={session?.user.id}

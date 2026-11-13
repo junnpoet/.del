@@ -26,13 +26,15 @@ Todos los usuarios residen en **Urbanización Bellamar (Nuevo Chimbote)**, alred
 
 ---
 
-## 2. Gadiel Zúñiga (Miembro Verificado y Oferente Activo)
+## 2. Gadiel Zúñiga (Miembro Verificado y Oferente Activo — Sector Alejado en Bellamar)
 * **Teléfono Celular:** `971825787`
 * **Contraseña:** `123456`
-* **Domicilio Georreferenciado:** Calle 22 Mz. M - Lt. 4, Urbanización Bellamar
+* **Domicilio Georreferenciado:** Sector II, Calle Los Laureles Mz. F - Lt. 11, Urbanización Bellamar (~655 m al noreste de Juan López)
 * **Estado de Membresía:** `MIEMBRO` (Integrado a *Junta Vecinal Urb. Bellamar*)
 * **¿Qué probar con este usuario?**
-  1. **Capa Pública y Pin Multicolor (Pestaña "Directorio"):**
+  1. **Expansión Compuesta del Área de Búsqueda:**
+     - Al estar a ~655 m del núcleo principal dentro de Bellamar, su hogar estira la figura compuesta del radio de búsqueda para los miembros de la comunidad (*Juan López*, *Brandon Mauricio*, *Mauro Lázaro*), mientras que *Ronaldinho Villanueva* (`PENDIENTE`, capa pública) aún no lo alcanza hasta ser aprobado.
+  2. **Capa Pública y Pin Multicolor (Pestaña "Directorio"):**
      - Ofrece **Servicio** (*Cerrajería 24h*), **Producto** (*Muebles y repisas de madera*) y **Auxilio** (*Botiquín de emergencia y curaciones*), generando un pin combinado de los 3 colores en el mapa.
      - Abre **Chats** para ver su conversación activa con *Juan López*.
   2. **Capa Privada y Publicación Rápida (`+`):**
