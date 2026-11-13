@@ -79,7 +79,7 @@ export function SolidaryActionSheet({
                 className="text-neutral-textMain"
                 style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 18 }}
               >
-                {t('sheet.title')}
+                {post.postType === 'PRESTAMO' ? 'Requerir apoyo' : t('sheet.title')}
               </Text>
               <Text
                 className="text-neutral-textMuted mt-0.5"
