@@ -14,6 +14,7 @@ import {
   HeartHandshake,
   Layers,
   LayoutGrid,
+  LifeBuoy,
   Lock,
   LogIn,
   Map as MapIcon,
@@ -71,6 +72,7 @@ const BENEFITS: TranslationKey[] = ['community.benefit1', 'community.benefit2', 
 
 const FILTER_ICONS: Record<FeedFilter, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   TODOS: Layers,
+  AYUDA: LifeBuoy,
   PRESTAMO: Repeat,
   DONACION: Gift,
   ACCION_COMUNAL: Users,
@@ -446,7 +448,7 @@ export default function SolidaryFeedScreen() {
           </View>
 
           {filterOpen && (
-            <View className="mt-1.5 rounded-2xl border border-neutral-border bg-neutral-surface p-1.5 shadow-sm">
+            <View className="mt-1.5 rounded-2xl border border-neutral-border bg-neutral-surface p-1.5 shadow-sm z-30">
               {FEED_FILTERS.map((value) => {
                 const active = filter === value;
                 const Icon = FILTER_ICONS[value];

@@ -1,16 +1,17 @@
 import type { CareStatus, PostStatus, PostType } from '../../types';
 import type { TranslationKey } from '../../i18n';
 
-export type FeedFilter = 'TODOS' | 'PRESTAMO' | 'DONACION' | 'ACCION_COMUNAL';
+export type FeedFilter = 'TODOS' | 'AYUDA' | 'PRESTAMO' | 'DONACION' | 'ACCION_COMUNAL';
 
-/** Chips consolidados del Muro Solidario (SPEC-04 §2.2). */
-export const FEED_FILTERS: FeedFilter[] = ['TODOS', 'PRESTAMO', 'DONACION', 'ACCION_COMUNAL'];
+/** Categorías consolidadas del Muro Solidario. */
+export const FEED_FILTERS: FeedFilter[] = ['TODOS', 'AYUDA', 'PRESTAMO', 'DONACION', 'ACCION_COMUNAL'];
 
 export const FEED_FILTER_META: Record<FeedFilter, { color: string; tint: string }> = {
   TODOS: { color: '#374151', tint: '#F3F4F6' },
-  PRESTAMO: { color: '#0369A1', tint: '#E0F2FE' },
-  DONACION: { color: '#B45309', tint: '#FEF3C7' },
-  ACCION_COMUNAL: { color: '#1E5E45', tint: '#E8F3EE' },
+  AYUDA: { color: '#B91C1C', tint: '#FEE2E2' },
+  PRESTAMO: { color: '#0284C7', tint: '#E0F2FE' },
+  DONACION: { color: '#D97706', tint: '#FEF3C7' },
+  ACCION_COMUNAL: { color: '#1E5E45', tint: '#EDF5F1' },
 };
 
 export function feedFilterKey(filter: FeedFilter): TranslationKey {
@@ -21,7 +22,7 @@ export function feedFilterKey(filter: FeedFilter): TranslationKey {
 export function matchesFeedFilter(postType: PostType, filter: FeedFilter): boolean {
   if (filter === 'TODOS') return true;
   if (filter === 'ACCION_COMUNAL') {
-    return postType === 'TRUEQUE' || postType === 'VOLUNTARIADO' || postType === 'AYUDA';
+    return postType === 'TRUEQUE' || postType === 'VOLUNTARIADO';
   }
   return postType === filter;
 }
