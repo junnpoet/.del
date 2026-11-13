@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
+  Image,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -11,12 +14,14 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronLeft,
   ChevronRight,
   Droplets,
   HeartHandshake,
+  ImagePlus,
   Megaphone,
   MessageCircle,
   Send,
@@ -40,6 +45,7 @@ export interface GroupChatMessage {
   senderId: string;
   senderName: string;
   text: string;
+  imageUri?: string;
   createdAt: string;
 }
 
@@ -92,7 +98,8 @@ interface Props {
 
 /**
  * Modal de grupos de apoyo de una emergencia: cualquier miembro de la comunidad
- * puede ingresar a cualquier grupo, y cada grupo funciona como un chat grupal.
+ * puede ingresar a cualquier grupo, y cada grupo funciona como un chat grupal
+ * con soporte de texto e imágenes.
  */
 export function EmergencySupportGroupsModal({
   visible,
@@ -107,12 +114,34 @@ export function EmergencySupportGroupsModal({
   const [activeGroup, setActiveGroup] = useState<SupportGroupDef | null>(null);
   const [messagesByGroup, setMessagesByGroup] = useState<Record<string, GroupChatMessage[]>>({});
   const [draft, setDraft] = useState('');
+  const [pendingImageUri, setPendingImageUri] = useState<string | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView> | null>(null);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates?.height ?? 0);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (!visible) {
       setActiveGroup(null);
       setDraft('');
+      setPendingImageUri(null);
+      setKeyboardHeight(0);
       return;
     }
     if (!eventId) {
@@ -134,15 +163,36 @@ export function EmergencySupportGroupsModal({
     });
   }, [visible, eventId]);
 
+  const handlePickImage = async () => {
+    if (readOnly) return;
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert(
+        'Permiso necesario',
+        'Autoriza el acceso a tus fotos para enviar imágenes en el chat grupal.'
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.75,
+      allowsEditing: false,
+    });
+    if (!result.canceled && result.assets[0]?.uri) {
+      setPendingImageUri(result.assets[0].uri);
+    }
+  };
+
   const handleSend = () => {
     const clean = draft.trim();
-    if (!clean || !activeGroup || !eventId || readOnly) return;
+    if ((!clean && !pendingImageUri) || !activeGroup || !eventId || readOnly) return;
 
     const newMsg: GroupChatMessage = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       senderId: profile?.id ?? 'member-local',
       senderName: profile?.full_name ?? 'Vecino',
       text: clean,
+      imageUri: pendingImageUri ?? undefined,
       createdAt: new Date().toISOString(),
     };
 
@@ -153,21 +203,27 @@ export function EmergencySupportGroupsModal({
       return { ...prev, [groupId]: nextList };
     });
     setDraft('');
+    setPendingImageUri(null);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
   };
 
   const activeMessages = activeGroup ? messagesByGroup[activeGroup.id] ?? [] : [];
+  const canSend = Boolean(draft.trim() || pendingImageUri);
+  const bottomPadding =
+    Platform.OS === 'android' && keyboardHeight > 0
+      ? keyboardHeight + 10
+      : Math.max(insets.bottom + 12, 20);
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         className="flex-1 bg-black/45 justify-end"
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <Pressable className="flex-1" onPress={onClose} />
         <View
           className="bg-neutral-surface rounded-t-3xl h-[86%] px-5 pt-5"
-          style={{ paddingBottom: Math.max(insets.bottom + 12, 20) }}
+          style={{ paddingBottom: bottomPadding }}
         >
           {!activeGroup ? (
             <>
@@ -340,7 +396,7 @@ export function EmergencySupportGroupsModal({
                     >
                       {readOnly
                         ? 'Este chat pertenece a una emergencia archivada.'
-                        : 'Cualquier miembro de la comunidad puede escribir aquí para coordinar.'}
+                        : 'Cualquier miembro de la comunidad puede escribir o enviar fotos aquí.'}
                     </Text>
                   </View>
                 ) : (
@@ -366,12 +422,21 @@ export function EmergencySupportGroupsModal({
                               : 'bg-neutral-background border border-neutral-border rounded-bl-sm'
                           }`}
                         >
-                          <Text
-                            className={isMine ? 'text-white' : 'text-neutral-textMain'}
-                            style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14 }}
-                          >
-                            {msg.text}
-                          </Text>
+                          {msg.imageUri ? (
+                            <Image
+                              source={{ uri: msg.imageUri }}
+                              className="w-52 h-40 rounded-xl mb-1.5"
+                              resizeMode="cover"
+                            />
+                          ) : null}
+                          {msg.text ? (
+                            <Text
+                              className={isMine ? 'text-white' : 'text-neutral-textMain'}
+                              style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14 }}
+                            >
+                              {msg.text}
+                            </Text>
+                          ) : null}
                         </View>
                         <Text
                           className="text-neutral-textMuted mt-0.5 mx-1"
@@ -385,29 +450,59 @@ export function EmergencySupportGroupsModal({
                 )}
               </ScrollView>
 
-              {/* Caja de envío */}
+              {/* Previsualización de imagen adjunta + Caja de envío */}
               {!readOnly && (
-                <View className="flex-row items-center gap-2 pt-2 border-t border-neutral-border/70">
-                  <TextInput
-                    value={draft}
-                    onChangeText={setDraft}
-                    placeholder="Escribe un mensaje al grupo..."
-                    placeholderTextColor="#9EA3AE"
-                    multiline
-                    className="flex-1 min-h-[44px] max-h-[100px] rounded-2xl border border-neutral-border bg-neutral-background px-3.5 py-2.5 text-neutral-textMain"
-                    style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14 }}
-                  />
-                  <TouchableOpacity
-                    accessibilityRole="button"
-                    accessibilityLabel="Enviar mensaje"
-                    onPress={handleSend}
-                    disabled={!draft.trim()}
-                    className={`w-11 h-11 rounded-2xl items-center justify-center ${
-                      draft.trim() ? 'bg-primary' : 'bg-neutral-mutedBg'
-                    }`}
-                  >
-                    <Send size={18} color={draft.trim() ? '#FFFFFF' : '#9EA3AE'} />
-                  </TouchableOpacity>
+                <View className="pt-2 border-t border-neutral-border/70">
+                  {pendingImageUri ? (
+                    <View className="mb-2 flex-row items-center">
+                      <View className="relative">
+                        <Image
+                          source={{ uri: pendingImageUri }}
+                          className="w-16 h-16 rounded-xl"
+                          resizeMode="cover"
+                        />
+                        <TouchableOpacity
+                          accessibilityRole="button"
+                          accessibilityLabel="Quitar imagen"
+                          onPress={() => setPendingImageUri(null)}
+                          className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-neutral-textMain items-center justify-center"
+                        >
+                          <X size={13} color="#FFFFFF" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : null}
+
+                  <View className="flex-row items-center gap-2">
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel="Adjuntar imagen"
+                      onPress={handlePickImage}
+                      className="w-11 h-11 rounded-2xl border border-neutral-border bg-neutral-background items-center justify-center"
+                    >
+                      <ImagePlus size={19} color="#1E5E45" />
+                    </TouchableOpacity>
+                    <TextInput
+                      value={draft}
+                      onChangeText={setDraft}
+                      placeholder="Escribe un mensaje al grupo..."
+                      placeholderTextColor="#9EA3AE"
+                      multiline
+                      className="flex-1 min-h-[44px] max-h-[100px] rounded-2xl border border-neutral-border bg-neutral-background px-3.5 py-2.5 text-neutral-textMain"
+                      style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14 }}
+                    />
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel="Enviar mensaje"
+                      onPress={handleSend}
+                      disabled={!canSend}
+                      className={`w-11 h-11 rounded-2xl items-center justify-center ${
+                        canSend ? 'bg-primary' : 'bg-neutral-mutedBg'
+                      }`}
+                    >
+                      <Send size={18} color={canSend ? '#FFFFFF' : '#9EA3AE'} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               )}
             </>
