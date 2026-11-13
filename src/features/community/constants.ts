@@ -6,6 +6,13 @@ export type FeedFilter = 'TODOS' | 'PRESTAMO' | 'DONACION' | 'ACCION_COMUNAL';
 /** Chips consolidados del Muro Solidario (SPEC-04 §2.2). */
 export const FEED_FILTERS: FeedFilter[] = ['TODOS', 'PRESTAMO', 'DONACION', 'ACCION_COMUNAL'];
 
+export const FEED_FILTER_META: Record<FeedFilter, { color: string; tint: string }> = {
+  TODOS: { color: '#374151', tint: '#F3F4F6' },
+  PRESTAMO: { color: '#0369A1', tint: '#E0F2FE' },
+  DONACION: { color: '#B45309', tint: '#FEF3C7' },
+  ACCION_COMUNAL: { color: '#1E5E45', tint: '#E8F3EE' },
+};
+
 export function feedFilterKey(filter: FeedFilter): TranslationKey {
   if (filter === 'ACCION_COMUNAL') return 'feed.filter.ACCION_COMUNAL';
   return `filter.${filter}`;

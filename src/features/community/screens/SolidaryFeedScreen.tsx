@@ -2,18 +2,24 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
+  Check,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
   Clock,
+  Gift,
   HeartHandshake,
+  Layers,
   LayoutGrid,
   Lock,
   LogIn,
   Map as MapIcon,
   Megaphone,
+  Repeat,
   Settings,
+  Users,
 } from 'lucide-react-native';
 import { Header } from '../../../components/ui/Header';
-import { Chip } from '../../../components/ui/Chip';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { useI18n, type TranslationKey } from '../../../i18n';
@@ -21,6 +27,7 @@ import {
   CARE_STATUS_META,
   careStatusKey,
   FEED_FILTERS,
+  FEED_FILTER_META,
   feedFilterKey,
   isCareVolunteerPost,
   matchesFeedFilter,
@@ -51,6 +58,13 @@ import type { CareStatus } from '../../../types';
 
 const BENEFITS: TranslationKey[] = ['community.benefit1', 'community.benefit2', 'community.benefit3'];
 
+const FILTER_ICONS: Record<FeedFilter, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
+  TODOS: Layers,
+  PRESTAMO: Repeat,
+  DONACION: Gift,
+  ACCION_COMUNAL: Users,
+};
+
 /** Muro Solidario Unificado (SPEC-04 §2.1 y §2.2). */
 export default function SolidaryFeedScreen() {
   const router = useRouter();
@@ -61,6 +75,7 @@ export default function SolidaryFeedScreen() {
 
   const [view, setView] = useState<'feed' | 'map'>('feed');
   const [filter, setFilter] = useState<FeedFilter>('TODOS');
+  const [filterOpen, setFilterOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
@@ -339,18 +354,85 @@ export default function SolidaryFeedScreen() {
           })}
         </View>
 
-        {/* Chips de filtrado rápido */}
-        <View className="mb-1">
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {FEED_FILTERS.map((value) => (
-              <Chip
-                key={value}
-                label={t(feedFilterKey(value))}
-                isActive={filter === value}
-                onPress={() => setFilter(value)}
-              />
-            ))}
-          </ScrollView>
+        {/* Lista desplegable de categorías de publicaciones */}
+        <View className="mb-3">
+          {(() => {
+            const SelectedIcon = FILTER_ICONS[filter];
+            const selectedMeta = FEED_FILTER_META[filter];
+            return (
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityState={{ expanded: filterOpen }}
+                onPress={() => setFilterOpen((prev) => !prev)}
+                className="min-h-[48px] flex-row items-center justify-between rounded-2xl border border-neutral-border bg-neutral-surface px-3.5 py-2"
+              >
+                <View className="flex-row items-center flex-1 mr-2">
+                  <View
+                    className="w-8 h-8 rounded-xl items-center justify-center mr-2.5"
+                    style={{ backgroundColor: selectedMeta.tint }}
+                  >
+                    <SelectedIcon size={16} color={selectedMeta.color} strokeWidth={2.2} />
+                  </View>
+                  <Text
+                    numberOfLines={1}
+                    className="text-neutral-textMain"
+                    style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13.5 }}
+                  >
+                    {t(feedFilterKey(filter))}
+                  </Text>
+                </View>
+                {filterOpen ? (
+                  <ChevronUp size={18} color="#6C727A" />
+                ) : (
+                  <ChevronDown size={18} color="#6C727A" />
+                )}
+              </TouchableOpacity>
+            );
+          })()}
+
+          {filterOpen && (
+            <View className="mt-1.5 rounded-2xl border border-neutral-border bg-neutral-surface p-1.5 shadow-sm">
+              {FEED_FILTERS.map((value) => {
+                const active = filter === value;
+                const Icon = FILTER_ICONS[value];
+                const meta = FEED_FILTER_META[value];
+                return (
+                  <TouchableOpacity
+                    key={value}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    onPress={() => {
+                      setFilter(value);
+                      setFilterOpen(false);
+                    }}
+                    className={`flex-row items-center justify-between rounded-xl px-3 py-2.5 ${
+                      active ? 'bg-neutral-mutedBg' : ''
+                    }`}
+                  >
+                    <View className="flex-row items-center flex-1 mr-2">
+                      <View
+                        className="w-8 h-8 rounded-xl items-center justify-center mr-2.5"
+                        style={{ backgroundColor: meta.tint }}
+                      >
+                        <Icon size={16} color={meta.color} strokeWidth={2.2} />
+                      </View>
+                      <Text
+                        numberOfLines={1}
+                        className={active ? 'text-neutral-textMain' : 'text-neutral-textMuted'}
+                        style={{
+                          fontFamily: active ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
+                          fontSize: 13.5,
+                        }}
+                      >
+                        {t(feedFilterKey(value))}
+                      </Text>
+                    </View>
+                    {active && <Check size={16} color={meta.color} strokeWidth={2.4} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
         </View>
 
         {view === 'feed' ? (
