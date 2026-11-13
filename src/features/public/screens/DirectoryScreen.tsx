@@ -288,12 +288,14 @@ export default function DirectoryScreen() {
   const [reportingService, setReportingService] = useState<NearbyService | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const insets = useSafeAreaInsets();
+  const sheetHeightRef = React.useRef(560);
   const backdropOpacity = React.useRef(new Animated.Value(0)).current;
-  const sheetTranslateY = React.useRef(new Animated.Value(360)).current;
+  const sheetTranslateY = React.useRef(new Animated.Value(560)).current;
 
   const openFilters = () => {
+    const offscreen = sheetHeightRef.current + 32;
     backdropOpacity.setValue(0);
-    sheetTranslateY.setValue(360);
+    sheetTranslateY.setValue(offscreen);
     setFiltersOpen(true);
     Animated.parallel([
       Animated.timing(backdropOpacity, {
@@ -311,6 +313,7 @@ export default function DirectoryScreen() {
   };
 
   const closeFilters = () => {
+    const offscreen = sheetHeightRef.current + 32;
     Animated.parallel([
       Animated.timing(backdropOpacity, {
         toValue: 0,
@@ -318,8 +321,8 @@ export default function DirectoryScreen() {
         useNativeDriver: true,
       }),
       Animated.timing(sheetTranslateY, {
-        toValue: 360,
-        duration: 140,
+        toValue: offscreen,
+        duration: 150,
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -746,6 +749,10 @@ export default function DirectoryScreen() {
           </Animated.View>
 
           <Animated.View
+            onLayout={(e) => {
+              const h = e.nativeEvent.layout.height;
+              if (h > 0) sheetHeightRef.current = h;
+            }}
             style={{
               transform: [{ translateY: sheetTranslateY }],
               maxHeight: '85%',
