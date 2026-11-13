@@ -40,6 +40,7 @@ import {
 import { LISTING_TYPE_META, ServiceCard } from '../components/ServiceCard';
 import { ReportModal } from '../components/ReportModal';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
+import { MapPointBottomSheet } from '../components/MapPointBottomSheet';
 import { useI18n } from '../../../i18n';
 import { usePublicI18n } from '../i18n';
 import { useAuth } from '../../../services/auth';
@@ -448,7 +449,11 @@ export default function DirectoryScreen() {
               accessibilityRole="button"
               accessibilityLabel={t('directory.viewList')}
               accessibilityState={{ selected: view === 'list' }}
-              onPress={() => setView('list')}
+              onPress={() => {
+                setView('list');
+                setSelectedMapService(null);
+                setDetailPointServices([]);
+              }}
               className={`h-10 w-10 items-center justify-center rounded-xl ${
                 view === 'list' ? 'bg-white' : ''
               }`}
@@ -560,7 +565,6 @@ export default function DirectoryScreen() {
           selectedService={selectedMapService}
           onSelectMarker={(svc, pointItems) => {
             setSelectedMapService(svc);
-            setDetailService(svc);
             setDetailPointServices(pointItems);
           }}
         />
@@ -602,6 +606,23 @@ export default function DirectoryScreen() {
               </Text>
             </View>
           }
+        />
+      )}
+
+      {view === 'map' && (
+        <MapPointBottomSheet
+          visible={Boolean(selectedMapService)}
+          service={selectedMapService}
+          pointServices={detailPointServices}
+          onSelectService={(svc) => setSelectedMapService(svc)}
+          onClose={() => {
+            setSelectedMapService(null);
+            setDetailPointServices([]);
+          }}
+          onConsult={handleConsult}
+          isFavorite={directory.isFavorite}
+          onToggleFavorite={directory.toggleFavorite}
+          onReport={(svc) => setReportingService(svc)}
         />
       )}
       </View>
