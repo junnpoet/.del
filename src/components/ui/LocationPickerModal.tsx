@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, Home, LocateFixed, X } from 'lucide-react-native';
+import { Check, Home, Layers, LocateFixed, X } from 'lucide-react-native';
 
 export interface Coordinates {
   latitude: number;
@@ -60,12 +60,29 @@ function buildPickerHtml(initial: Coordinates): string {
       var arcgis = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19
       });
+      var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19
+      });
+      var useArcgisStreet = false;
       osm.on('tileerror', function () {
-        if (!map.hasLayer(arcgis)) {
+        useArcgisStreet = true;
+        if (!map.hasLayer(satellite) && !map.hasLayer(arcgis)) {
           arcgis.addTo(map);
         }
       });
       osm.addTo(map);
+
+      window.__setMapMode = function (mode) {
+        if (mode === 'satellite') {
+          if (map.hasLayer(osm)) map.removeLayer(osm);
+          if (map.hasLayer(arcgis)) map.removeLayer(arcgis);
+          if (!map.hasLayer(satellite)) satellite.addTo(map);
+        } else {
+          if (map.hasLayer(satellite)) map.removeLayer(satellite);
+          var street = useArcgisStreet ? arcgis : osm;
+          if (!map.hasLayer(street)) street.addTo(map);
+        }
+      };
 
       var gpsMarker = null;
       window.__setGpsMarker = function (lat, lng) {
@@ -119,6 +136,7 @@ export function LocationPickerModal({
   const webViewRef = useRef<{ injectJavaScript: (script: string) => void } | null>(null);
   const [selectedCoords, setSelectedCoords] = useState<Coordinates>(initialCoords);
   const [isRecentering, setIsRecentering] = useState(false);
+  const [satellite, setSatellite] = useState(false);
   const htmlRef = useRef<string>('');
   const prevVisibleRef = useRef(false);
 
@@ -139,6 +157,14 @@ export function LocationPickerModal({
       `window.__setGpsMarker && window.__setGpsMarker(${gpsCoords.latitude}, ${gpsCoords.longitude}); true;`
     );
   }, [visible, gpsCoords.latitude, gpsCoords.longitude]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const mode = satellite ? 'satellite' : 'street';
+    webViewRef.current?.injectJavaScript(
+      `window.__setMapMode && window.__setMapMode('${mode}'); true;`
+    );
+  }, [visible, satellite]);
 
   const handleReturnToGps = async () => {
     // Recenter immediately to the known GPS coordinates for instant feedback
@@ -258,6 +284,40 @@ export function LocationPickerModal({
               <View className="mt-0.5 h-2 w-3 rounded-full bg-black/25" />
             </View>
           </View>
+
+          {/* Satellite / Map View Toggle Button */}
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={satellite ? 'Cambiar a vista mapa' : 'Cambiar a vista satélite'}
+            onPress={() => setSatellite((prev) => !prev)}
+            activeOpacity={0.85}
+            style={{
+              position: 'absolute',
+              bottom: 16,
+              left: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              borderRadius: 9999,
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+              backgroundColor: satellite ? '#1E5E45' : '#FFFFFF',
+              borderWidth: 1,
+              borderColor: satellite ? '#1E5E45' : '#E5E7EB',
+              elevation: 4,
+            }}
+          >
+            <Layers size={16} color={satellite ? '#FFFFFF' : '#1E5E45'} strokeWidth={2.3} />
+            <Text
+              style={{
+                marginLeft: 6,
+                fontFamily: 'PlusJakartaSans_700Bold',
+                fontSize: 12.5,
+                color: satellite ? '#FFFFFF' : '#111827',
+              }}
+            >
+              {satellite ? 'Mapa' : 'Satélite'}
+            </Text>
+          </TouchableOpacity>
 
           {/* Return to GPS Location Button */}
           <TouchableOpacity

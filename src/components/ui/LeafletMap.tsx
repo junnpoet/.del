@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import { Platform, View, type StyleProp, type ViewStyle } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, Text, TouchableOpacity, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Layers } from 'lucide-react-native';
 
 export interface LeafletMarkerItem {
   id: string;
@@ -153,12 +154,29 @@ function buildLeafletHtml(initialPayloadJson: string): string {
       var arcgis = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19
       });
+      var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19
+      });
+      var useArcgisStreet = false;
       osm.on('tileerror', function () {
-        if (!map.hasLayer(arcgis)) {
+        useArcgisStreet = true;
+        if (!map.hasLayer(satellite) && !map.hasLayer(arcgis)) {
           arcgis.addTo(map);
         }
       });
       osm.addTo(map);
+
+      window.__setMapMode = function (mode) {
+        if (mode === 'satellite') {
+          if (map.hasLayer(osm)) map.removeLayer(osm);
+          if (map.hasLayer(arcgis)) map.removeLayer(arcgis);
+          if (!map.hasLayer(satellite)) satellite.addTo(map);
+        } else {
+          if (map.hasLayer(satellite)) map.removeLayer(satellite);
+          var street = useArcgisStreet ? arcgis : osm;
+          if (!map.hasLayer(street)) street.addTo(map);
+        }
+      };
 
       var layerGroup = L.layerGroup().addTo(map);
 
@@ -298,6 +316,7 @@ export function LeafletMap({
   webFallback,
 }: LeafletMapProps) {
   const webViewRef = useRef<{ injectJavaScript: (script: string) => void } | null>(null);
+  const [satellite, setSatellite] = useState(false);
   const resolvedZoom = zoom ?? radiusToZoom(radiusMeters);
   const resolvedShowMarkerPopup = showMarkerPopup ?? !onMarkerPress;
 
@@ -337,6 +356,13 @@ export function LeafletMap({
     );
   }, [payload]);
 
+  useEffect(() => {
+    const mode = satellite ? 'satellite' : 'street';
+    webViewRef.current?.injectJavaScript(
+      `window.__setMapMode && window.__setMapMode('${mode}'); true;`
+    );
+  }, [satellite]);
+
   if (Platform.OS === 'web') {
     return <>{webFallback ?? <View style={[{ flex: 1 }, style]} />}</>;
   }
@@ -365,6 +391,39 @@ export function LeafletMap({
           }
         }}
       />
+
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={satellite ? 'Cambiar a vista mapa' : 'Cambiar a vista satélite'}
+        onPress={() => setSatellite((prev) => !prev)}
+        activeOpacity={0.85}
+        style={{
+          position: 'absolute',
+          bottom: 16,
+          left: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          borderRadius: 9999,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          backgroundColor: satellite ? '#1E5E45' : 'rgba(255,255,255,0.95)',
+          borderWidth: 1,
+          borderColor: satellite ? '#1E5E45' : '#E5E7EB',
+          elevation: 4,
+        }}
+      >
+        <Layers size={15} color={satellite ? '#FFFFFF' : '#1E5E45'} strokeWidth={2.2} />
+        <Text
+          style={{
+            marginLeft: 6,
+            fontFamily: 'PlusJakartaSans_700Bold',
+            fontSize: 12,
+            color: satellite ? '#FFFFFF' : '#111827',
+          }}
+        >
+          {satellite ? 'Mapa' : 'Satélite'}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
