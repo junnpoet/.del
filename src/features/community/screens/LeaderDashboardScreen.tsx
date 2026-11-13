@@ -388,7 +388,14 @@ export default function LeaderDashboardScreen() {
         )}
       </View>
 
-      <ScrollView contentContainerClassName="p-4 pt-2 pb-16" keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 10,
+          paddingBottom: Math.max(insets.bottom + 32, 64),
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
 
         {/* 1. Solicitudes de unión */}
         {section === 'requests' && (
