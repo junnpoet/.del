@@ -4,6 +4,7 @@ import {
   Animated,
   Image,
   PanResponder,
+  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -12,6 +13,8 @@ import {
 } from 'react-native';
 import {
   Camera,
+  Check,
+  ChevronDown,
   Flag,
   Heart,
   MapPin,
@@ -74,6 +77,11 @@ export function MapPointBottomSheet({
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    setDropdownOpen(false);
+  }, [visible, service?.service_id]);
 
   useEffect(() => {
     setHideGlobalFAB(rendered && Boolean(service));
@@ -84,7 +92,7 @@ export function MapPointBottomSheet({
 
   const hasMultipleAtPoint = pointServices.length > 1;
   const expandedHeight = Math.min(Math.round(windowHeight * 0.76), 600);
-  const peekHeight = hasMultipleAtPoint ? 248 : 204;
+  const peekHeight = 204;
   const peekOffset = Math.max(0, expandedHeight - peekHeight);
   const closedOffset = expandedHeight + 48;
 
@@ -326,23 +334,67 @@ export function MapPointBottomSheet({
           <View className="h-1.5 w-11 rounded-full bg-neutral-border" />
         </TouchableOpacity>
 
-        {/* Top Badge + Actions */}
+        {/* Top Selector + Count + Actions */}
         <View className="flex-row items-center justify-between">
-          <View
-            className="flex-row items-center rounded-full px-3 py-1"
-            style={{ backgroundColor: meta.bg }}
-          >
-            <TypeIcon size={14} color={meta.color} />
-            <Text
-              className="ml-1.5"
-              style={{
-                fontFamily: 'PlusJakartaSans_700Bold',
-                fontSize: 12,
-                color: meta.color,
-              }}
-            >
-              {tp(`public.type.${listingType}`)}
-            </Text>
+          <View className="flex-row items-center gap-1.5">
+            {hasMultipleAtPoint ? (
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Seleccionar oferta del punto"
+                accessibilityState={{ expanded: dropdownOpen }}
+                onPress={() => setDropdownOpen((prev) => !prev)}
+                className="flex-row items-center rounded-full border px-3 py-1"
+                style={{
+                  backgroundColor: meta.bg,
+                  borderColor: dropdownOpen ? meta.color : 'transparent',
+                }}
+              >
+                <TypeIcon size={14} color={meta.color} />
+                <Text
+                  className="ml-1.5 mr-1"
+                  style={{
+                    fontFamily: 'PlusJakartaSans_700Bold',
+                    fontSize: 12,
+                    color: meta.color,
+                  }}
+                >
+                  {tp(`public.type.${listingType}`)}
+                </Text>
+                <ChevronDown size={14} color={meta.color} />
+              </TouchableOpacity>
+            ) : (
+              <View
+                className="flex-row items-center rounded-full px-3 py-1"
+                style={{ backgroundColor: meta.bg }}
+              >
+                <TypeIcon size={14} color={meta.color} />
+                <Text
+                  className="ml-1.5"
+                  style={{
+                    fontFamily: 'PlusJakartaSans_700Bold',
+                    fontSize: 12,
+                    color: meta.color,
+                  }}
+                >
+                  {tp(`public.type.${listingType}`)}
+                </Text>
+              </View>
+            )}
+
+            {hasMultipleAtPoint && (
+              <View className="rounded-full bg-neutral-mutedBg px-2.5 py-1">
+                <Text
+                  className="text-neutral-textMain"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11.5 }}
+                >
+                  {Math.max(
+                    1,
+                    pointServices.findIndex((item) => item.service_id === service.service_id) + 1
+                  )}
+                  /{pointServices.length}
+                </Text>
+              </View>
+            )}
           </View>
 
           <View className="flex-row items-center gap-1.5">
@@ -378,51 +430,6 @@ export function MapPointBottomSheet({
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* Multi-offer switcher at this map point */}
-        {hasMultipleAtPoint && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="mt-2.5"
-          >
-            {pointServices.map((item) => {
-              const active = item.service_id === service.service_id;
-              const itemType = normalizeListingType(item.listing_type);
-              const itemMeta = LISTING_TYPE_META[itemType];
-              const ItemIcon = itemMeta.Icon;
-              return (
-                <TouchableOpacity
-                  key={item.service_id}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                  onPress={() => onSelectService(item)}
-                  className="mr-2 flex-row items-center rounded-full border px-3 py-1.5"
-                  style={{
-                    borderColor: active ? itemMeta.color : '#E5E7EB',
-                    backgroundColor: active ? itemMeta.bg : '#F9FAFB',
-                    maxWidth: 210,
-                  }}
-                >
-                  <ItemIcon size={13} color={itemMeta.color} />
-                  <Text
-                    numberOfLines={1}
-                    className="ml-1.5"
-                    style={{
-                      fontFamily: active
-                        ? 'PlusJakartaSans_700Bold'
-                        : 'PlusJakartaSans_500Medium',
-                      fontSize: 12,
-                      color: active ? itemMeta.color : '#374151',
-                    }}
-                  >
-                    {item.title}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        )}
 
         {/* Peeked Summary Row + Icon-only Consult Button */}
         <View className="mt-2.5 flex-row items-center justify-between">
@@ -494,6 +501,97 @@ export function MapPointBottomSheet({
           </Animated.View>
         </View>
       </View>
+
+      {dropdownOpen && hasMultipleAtPoint && (
+        <>
+          <Pressable
+            onPress={() => setDropdownOpen(false)}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 55,
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              top: 66,
+              left: 20,
+              right: 20,
+              zIndex: 60,
+              shadowColor: '#000000',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.16,
+              shadowRadius: 12,
+              elevation: 18,
+            }}
+            className="rounded-2xl border border-neutral-border bg-neutral-surface p-1.5"
+          >
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: isExpanded ? 240 : 126 }}
+            >
+              {pointServices.map((item, idx) => {
+                const active = item.service_id === service.service_id;
+                const itemType = normalizeListingType(item.listing_type);
+                const itemMeta = LISTING_TYPE_META[itemType];
+                const ItemIcon = itemMeta.Icon;
+                return (
+                  <TouchableOpacity
+                    key={item.service_id}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    onPress={() => {
+                      setDropdownOpen(false);
+                      onSelectService(item);
+                    }}
+                    className={`flex-row items-center justify-between rounded-xl px-3 py-2.5 ${
+                      active ? 'bg-neutral-mutedBg' : ''
+                    }`}
+                  >
+                    <View className="flex-1 flex-row items-center pr-2">
+                      <View
+                        className="h-7 w-7 items-center justify-center rounded-full"
+                        style={{ backgroundColor: itemMeta.bg }}
+                      >
+                        <ItemIcon size={14} color={itemMeta.color} />
+                      </View>
+                      <View className="ml-2.5 flex-1">
+                        <Text
+                          numberOfLines={1}
+                          className="text-neutral-textMain"
+                          style={{
+                            fontFamily: active
+                              ? 'PlusJakartaSans_700Bold'
+                              : 'PlusJakartaSans_600SemiBold',
+                            fontSize: 13,
+                          }}
+                        >
+                          {item.title}
+                        </Text>
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            fontFamily: 'PlusJakartaSans_500Medium',
+                            fontSize: 11,
+                            color: itemMeta.color,
+                          }}
+                        >
+                          {idx + 1}/{pointServices.length} · {tp(`public.type.${itemType}`)}
+                        </Text>
+                      </View>
+                    </View>
+                    {active && <Check size={16} color="#1E5E45" />}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </>
+      )}
 
       {/* Expanded Content: Description, Photos, Comments & Full Consult Button */}
       <Animated.View
