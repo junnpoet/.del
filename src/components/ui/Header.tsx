@@ -93,37 +93,38 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {title}
             </Text>
-            {subtitle && !zoneEmergency && (
-              <Text
-                className={`mt-0.5 ${subtitleStyles}`}
-                style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
-                numberOfLines={1}
+            {zoneEmergency ? (
+              <TouchableOpacity
+                accessibilityRole="button"
+                activeOpacity={0.85}
+                onPress={() => setEmergencyInfoOpen(true)}
+                className="mt-1 flex-row items-center rounded-xl bg-red-600 px-2.5 py-1 self-start"
               >
-                {subtitle}
-              </Text>
+                <AlertTriangle size={12} color="#FFFFFF" />
+                <Text
+                  numberOfLines={1}
+                  className="ml-1.5 uppercase tracking-wider text-white"
+                  style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 10.5 }}
+                >
+                  Info Emergencia · {zoneEmergency.event_type}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              subtitle && (
+                <Text
+                  className={`mt-0.5 ${subtitleStyles}`}
+                  style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
+                  numberOfLines={1}
+                >
+                  {subtitle}
+                </Text>
+              )
             )}
           </View>
         </View>
 
         {rightAction && <View className="ml-3">{rightAction}</View>}
       </View>
-
-      {zoneEmergency && (
-        <TouchableOpacity
-          accessibilityRole="button"
-          activeOpacity={0.85}
-          onPress={() => setEmergencyInfoOpen(true)}
-          className="mt-1.5 flex-row items-center rounded-xl bg-red-600 px-2.5 py-1 self-start"
-        >
-          <AlertTriangle size={12} color="#FFFFFF" />
-          <Text
-            className="ml-1.5 text-white"
-            style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 11 }}
-          >
-            Info Emergencia...
-          </Text>
-        </TouchableOpacity>
-      )}
 
       <PublicEmergencyInfoModal
         visible={emergencyInfoOpen}
