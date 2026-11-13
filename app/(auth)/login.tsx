@@ -11,7 +11,7 @@ import {
   Image,
   Keyboard,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { Button } from '../../src/components/ui/Button';
@@ -24,6 +24,7 @@ import { LanguageMenuButton } from '../../src/i18n/LanguageToggle';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { signIn, requestOtp, signInWithOtp } = useAuth();
   const { t } = useI18n();
 
@@ -136,8 +137,12 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-background">
-      <View className="items-end px-5 pt-2 z-20">
+    <SafeAreaView className="flex-1 bg-neutral-background relative">
+      <View
+        className="absolute right-5 z-20"
+        style={{ top: Math.max(insets.top + 8, 12) }}
+        pointerEvents="box-none"
+      >
         <LanguageMenuButton />
       </View>
 
