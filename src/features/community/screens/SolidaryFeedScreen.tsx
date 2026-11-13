@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
+  AlertTriangle,
   CheckCircle,
   Clock,
   HeartHandshake,
@@ -35,6 +36,7 @@ import {
 } from '../hooks/useSolidaryFeed';
 import { useCareNetwork } from '../hooks/useCareNetwork';
 import { useJoinRequests } from '../hooks/useLeaderDashboard';
+import { useZoneEmergency } from '../../emergency/hooks/useEmergencyRealtime';
 import { SolidaryPostCard } from '../components/SolidaryPostCard';
 import { CommunityActionCard } from '../components/CommunityActionCard';
 import { CareVolunteerCard } from '../components/CareVolunteerCard';
@@ -68,6 +70,7 @@ export default function SolidaryFeedScreen() {
   const toggleVolunteer = useToggleVolunteer();
   const { unreadCount, markAllRead } = useNeighborhoodNewsUnread();
   const care = useCareNetwork(isMember);
+  const { zoneEmergency } = useZoneEmergency();
   const { requests } = useJoinRequests(isLeader);
   const canSeeCareLayer = isLeader || isPadrino || care.assignments.length > 0;
   const pendingRequests = requests.data?.length ?? 0;
@@ -264,6 +267,46 @@ export default function SolidaryFeedScreen() {
       )}
 
       <View className="px-4 pt-4 flex-1">
+        {zoneEmergency && (
+          <TouchableOpacity
+            accessibilityRole="button"
+            activeOpacity={0.88}
+            onPress={() => router.push('/emergency-board')}
+            className="mb-3 rounded-2xl border border-red-400 bg-red-600 p-3.5 shadow-sm"
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 flex-row items-center pr-3">
+                <View className="mr-3 rounded-xl bg-white/20 p-2">
+                  <AlertTriangle size={20} color="#FFFFFF" />
+                </View>
+                <View className="flex-1">
+                  <Text
+                    className="uppercase tracking-wider text-white"
+                    style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 12 }}
+                  >
+                    Emergencia activa · {zoneEmergency.event_type}
+                  </Text>
+                  <Text
+                    numberOfLines={2}
+                    className="mt-0.5 text-white/90"
+                    style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
+                  >
+                    Coordina acciones grupales, víveres y auxilio con tu comunidad.
+                  </Text>
+                </View>
+              </View>
+              <View className="rounded-xl bg-white px-3 py-2">
+                <Text
+                  className="text-red-700"
+                  style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 12 }}
+                >
+                  Tablero
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+
         {/* Selector [ Muro Feed | Mapa Barrial ] */}
         <View className="flex-row bg-neutral-mutedBg p-1 rounded-2xl mb-3">
           {(

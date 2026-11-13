@@ -733,6 +733,21 @@ export type Database = {
     }
     Functions: {
       approve_join_request: { Args: { request_id: string }; Returns: undefined }
+      get_active_zone_emergency: {
+        Args: {
+          radius_meters?: number
+          user_home_lat: number
+          user_home_lng: number
+        }
+        Returns: {
+          activated_at: string
+          description: string | null
+          event_type: string
+          group_id: string
+          group_name: string
+          id: string
+        }[]
+      }
       get_nearby_groups: {
         Args: { radius_meters: number; user_lat: number; user_lng: number }
         Returns: {

@@ -6,24 +6,37 @@ import {
   RefreshControl,
   ActivityIndicator,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
-import { Droplets, Hammer, Megaphone, Newspaper } from 'lucide-react-native';
+import { AlertTriangle, Droplets, Hammer, Megaphone, Newspaper } from 'lucide-react-native';
 import { Header } from '../../../components/ui/Header';
 import { Card } from '../../../components/ui/Card';
 import { Chip } from '../../../components/ui/Chip';
 import { useNews, NeighborhoodNews } from '../hooks/useNews';
+import { useZoneEmergency } from '../../emergency/hooks/useEmergencyRealtime';
 import { useI18n, type TranslationKey } from '../../../i18n';
 
 const SOURCE_META: Record<
   string,
-  { label: TranslationKey; color: string; bg: string; Icon: typeof Megaphone }
+  { label?: TranslationKey; customLabel?: string; color: string; bg: string; Icon: typeof Megaphone }
 > = {
   MUNICIPAL: { label: 'news.source.MUNICIPAL', color: '#1E5E45', bg: '#EDF5F1', Icon: Megaphone },
   SERVICIOS_PUBLICOS: { label: 'news.source.SERVICIOS_PUBLICOS', color: '#92400E', bg: '#FEF3C7', Icon: Droplets },
   DIRIGENCIA: { label: 'news.source.DIRIGENCIA', color: '#583018', bg: '#FBF3EE', Icon: Hammer },
+  EMERGENCIA: { customLabel: 'Emergencia', color: '#DC2626', bg: '#FEE2E2', Icon: AlertTriangle },
 };
 const FALLBACK_META = SOURCE_META.MUNICIPAL;
 const ALL_SECTORS = '__ALL__';
+const EMERGENCY_FILTER = '__EMERGENCY__';
+const EMERGENCY_KEYWORDS = /(emergencia|contingencia|sismo|terremoto|huaico|incendio|evacuaci[oó]n|alerta|auxilio)/i;
+
+function isEmergencyNews(item: NeighborhoodNews): boolean {
+  return (
+    item.source === 'EMERGENCIA' ||
+    EMERGENCY_KEYWORDS.test(item.title) ||
+    EMERGENCY_KEYWORDS.test(item.content)
+  );
+}
 
 function formatDate(iso: string | null, numeric: boolean): string {
   if (!iso) return '';
@@ -51,7 +64,7 @@ function NewsCard({ item }: { item: NeighborhoodNews }) {
             className="ml-1.5"
             style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12, color: meta.color }}
           >
-            {t(meta.label)}
+            {meta.label ? t(meta.label) : meta.customLabel}
           </Text>
         </View>
         <Text
@@ -85,41 +98,104 @@ function NewsCard({ item }: { item: NeighborhoodNews }) {
 
 export default function NewsScreen() {
   const { data, isLoading, isError, refetch, isRefetching } = useNews();
+  const { zoneEmergency } = useZoneEmergency();
   const { t } = useI18n();
   const [sector, setSector] = useState<string>(ALL_SECTORS);
+  const [onlyEmergency, setOnlyEmergency] = useState(false);
 
   const sectors = useMemo(
     () => [ALL_SECTORS, ...Array.from(new Set((data ?? []).map((n) => n.sector_name)))],
     [data]
   );
 
-  const filtered = useMemo(
-    () => (sector === ALL_SECTORS ? data ?? [] : (data ?? []).filter((n) => n.sector_name === sector)),
-    [data, sector]
+  const emergencySyntheticNews = useMemo<NeighborhoodNews[]>(() => {
+    if (!zoneEmergency) return [];
+    return [
+      {
+        id: `active-emergency-${zoneEmergency.id}`,
+        title: `Contingencia activa: ${zoneEmergency.event_type}`,
+        content:
+          zoneEmergency.description ||
+          `${zoneEmergency.group_name} activó el protocolo de emergencia en tu zona de influencia. Revisa puntos seguros y avisos oficiales.`,
+        sector_name: zoneEmergency.group_name,
+        source: 'EMERGENCIA',
+        created_at: zoneEmergency.activated_at,
+      },
+    ];
+  }, [zoneEmergency]);
+
+  const combinedData = useMemo(
+    () => [...emergencySyntheticNews, ...(data ?? [])],
+    [emergencySyntheticNews, data]
   );
+
+  const filtered = useMemo(() => {
+    return combinedData.filter((n) => {
+      if (onlyEmergency && !isEmergencyNews(n)) return false;
+      if (sector !== ALL_SECTORS && n.sector_name !== sector) return false;
+      return true;
+    });
+  }, [combinedData, onlyEmergency, sector]);
 
   return (
     <View className="flex-1 bg-neutral-background">
       <Header title={t('news.title')} subtitle={t('news.subtitle')} />
 
-      {sectors.length > 2 && (
-        <View className="py-3">
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+      {zoneEmergency && !onlyEmergency && (
+        <TouchableOpacity
+          accessibilityRole="button"
+          activeOpacity={0.88}
+          onPress={() => {
+            setSector(ALL_SECTORS);
+            setOnlyEmergency(true);
+          }}
+          className="mx-5 mt-3 flex-row items-center justify-between rounded-2xl border border-red-200 bg-[#FEE2E2] px-3.5 py-2.5"
+        >
+          <View className="flex-1 flex-row items-center pr-2">
+            <AlertTriangle size={16} color="#DC2626" />
+            <Text
+              numberOfLines={1}
+              className="ml-2 text-[#991B1B]"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12.5 }}
+            >
+              Emergencia activa ({zoneEmergency.event_type}) en tu zona
+            </Text>
+          </View>
+          <Text
+            className="text-[#DC2626]"
+            style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 12 }}
           >
-            {sectors.map((s) => (
+            Filtrar
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      <View className="py-3">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+        >
+          <Chip
+            key={EMERGENCY_FILTER}
+            label="Emergencia"
+            isActive={onlyEmergency}
+            onPress={() => setOnlyEmergency((prev) => !prev)}
+          />
+          {sectors.length > 2 &&
+            sectors.map((s) => (
               <Chip
                 key={s}
                 label={s === ALL_SECTORS ? t('common.all') : s}
-                isActive={s === sector}
-                onPress={() => setSector(s)}
+                isActive={!onlyEmergency && s === sector}
+                onPress={() => {
+                  setOnlyEmergency(false);
+                  setSector(s);
+                }}
               />
             ))}
-          </ScrollView>
-        </View>
-      )}
+        </ScrollView>
+      </View>
 
       {isLoading ? (
         <View className="flex-1 items-center justify-center">

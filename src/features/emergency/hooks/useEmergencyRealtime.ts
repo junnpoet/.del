@@ -85,46 +85,96 @@ export function useActiveEmergency(groupId: string | null | undefined) {
   return { activeEvent, loading, refetch: fetchActive, resolveEmergency };
 }
 
+export interface ZoneEmergencyInfo {
+  id: string;
+  group_id: string;
+  group_name: string;
+  event_type: string;
+  description: string | null;
+  activated_at: string;
+}
+
 /**
- * Listener global (SPEC-05 §2.2) para RootContent en app/_layout.tsx.
- * Muta automáticamente a /emergency-board cuando se activa una emergencia en el grupo
- * y regresa al flujo normal cuando pasa a RESOLVED.
+ * Detecta en vivo si existe una emergencia activa en la comunidad del usuario
+ * o en cualquier comunidad cuya zona compuesta de influencia cubra su hogar.
+ */
+export function useZoneEmergency() {
+  const { profile, session } = useAuth();
+  const [zoneEmergency, setZoneEmergency] = useState<ZoneEmergencyInfo | null>(null);
+  const [loading, setLoading] = useState<boolean>(Boolean(session));
+
+  const fetchZoneEmergency = useCallback(async () => {
+    if (!session || profile?.lat === null || profile?.lat === undefined || profile?.lng === null || profile?.lng === undefined) {
+      setZoneEmergency(null);
+      setLoading(false);
+      return;
+    }
+    try {
+      const { data, error } = await supabase.rpc('get_active_zone_emergency', {
+        user_home_lat: profile.lat,
+        user_home_lng: profile.lng,
+        radius_meters: 500,
+      });
+      if (!error) {
+        setZoneEmergency(data?.[0] ?? null);
+      }
+    } catch {
+      // Fallback silencioso ante modo offline
+    } finally {
+      setLoading(false);
+    }
+  }, [session, profile?.lat, profile?.lng]);
+
+  useEffect(() => {
+    void fetchZoneEmergency();
+    if (!session) return;
+
+    const channel = supabase
+      .channel(channelName('zone-emergency-events'))
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'emergency_events' },
+        () => {
+          void fetchZoneEmergency();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [session, fetchZoneEmergency]);
+
+  return { zoneEmergency, loading, refetch: fetchZoneEmergency };
+}
+
+/**
+ * Listener global para RootContent en app/_layout.tsx.
+ * No saca al usuario del flujo principal; solo lo regresa a /(main) si estaba
+ * dentro del Tablero de Ayuda Humanitaria cuando la contingencia pasa a RESOLVED.
  */
 export function useEmergencyGlobalMutation() {
   const { profile } = useAuth();
   const router = useRouter();
   const segments = useSegments();
   const { activeEvent } = useActiveEmergency(profile?.group_id);
-  const lastNavigatedEventIdRef = useRef<string | null>(null);
   const wasActiveOnBoardRef = useRef(false);
 
   const isOnEmergencyBoard = segments[0] === 'emergency-board';
-  const isInMainFlow = segments[0] === '(main)';
 
   useEffect(() => {
     if (activeEvent) {
       if (isOnEmergencyBoard) {
         wasActiveOnBoardRef.current = true;
-        lastNavigatedEventIdRef.current = activeEvent.id;
-        return;
-      }
-
-      if (isInMainFlow && lastNavigatedEventIdRef.current !== activeEvent.id) {
-        lastNavigatedEventIdRef.current = activeEvent.id;
-        wasActiveOnBoardRef.current = true;
-        router.push('/emergency-board');
       }
       return;
     }
 
-    // Cuando el evento pasa a RESOLVED y el usuario estaba en el tablero por mutación, volver al flujo normal
     if (wasActiveOnBoardRef.current && isOnEmergencyBoard) {
       wasActiveOnBoardRef.current = false;
-      lastNavigatedEventIdRef.current = null;
       router.replace('/(main)');
     } else if (!activeEvent) {
-      lastNavigatedEventIdRef.current = null;
       wasActiveOnBoardRef.current = false;
     }
-  }, [activeEvent, isOnEmergencyBoard, isInMainFlow, router]);
+  }, [activeEvent, isOnEmergencyBoard, router]);
 }

@@ -12,10 +12,11 @@ import {
   Users,
   X,
 } from 'lucide-react-native';
-import { channelName, supabase } from '../../../services/supabase';
+import { supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
 import { useI18n } from '../../../i18n';
 import { BottomSheetModal } from '../../../components/ui/BottomSheetModal';
+import { useZoneEmergency } from '../hooks/useEmergencyRealtime';
 
 interface EmergencyBannerProps {
   isEmergencyActive?: boolean;
@@ -41,16 +42,26 @@ export function EmergencyBanner({
 }: EmergencyBannerProps) {
   const { profile, session } = useAuth();
   const { t } = useI18n();
-  const [liveEmergency, setLiveEmergency] = useState<ActiveEmergencySummary | null>(null);
+  const { zoneEmergency } = useZoneEmergency();
   const [targetGroupId, setTargetGroupId] = useState<string | null>(null);
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
 
+  const liveEmergency: ActiveEmergencySummary | null = zoneEmergency
+    ? {
+        id: zoneEmergency.id,
+        group_id: zoneEmergency.group_id,
+        event_type: zoneEmergency.event_type,
+        description: zoneEmergency.description,
+      }
+    : null;
+
   const effectiveIsInGroup =
     isInGroupProp ?? Boolean(profile?.group_id || profile?.role === 'dirigente');
 
   const resolveNearbyGroupId = useCallback(async (): Promise<string | null> => {
+    if (zoneEmergency?.group_id) return zoneEmergency.group_id;
     if (
       profile?.lat !== null &&
       profile?.lat !== undefined &&
@@ -72,7 +83,13 @@ export function EmergencyBanner({
       .select('id')
       .limit(1);
     return fallbackGroups?.[0]?.id ?? null;
-  }, [profile?.lat, profile?.lng]);
+  }, [zoneEmergency?.group_id, profile?.lat, profile?.lng]);
+
+  useEffect(() => {
+    if (zoneEmergency?.group_id) {
+      setTargetGroupId(zoneEmergency.group_id);
+    }
+  }, [zoneEmergency?.group_id]);
 
   useEffect(() => {
     if (effectiveIsInGroup || !session) {
@@ -97,58 +114,12 @@ export function EmergencyBanner({
       }
     };
 
-    const checkLiveEmergency = async () => {
-      if (isEmergencyActiveProp !== undefined) return;
-      try {
-        const nearbyGroupId = await resolveNearbyGroupId();
-        if (!mounted) return;
-        if (nearbyGroupId) {
-          setTargetGroupId(nearbyGroupId);
-        }
-
-        let query = supabase
-          .from('emergency_events')
-          .select('id, group_id, event_type, description')
-          .eq('status', 'ACTIVE')
-          .order('activated_at', { ascending: false })
-          .limit(1);
-
-        if (nearbyGroupId) {
-          query = query.eq('group_id', nearbyGroupId);
-        }
-
-        const { data } = await query;
-        if (mounted) {
-          const active = (data?.[0] as ActiveEmergencySummary | undefined) ?? null;
-          setLiveEmergency(active);
-          if (active?.group_id) {
-            setTargetGroupId(active.group_id);
-          }
-        }
-      } catch {
-        if (mounted) setLiveEmergency(null);
-      }
-    };
-
     void checkPendingRequest();
-    void checkLiveEmergency();
-
-    const channel = supabase
-      .channel(channelName('public-emergency-banner'))
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'emergency_events' },
-        () => {
-          void checkLiveEmergency();
-        }
-      )
-      .subscribe();
 
     return () => {
       mounted = false;
-      void supabase.removeChannel(channel);
     };
-  }, [isEmergencyActiveProp, effectiveIsInGroup, session, resolveNearbyGroupId]);
+  }, [effectiveIsInGroup, session]);
 
   const effectiveEmergencyActive =
     isEmergencyActiveProp ?? Boolean(liveEmergency);
