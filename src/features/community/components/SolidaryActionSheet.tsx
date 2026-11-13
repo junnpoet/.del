@@ -129,15 +129,15 @@ export function SolidaryActionSheet({
   };
 
   const windowHeight = Dimensions.get('window').height;
-  const maxSheetHeight =
-    keyboardHeight > 0
-      ? Math.max(240, windowHeight - keyboardHeight - insets.top - 16)
-      : Math.round(windowHeight * 0.84);
-  const commentsMaxHeight =
-    keyboardHeight > 0
-      ? Math.max(88, maxSheetHeight - 250)
-      : Math.min(250, Math.round(windowHeight * 0.32));
-  const androidKeyboardLift = Platform.OS === 'android' ? keyboardHeight : 0;
+  const isKeyboardOpen = keyboardHeight > 0;
+  const maxSheetHeight = isKeyboardOpen
+    ? Math.max(220, windowHeight - keyboardHeight - insets.top - 28)
+    : Math.round(windowHeight * 0.84);
+  const commentsMaxHeight = isKeyboardOpen
+    ? Math.max(72, maxSheetHeight - 260)
+    : Math.min(250, Math.round(windowHeight * 0.32));
+  const androidKeyboardLift =
+    Platform.OS === 'android' && isKeyboardOpen ? keyboardHeight + 12 : 0;
 
   return (
     <Modal visible={Boolean(post)} animationType="none" transparent onRequestClose={handleClose}>
@@ -155,11 +155,12 @@ export function SolidaryActionSheet({
         >
           <Pressable className="flex-1" onPress={handleClose} />
           <Animated.View
-            className="bg-neutral-background rounded-t-3xl px-4 pt-5 border-t border-neutral-border shadow-2xl"
+            className="bg-neutral-background rounded-t-3xl px-4 pt-4 border-t border-neutral-border shadow-2xl"
             style={{
               maxHeight: maxSheetHeight,
+              overflow: 'hidden',
               marginBottom: androidKeyboardLift,
-              paddingBottom: keyboardHeight > 0 ? 10 : Math.max(insets.bottom + 14, 24),
+              paddingBottom: isKeyboardOpen ? 10 : Math.max(insets.bottom + 14, 24),
               transform: [{ translateY: sheetTranslateY }],
             }}
           >
@@ -188,7 +189,7 @@ export function SolidaryActionSheet({
             </TouchableOpacity>
           </View>
 
-          {pointPosts.length > 1 && onSelectPointPost && (
+          {!isKeyboardOpen && pointPosts.length > 1 && onSelectPointPost && (
             <View className="mb-2.5">
               <Text
                 className="text-neutral-textMuted mb-1.5"
@@ -232,7 +233,11 @@ export function SolidaryActionSheet({
             </View>
           )}
 
-          <View className="bg-neutral-surface border border-neutral-border rounded-2xl p-3 mb-2.5">
+          <View
+            className={`bg-neutral-surface border border-neutral-border rounded-2xl ${
+              isKeyboardOpen ? 'p-2.5 mb-2' : 'p-3 mb-2.5'
+            }`}
+          >
             <View className="flex-row flex-wrap items-center gap-1.5 mb-1.5">
               <View className="px-2.5 py-1 rounded-lg" style={{ backgroundColor: statusMeta.tint }}>
                 <Text style={{ color: statusMeta.color, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}>
@@ -258,14 +263,14 @@ export function SolidaryActionSheet({
             </View>
 
             <Text
-              numberOfLines={keyboardHeight > 0 ? 2 : undefined}
+              numberOfLines={isKeyboardOpen ? 1 : undefined}
               className="text-neutral-textMain leading-5"
               style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13.5 }}
             >
               {post.description}
             </Text>
 
-            {post.isFromWhatsapp && post.contactPhone && keyboardHeight === 0 && (
+            {post.isFromWhatsapp && post.contactPhone && !isKeyboardOpen && (
               <TouchableOpacity
                 accessibilityRole="button"
                 onPress={() =>
@@ -296,7 +301,7 @@ export function SolidaryActionSheet({
 
           <ScrollView
             ref={scrollRef}
-            style={{ maxHeight: commentsMaxHeight }}
+            style={{ flexShrink: 1, maxHeight: commentsMaxHeight }}
             showsVerticalScrollIndicator
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled
