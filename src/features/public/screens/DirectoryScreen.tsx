@@ -28,6 +28,7 @@ import {
 } from 'lucide-react-native';
 import { Header } from '../../../components/ui/Header';
 import { Chip } from '../../../components/ui/Chip';
+import { LeafletMap, type LeafletMarkerItem } from '../../../components/ui/LeafletMap';
 import {
   normalizeListingType,
   useDirectory,
@@ -103,9 +104,21 @@ function NativeMap({
     );
   }
 
-  const maps = require('react-native-maps') as typeof import('react-native-maps');
-  const MapView = maps.default;
-  const radiusDelta = radius === 300 ? 0.006 : radius === 500 ? 0.01 : 0.018;
+  const mapMarkers: LeafletMarkerItem[] = services
+    .map((service): LeafletMarkerItem | null => {
+      const coordinate = locations[service.service_id];
+      if (!coordinate) return null;
+      const listingType = normalizeListingType(service.listing_type);
+      return {
+        id: service.service_id,
+        latitude: coordinate.latitude,
+        longitude: coordinate.longitude,
+        color: LISTING_TYPE_META[listingType].color,
+        title: service.title,
+        subtitle: `${service.provider_name} · ${Math.round(service.distance_meters)} m`,
+      };
+    })
+    .filter((item): item is LeafletMarkerItem => item !== null);
 
   const selectedType = selectedService
     ? normalizeListingType(selectedService.listing_type)
@@ -115,48 +128,18 @@ function NativeMap({
 
   return (
     <View className="flex-1 relative">
-      <MapView
-        style={{ flex: 1 }}
-        initialRegion={{
-          latitude,
-          longitude,
-          latitudeDelta: radiusDelta,
-          longitudeDelta: radiusDelta,
+      <LeafletMap
+        center={{ latitude, longitude }}
+        radiusMeters={radius}
+        showHomePin
+        homeTitle={tp('public.homePinTitle')}
+        homeSubtitle={tp('public.homePinDesc')}
+        markers={mapMarkers}
+        onMarkerPress={(id) => {
+          const found = services.find((service) => service.service_id === id);
+          if (found) onSelectMarker(found);
         }}
-        showsUserLocation={false}
-        customMapStyle={require('../../../theme/cleanMapStyle').CLEAN_NEIGHBORHOOD_MAP_STYLE}
-      >
-        {/* Home Pin */}
-        <maps.Marker
-          coordinate={{ latitude, longitude }}
-          title={tp('public.homePinTitle')}
-          description={tp('public.homePinDesc')}
-          pinColor="#1E5E45"
-        />
-        <maps.Circle
-          center={{ latitude, longitude }}
-          radius={radius}
-          strokeColor="#1E5E45"
-          fillColor="rgba(30, 94, 69, 0.12)"
-        />
-        {services.map((service) => {
-          const coordinate = locations[service.service_id];
-          if (!coordinate) return null;
-          const listingType = normalizeListingType(service.listing_type);
-          const pinColor = LISTING_TYPE_META[listingType].color;
-          return (
-            <maps.Marker
-              key={service.service_id}
-              coordinate={coordinate}
-              title={service.title}
-              description={`${service.provider_name} · ${Math.round(service.distance_meters)} m`}
-              pinColor={pinColor}
-              onPress={() => onSelectMarker(service)}
-              onCalloutPress={() => onConsult(service)}
-            />
-          );
-        })}
-      </MapView>
+      />
 
       {/* Map Floating Preview Card */}
       {selectedService && selectedMeta && selectedType && SelectedIcon && (
