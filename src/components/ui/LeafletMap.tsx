@@ -152,9 +152,11 @@ function buildLeafletHtml(initialPayloadJson: string): string {
         maxZoom: 19
       });
       var arcgis = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        maxNativeZoom: 17,
         maxZoom: 19
       });
       var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxNativeZoom: 17,
         maxZoom: 19
       });
       var useArcgisStreet = false;
