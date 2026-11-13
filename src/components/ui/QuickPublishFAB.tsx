@@ -70,6 +70,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
   const [category, setCategory] = useState('');
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
   // Voice recording state using expo-audio
@@ -85,10 +86,12 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
     setCategory('');
     setIsCustomCategory(false);
     setCustomCategory('');
+    setTitle('');
   };
 
   const handleOpenMenu = () => {
     selectPublishType(null);
+    setTitle('');
     setDescription('');
     setRecordedUri(null);
     setIsRecording(false);
@@ -160,7 +163,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       showMessage(t('common.attention'), t('fab.selectCategory'));
       return;
     }
-    if (!description.trim() && !recordedUri) {
+    if (!description.trim() && !title.trim() && !recordedUri) {
       showMessage(t('common.attention'), t('fab.needDetail'));
       return;
     }
@@ -196,11 +199,19 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
 
       if (selectedType === 'SERVICIO' || selectedType === 'PRODUCTO') {
         // Oficio o producto para el Directorio público (tabla services, SPEC-03).
+        const resolvedTitle = title.trim()
+          ? title.trim().slice(0, 80)
+          : finalDescription.slice(0, 80);
+        const resolvedBody = hasCustomDescription
+          ? typedDescription
+          : recordedUri
+          ? finalDescription
+          : resolvedTitle;
         const { error } = await supabase.from('services').insert({
           provider_id: session.user.id,
-          title: finalDescription.slice(0, 80),
+          title: resolvedTitle,
           category: resolvedCategory,
-          description: finalDescription,
+          description: resolvedBody,
           listing_type: selectedType,
         });
         if (error) throw error;
@@ -591,6 +602,16 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                     </View>
                   )}
                 </View>
+
+                {(selectedType === 'SERVICIO' || selectedType === 'PRODUCTO') && (
+                  <Input
+                    label={t('fab.postTitle')}
+                    placeholder={t('fab.postTitlePlaceholder')}
+                    value={title}
+                    onChangeText={setTitle}
+                    maxLength={80}
+                  />
+                )}
 
                 <Input
                   label={t('fab.description')}
