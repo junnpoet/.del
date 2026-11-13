@@ -321,7 +321,7 @@ export const DEMO_PERSONAS: DemoUser[] = [
     isVulnerable: true,
     accessibleMode: true,
     avatarIcon: 'heart',
-    avatarUrl: 'https://randomuser.me/api/portraits/men/68.jpg',
+    avatarUrl: 'https://randomuser.me/api/portraits/men/29.jpg',
     description: 'Cuenta con interfaz adaptativa gigante, botón central SOS de 2s y asistencia por voz.',
   },
   {

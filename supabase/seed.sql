@@ -181,7 +181,7 @@ INSERT INTO public.profiles (id, full_name, phone, home_address, home_location, 
   ST_GeogFromText('SRID=4326;POINT(-78.51618 -9.11542)'),
   'vecino',
   TRUE,
-  'https://randomuser.me/api/portraits/men/68.jpg'
+  'https://randomuser.me/api/portraits/men/29.jpg'
 ),
 (
   'e75da8d4-4505-4087-bd7d-9c637e6fa608',

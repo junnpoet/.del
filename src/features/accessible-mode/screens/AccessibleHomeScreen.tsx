@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CheckCircle2, LogOut, Pill, ShoppingBasket } from 'lucide-react-native';
 import { useAuth } from '../../../services/auth';
@@ -30,11 +31,13 @@ export default function AccessibleHomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
-  const { session, profile } = useAuth();
+  const { session, profile, signOut } = useAuth();
   const { send, cancel } = useSosAlert();
   const createPost = useCreateSolidaryPost();
   const [sentAlertId, setSentAlertId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
 
   const firstName = profile?.full_name?.split(' ')[0] ?? t('accessible.neighbor');
@@ -107,6 +110,21 @@ export default function AccessibleHomeScreen() {
     router.replace('/(main)');
   };
 
+  const handleConfirmLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      await AsyncStorage.removeItem('user_session');
+      setLogoutModalOpen(false);
+      router.replace('/(auth)/login');
+    } catch (error) {
+      showMessage(t('common.error'), errorMessage(error));
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   if (!session) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-background p-6">
@@ -167,6 +185,16 @@ export default function AccessibleHomeScreen() {
               {t('accessible.exit')}
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={() => setLogoutModalOpen(true)}
+            className="mt-3 min-h-[60px] rounded-2xl bg-red-50 border border-red-200 flex-row items-center justify-center"
+          >
+            <LogOut size={22} color="#DC2626" />
+            <Text className="text-emergency-alert ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}>
+              {t('profile.logout')}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -220,6 +248,60 @@ export default function AccessibleHomeScreen() {
           ))}
         </View>
       </View>
+
+      <Modal
+        visible={logoutModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          if (!isLoggingOut) setLogoutModalOpen(false);
+        }}
+      >
+        <View className="flex-1 bg-black/50 items-center justify-center px-6">
+          <View className="w-full max-w-[380px] bg-neutral-surface rounded-3xl p-6 border border-neutral-border shadow-2xl">
+            <Text
+              className="text-neutral-textMain text-center"
+              style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 22 }}
+            >
+              {t('profile.logout')}
+            </Text>
+            <Text
+              className="text-neutral-textMuted text-center mt-2.5 leading-6"
+              style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 16 }}
+            >
+              {t('profile.logoutConfirm')}
+            </Text>
+
+            <TouchableOpacity
+              accessibilityRole="button"
+              disabled={isLoggingOut}
+              onPress={handleConfirmLogout}
+              className="mt-6 min-h-[60px] rounded-2xl bg-emergency-alert items-center justify-center px-4"
+            >
+              <Text
+                className="text-white"
+                style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 18 }}
+              >
+                {t('profile.logoutAction')}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              accessibilityRole="button"
+              disabled={isLoggingOut}
+              onPress={() => setLogoutModalOpen(false)}
+              className="mt-3 min-h-[60px] rounded-2xl bg-neutral-mutedBg items-center justify-center px-4"
+            >
+              <Text
+                className="text-neutral-textMain"
+                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
+              >
+                {t('common.cancel')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
