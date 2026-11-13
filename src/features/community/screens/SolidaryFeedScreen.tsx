@@ -320,7 +320,7 @@ export default function SolidaryFeedScreen() {
 
       <View className="pt-4 flex-1">
         {/* Accesos comunitarios: Anuncios (solo ícono), Red de Cuidado Vecinal y Archivo */}
-        <View className="px-4 flex-row items-center gap-2 mb-3">
+        <View className="px-4 flex-row items-center gap-2 pb-3 border-b border-neutral-border/70">
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel={t('feed.newsButtonA11y')}
@@ -375,13 +375,13 @@ export default function SolidaryFeedScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Contenedor debajo de la primera fila: en mapa, la barra de filtros flota sobre el mapa */}
+        {/* Contenedor debajo de la primera fila: en mapa, la barra de filtros flota exactamente a la misma altura */}
         <View className="flex-1 relative">
           <View
             className={
               view === 'map'
                 ? 'absolute top-3 left-4 right-4 z-20'
-                : 'px-4 mb-3'
+                : 'px-4 pt-3 mb-3'
             }
           >
             <View className="flex-row items-center gap-2">
