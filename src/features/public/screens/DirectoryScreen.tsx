@@ -31,6 +31,10 @@ import {
 import { Header } from '../../../components/ui/Header';
 import { Chip } from '../../../components/ui/Chip';
 import { BottomSheetModal } from '../../../components/ui/BottomSheetModal';
+import {
+  EditPublicationModal,
+  type EditPublicationTarget,
+} from '../../../components/ui/EditPublicationModal';
 import { LeafletMap, type LeafletMarkerItem } from '../../../components/ui/LeafletMap';
 import {
   normalizeListingType,
@@ -194,6 +198,7 @@ export default function DirectoryScreen() {
   const [detailService, setDetailService] = useState<NearbyService | null>(null);
   const [detailPointServices, setDetailPointServices] = useState<NearbyService[]>([]);
   const [reportingService, setReportingService] = useState<NearbyService | null>(null);
+  const [editTarget, setEditTarget] = useState<EditPublicationTarget | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const activeFilterCount =
@@ -589,6 +594,19 @@ export default function DirectoryScreen() {
                 setDetailService(item);
               }}
               onReport={() => setReportingService(item)}
+              onEdit={
+                session?.user?.id && item.provider_id === session.user.id
+                  ? () =>
+                      setEditTarget({
+                        kind: 'service',
+                        id: item.service_id,
+                        listingType: normalizeListingType(item.listing_type),
+                        title: item.title,
+                        category: item.category,
+                        description: item.description ?? item.title,
+                      })
+                  : undefined
+              }
               isTogglingFavorite={directory.isTogglingFavorite}
             />
           )}
@@ -642,6 +660,8 @@ export default function DirectoryScreen() {
           serviceTitle={reportingService.title}
         />
       )}
+
+      <EditPublicationModal target={editTarget} onClose={() => setEditTarget(null)} />
 
       <ServiceDetailModal
         visible={Boolean(detailService)}

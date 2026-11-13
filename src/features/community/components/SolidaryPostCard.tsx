@@ -7,6 +7,7 @@ import {
   LifeBuoy,
   MessageCircle,
   Mic,
+  Pencil,
   Repeat,
   Smartphone,
   Users,
@@ -23,6 +24,7 @@ interface Props {
   canResolve: boolean;
   onCoordinate: (post: SolidaryPost) => void;
   onMarkResolved: (post: SolidaryPost) => void;
+  onEdit?: (post: SolidaryPost) => void;
 }
 
 const POST_TYPE_ICONS: Record<PostType, typeof LifeBuoy> = {
@@ -34,7 +36,7 @@ const POST_TYPE_ICONS: Record<PostType, typeof LifeBuoy> = {
 };
 
 /** Tarjeta de publicación solidaria alineada con el estilo visual del directorio. */
-export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolved }: Props) {
+export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolved, onEdit }: Props) {
   const { t, tCategory } = useI18n();
   const name = post.authorName ?? t('post.anonymous');
   const category = tCategory(post.category);
@@ -166,6 +168,24 @@ export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolve
               : t('post.coordinate', { n: post.commentsCount })}
           </Text>
         </TouchableOpacity>
+
+        {onEdit && (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Edición"
+            onPress={() => onEdit(post)}
+            className="h-12 flex-row items-center justify-center rounded-2xl border border-neutral-border bg-neutral-mutedBg px-3.5"
+          >
+            <Pencil size={16} color="#1A1D20" />
+            <Text
+              numberOfLines={1}
+              className="ml-1.5 text-neutral-textMain"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
+            >
+              Edición
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {canResolve && !isResolved && (
           <TouchableOpacity

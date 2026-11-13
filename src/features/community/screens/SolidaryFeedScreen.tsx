@@ -27,6 +27,10 @@ import {
 import { Header } from '../../../components/ui/Header';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import {
+  EditPublicationModal,
+  type EditPublicationTarget,
+} from '../../../components/ui/EditPublicationModal';
 import { useI18n, type TranslationKey } from '../../../i18n';
 import {
   CARE_STATUS_META,
@@ -93,6 +97,7 @@ export default function SolidaryFeedScreen() {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [supportGroupsOpen, setSupportGroupsOpen] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<EditPublicationTarget | null>(null);
   const [selectedPointPosts, setSelectedPointPosts] = useState<SolidaryPost[]>([]);
 
   const feed = useSolidaryFeed(isMember);
@@ -606,6 +611,19 @@ export default function SolidaryFeedScreen() {
                     canResolve={canResolve}
                     onCoordinate={(item) => setSelectedPostId(item.id)}
                     onMarkResolved={handleMarkResolved}
+                    onEdit={
+                      post.authorId && post.authorId === profile?.id
+                        ? (item) =>
+                            setEditTarget({
+                              kind: 'solidary',
+                              id: item.id,
+                              postType: item.postType,
+                              category: item.category,
+                              description: item.description,
+                              urgency: item.urgency,
+                            })
+                        : undefined
+                    }
                   />
                 );
               })
@@ -687,6 +705,7 @@ export default function SolidaryFeedScreen() {
           setSelectedPointPosts([]);
         }}
       />
+      <EditPublicationModal target={editTarget} onClose={() => setEditTarget(null)} />
     </View>
   );
 }

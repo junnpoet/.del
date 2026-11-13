@@ -23,6 +23,7 @@ import {
   Wrench,
   Heart,
   ShieldCheck,
+  FileText,
 } from 'lucide-react-native';
 import { Card } from '../../src/components/ui/Card';
 import { Button } from '../../src/components/ui/Button';
@@ -252,6 +253,22 @@ export default function ProfileScreen() {
 
         {/* Quick links */}
         <Card className="p-2 mb-4">
+          <TouchableOpacity
+            className="flex-row items-center justify-between p-3.5 border-b border-neutral-border/50 min-h-[48px]"
+            onPress={() => router.push('/my-publications')}
+          >
+            <View className="flex-row items-center flex-1 mr-2">
+              <FileText size={18} color="#1E5E45" strokeWidth={2} />
+              <Text
+                className="text-neutral-textMain ml-3 flex-1"
+                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
+              >
+                Mis publicaciones
+              </Text>
+            </View>
+            <ChevronRight size={18} color="#9EA3AE" />
+          </TouchableOpacity>
+
           <TouchableOpacity
             className="flex-row items-center justify-between p-3.5 border-b border-neutral-border/50 min-h-[48px]"
             onPress={() =>

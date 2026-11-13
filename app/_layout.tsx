@@ -35,6 +35,7 @@ function RootContent() {
         <Stack.Screen name="(main)" options={{ headerShown: false }} />
         <Stack.Screen name="care-network" options={{ headerShown: false }} />
         <Stack.Screen name="leader-dashboard" options={{ headerShown: false }} />
+        <Stack.Screen name="my-publications" options={{ headerShown: false }} />
         <Stack.Screen name="accessible" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen
           name="chat/[id]"

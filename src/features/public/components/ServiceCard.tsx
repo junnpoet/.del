@@ -6,6 +6,7 @@ import {
   LifeBuoy,
   MapPin,
   MessageCircle,
+  Pencil,
   ShieldCheck,
   ShoppingBag,
   Star,
@@ -36,6 +37,7 @@ interface ServiceCardProps {
   onConsult: () => void;
   onViewMore?: () => void;
   onReport?: () => void;
+  onEdit?: () => void;
   isTogglingFavorite?: boolean;
 }
 
@@ -46,6 +48,7 @@ export function ServiceCard({
   onConsult,
   onViewMore,
   onReport,
+  onEdit,
   isTogglingFavorite = false,
 }: ServiceCardProps) {
   const { t } = useI18n();
@@ -186,6 +189,23 @@ export function ServiceCard({
       </View>
 
       <View className="mt-4 flex-row items-center gap-2">
+        {onEdit && (
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={onEdit}
+            className="min-h-[48px] flex-row items-center justify-center rounded-2xl border border-neutral-border bg-neutral-mutedBg px-3.5"
+          >
+            <Pencil size={15} color="#1A1D20" />
+            <Text
+              numberOfLines={1}
+              className="ml-1.5 text-neutral-textMain"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13.5 }}
+            >
+              Edición
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {onViewMore && (
           <TouchableOpacity
             accessibilityRole="button"
