@@ -38,9 +38,9 @@ export function SolidaryArchiveModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable className="flex-1 bg-black/45 justify-end" onPress={onClose}>
+      <Pressable className="flex-1 justify-end" onPress={onClose}>
         <Pressable
-          className="bg-neutral-background rounded-t-3xl h-[85%] px-5 pt-5"
+          className="bg-neutral-background rounded-t-3xl h-[85%] px-5 pt-5 border-t border-neutral-border shadow-2xl"
           style={{ paddingBottom: Math.max(insets.bottom + 12, 20) }}
           onPress={(e) => e.stopPropagation()}
         >

@@ -767,11 +767,11 @@ export default function LeaderDashboardScreen() {
         onRequestClose={() => setEmergencyModalOpen(false)}
       >
         <Pressable
-          className="flex-1 bg-black/45 justify-end"
+          className="flex-1 justify-end"
           onPress={() => setEmergencyModalOpen(false)}
         >
           <Pressable
-            className="bg-neutral-surface rounded-t-3xl px-5 pt-5"
+            className="bg-neutral-surface rounded-t-3xl px-5 pt-5 border-t border-neutral-border shadow-2xl"
             style={{ paddingBottom: Math.max(insets.bottom + 14, 24) }}
             onPress={(e) => e.stopPropagation()}
           >

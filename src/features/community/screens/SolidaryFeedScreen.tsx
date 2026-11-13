@@ -316,9 +316,9 @@ export default function SolidaryFeedScreen() {
         </TouchableOpacity>
       )}
 
-      <View className="px-4 pt-4 flex-1">
+      <View className="pt-4 flex-1">
         {/* Accesos comunitarios: Anuncios (solo ícono), Red de Cuidado Vecinal y Archivo */}
-        <View className="flex-row items-center gap-2 mb-3">
+        <View className="px-4 flex-row items-center gap-2 mb-3">
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel={t('feed.newsButtonA11y')}
@@ -373,9 +373,16 @@ export default function SolidaryFeedScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Fila de Categorías (desplegable) + Selector Muro / Mapa (solo ícono) */}
-        <View className="mb-3">
-          <View className="flex-row items-center gap-2">
+        {/* Contenedor debajo de la primera fila: en mapa, la barra de filtros flota sobre el mapa */}
+        <View className="flex-1 relative">
+          <View
+            className={
+              view === 'map'
+                ? 'absolute top-3 left-4 right-4 z-20'
+                : 'px-4 mb-3'
+            }
+          >
+            <View className="flex-row items-center gap-2">
             <View className="flex-1">
               {(() => {
                 const SelectedIcon = FILTER_ICONS[filter];
@@ -485,7 +492,7 @@ export default function SolidaryFeedScreen() {
 
         {view === 'feed' ? (
           <ScrollView
-            contentContainerClassName="pb-28 pt-1"
+            contentContainerClassName="px-4 pb-28 pt-1"
             refreshControl={<RefreshControl refreshing={feed.isRefetching} onRefresh={() => void feed.refetch()} />}
           >
             {zoneEmergency && (
@@ -602,7 +609,7 @@ export default function SolidaryFeedScreen() {
             )}
           </ScrollView>
         ) : (
-          <View className="flex-1 pb-2 relative">
+          <View className="flex-1 relative">
             <NeighborhoodMap
               posts={posts}
               careAssignments={canSeeCareLayer ? care.assignments : undefined}
@@ -613,7 +620,7 @@ export default function SolidaryFeedScreen() {
               webHint={t('community.mapWebHint')}
             />
             {canSeeCareLayer && (
-              <View className="absolute top-3 left-3 right-3 bg-neutral-surface/95 p-3 rounded-2xl">
+              <View className="absolute top-16 left-4 right-4 bg-neutral-surface/95 p-3 rounded-2xl border border-neutral-border/70">
                 <Text className="text-neutral-textMain" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}>
                   {t('community.careLegend', {
                     title: t('care.title'),
@@ -640,6 +647,7 @@ export default function SolidaryFeedScreen() {
             )}
           </View>
         )}
+        </View>
       </View>
 
       <NeighborhoodNewsModal visible={newsOpen} onClose={() => setNewsOpen(false)} />

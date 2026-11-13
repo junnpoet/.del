@@ -232,12 +232,12 @@ export function EmergencySupportGroupsModal({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
-        className="flex-1 bg-black/45 justify-end"
+        className="flex-1 justify-end"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <Pressable className="flex-1" onPress={onClose} />
         <View
-          className="bg-neutral-surface rounded-t-3xl h-[86%] px-5 pt-5"
+          className="bg-neutral-surface rounded-t-3xl h-[86%] px-5 pt-5 border-t border-neutral-border shadow-2xl"
           style={{ paddingBottom: bottomPadding }}
         >
           {!activeGroup ? (

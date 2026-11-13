@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { CheckCircle2, MessageCircle, Mic, Send, Smartphone, X } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../../../i18n';
 import { POST_STATUS_META, postStatusKey, postTypeKey } from '../constants';
 import { useSolidaryComments } from '../hooks/useSolidaryComments';
@@ -26,6 +27,7 @@ interface Props {
 /** Panel inferior de coordinación en tiempo real para un pedido solidario (SPEC-04 §2.3). */
 export function SolidaryActionSheet({ post, currentUserId, onClose }: Props) {
   const { t, tCategory } = useI18n();
+  const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState('');
   const { comments, addComment, acceptSupport } = useSolidaryComments(post?.id ?? null);
 
@@ -56,10 +58,13 @@ export function SolidaryActionSheet({ post, currentUserId, onClose }: Props) {
   return (
     <Modal visible={Boolean(post)} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
-        className="flex-1 bg-black/45 justify-end"
+        className="flex-1 justify-end"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View className="bg-neutral-background rounded-t-3xl max-h-[88%] px-4 pt-5 pb-6">
+        <View
+          className="bg-neutral-background rounded-t-3xl max-h-[88%] px-4 pt-5 border-t border-neutral-border shadow-2xl"
+          style={{ paddingBottom: Math.max(insets.bottom + 14, 24) }}
+        >
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-1 mr-3">
               <Text

@@ -142,7 +142,7 @@ export function NeighborhoodMap({
   );
 
   return (
-    <View className="flex-1 rounded-3xl overflow-hidden min-h-[260px]">
+    <View className="flex-1 overflow-hidden min-h-[260px]">
       <LeafletMap
         center={mapCenter}
         focus={focusCoord}
