@@ -3,7 +3,9 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Modal,
   Platform,
+  Pressable,
   RefreshControl,
   ScrollView,
   Text,
@@ -23,6 +25,7 @@ import {
   MessageSquare,
   Search,
   ShieldCheck,
+  SlidersHorizontal,
   Star,
   X,
 } from 'lucide-react-native';
@@ -280,6 +283,22 @@ export default function DirectoryScreen() {
   const [openingChatId, setOpeningChatId] = useState<string | null>(null);
   const [selectedMapService, setSelectedMapService] = useState<NearbyService | null>(null);
   const [reportingService, setReportingService] = useState<NearbyService | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const activeFilterCount =
+    (listingTypeFilter !== 'ALL' ? 1 : 0) +
+    (category !== 'Todos' ? 1 : 0) +
+    (radius !== 500 ? 1 : 0) +
+    (onlyFavorites ? 1 : 0);
+
+  const cycleRadius = () => {
+    const idx = RADII.findIndex((r) => r.value === radius);
+    const next = RADII[(idx + 1) % RADII.length];
+    setRadius(next.value);
+  };
+
+  const currentRadiusLabel =
+    RADII.find((r) => r.value === radius)?.label ?? `${radius}m`;
 
   useEffect(() => {
     if (filter === 'favorites') {
@@ -417,49 +436,149 @@ export default function DirectoryScreen() {
     );
   }
 
+  const inboxAction = (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={tp('public.inboxA11y')}
+      onPress={() => router.push('/chat')}
+      className="min-h-[44px] flex-row items-center rounded-2xl border border-primary/25 bg-[#EDF5F1] px-3"
+    >
+      <MessageSquare size={17} color="#1E5E45" />
+      <Text
+        className="ml-1.5 text-primary"
+        style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
+      >
+        {tp('public.inboxButton')}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
     <View className="flex-1 bg-neutral-background">
-      <Header title={t('directory.title')} subtitle={t('directory.subtitle')} />
+      <Header
+        title={t('directory.title')}
+        subtitle={t('directory.subtitle')}
+        rightAction={inboxAction}
+      />
       <EmergencyBanner />
-      <View className="border-b border-neutral-border/60 bg-neutral-surface px-4 pb-2.5 pt-3">
-        {/* Search bar */}
-        <View className="min-h-[48px] flex-row items-center rounded-2xl bg-neutral-mutedBg px-3">
-          <Search size={18} color="#6C727A" />
-          <TextInput
-            accessibilityLabel={t('directory.search')}
-            className="ml-2 flex-1 py-2 text-neutral-textMain"
-            placeholder={t('directory.search')}
-            placeholderTextColor="#9EA3AE"
-            value={query}
-            onChangeText={setQuery}
-            style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 14 }}
-          />
+      <View className="border-b border-neutral-border/60 bg-neutral-surface px-4 pb-2.5 pt-2.5">
+        {/* Row 1: Search bar + List/Map toggle */}
+        <View className="flex-row items-center gap-2">
+          <View className="min-h-[48px] flex-1 flex-row items-center rounded-2xl bg-neutral-mutedBg px-3">
+            <Search size={18} color="#6C727A" />
+            <TextInput
+              accessibilityLabel={t('directory.search')}
+              className="ml-2 flex-1 py-2 text-neutral-textMain"
+              placeholder={t('directory.search')}
+              placeholderTextColor="#9EA3AE"
+              value={query}
+              onChangeText={setQuery}
+              style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 14 }}
+            />
+            {query.length > 0 && (
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => setQuery('')}
+                className="p-1.5"
+              >
+                <X size={16} color="#6C727A" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View className="flex-row rounded-2xl bg-neutral-mutedBg p-1">
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={t('directory.viewList')}
+              accessibilityState={{ selected: view === 'list' }}
+              onPress={() => setView('list')}
+              className={`h-10 w-10 items-center justify-center rounded-xl ${
+                view === 'list' ? 'bg-white' : ''
+              }`}
+            >
+              <List size={19} color={view === 'list' ? '#1E5E45' : '#6C727A'} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={t('directory.viewMap')}
+              accessibilityState={{ selected: view === 'map' }}
+              onPress={() => setView('map')}
+              className={`h-10 w-10 items-center justify-center rounded-xl ${
+                view === 'map' ? 'bg-white' : ''
+              }`}
+            >
+              <MapIcon size={19} color={view === 'map' ? '#1E5E45' : '#6C727A'} />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Tricolor Listing Type Filters */}
+        {/* Row 2: Single compact filter strip */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           className="mt-2.5"
-          contentContainerStyle={{ gap: 8 }}
+          contentContainerStyle={{ gap: 8, alignItems: 'center' }}
         >
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityState={{ selected: listingTypeFilter === 'ALL' }}
-            onPress={() => setListingTypeFilter('ALL')}
-            className={`min-h-[48px] flex-row items-center rounded-2xl border px-3.5 ${
-              listingTypeFilter === 'ALL'
-                ? 'border-neutral-textMain bg-neutral-textMain'
+            onPress={() => setFiltersOpen(true)}
+            className={`min-h-[40px] flex-row items-center rounded-full border px-3.5 ${
+              activeFilterCount > 0
+                ? 'border-primary bg-[#EDF5F1]'
                 : 'border-neutral-border bg-neutral-surface'
             }`}
           >
+            <SlidersHorizontal
+              size={15}
+              color={activeFilterCount > 0 ? '#1E5E45' : '#6C727A'}
+            />
             <Text
-              className={
-                listingTypeFilter === 'ALL' ? 'text-white' : 'text-neutral-textMain'
-              }
+              className={`ml-1.5 ${
+                activeFilterCount > 0 ? 'text-primary' : 'text-neutral-textMain'
+              }`}
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
             >
-              {tp('public.type.ALL')}
+              {category !== 'Todos' ? tpCategory(category) : 'Filtros'}
+              {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={cycleRadius}
+            className="min-h-[40px] flex-row items-center rounded-full border border-neutral-border bg-neutral-mutedBg px-3.5"
+          >
+            <MapPin size={14} color="#1E5E45" />
+            <Text
+              className="ml-1 text-neutral-textMain"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
+            >
+              {currentRadiusLabel}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ selected: onlyFavorites }}
+            onPress={() => setOnlyFavorites((prev) => !prev)}
+            className={`min-h-[40px] flex-row items-center rounded-full border px-3.5 ${
+              onlyFavorites
+                ? 'border-emergency-alert bg-[#FEE2E2]'
+                : 'border-neutral-border bg-neutral-surface'
+            }`}
+          >
+            <Heart
+              size={14}
+              color={onlyFavorites ? '#D90429' : '#6C727A'}
+              fill={onlyFavorites ? '#D90429' : 'none'}
+            />
+            <Text
+              className={`ml-1.5 ${
+                onlyFavorites ? 'text-emergency-alert' : 'text-neutral-textMain'
+              }`}
+              style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
+            >
+              {tp('public.favoritesChip')} ({directory.favorites.length})
             </Text>
           </TouchableOpacity>
 
@@ -472,14 +591,16 @@ export default function DirectoryScreen() {
                 key={typeKey}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
-                onPress={() => setListingTypeFilter(typeKey)}
-                className="min-h-[48px] flex-row items-center rounded-2xl border px-3.5"
+                onPress={() =>
+                  setListingTypeFilter((prev) => (prev === typeKey ? 'ALL' : typeKey))
+                }
+                className="min-h-[40px] flex-row items-center rounded-full border px-3.5"
                 style={{
                   borderColor: active ? meta.color : '#E5E7EB',
                   backgroundColor: active ? meta.color : meta.bg,
                 }}
               >
-                <Icon size={15} color={active ? '#FFFFFF' : meta.color} />
+                <Icon size={14} color={active ? '#FFFFFF' : meta.color} />
                 <Text
                   className="ml-1.5"
                   style={{
@@ -494,82 +615,6 @@ export default function DirectoryScreen() {
             );
           })}
         </ScrollView>
-
-        {/* Radii + Favorites Chip */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mt-2"
-        >
-          {RADII.map((item) => (
-            <Chip
-              key={item.label}
-              label={item.label}
-              isActive={radius === item.value}
-              onPress={() => setRadius(item.value)}
-            />
-          ))}
-          <Chip
-            label={`${tp('public.favoritesChip')} (${directory.favorites.length})`}
-            isActive={onlyFavorites}
-            onPress={() => setOnlyFavorites((prev) => !prev)}
-          />
-        </ScrollView>
-
-        {/* Categories */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {CATEGORIES.map((item) => (
-            <Chip
-              key={item}
-              label={item === 'Todos' ? tp('public.type.ALL') : tpCategory(item)}
-              isActive={category === item}
-              onPress={() => setCategory(item)}
-            />
-          ))}
-        </ScrollView>
-
-        {/* Toolbar: Inbox button + List/Map toggle */}
-        <View className="mt-1.5 flex-row items-center justify-between">
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={tp('public.inboxA11y')}
-            onPress={() => router.push('/chat')}
-            className="min-h-[48px] flex-row items-center rounded-2xl border border-primary/25 bg-[#EDF5F1] px-3.5"
-          >
-            <MessageSquare size={17} color="#1E5E45" />
-            <Text
-              className="ml-2 text-primary"
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
-            >
-              {tp('public.inboxButton')}
-            </Text>
-          </TouchableOpacity>
-
-          <View className="flex-row rounded-xl bg-neutral-mutedBg p-1">
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={t('directory.viewList')}
-              accessibilityState={{ selected: view === 'list' }}
-              onPress={() => setView('list')}
-              className={`h-12 w-12 items-center justify-center rounded-lg ${
-                view === 'list' ? 'bg-white' : ''
-              }`}
-            >
-              <List size={20} color={view === 'list' ? '#1E5E45' : '#6C727A'} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={t('directory.viewMap')}
-              accessibilityState={{ selected: view === 'map' }}
-              onPress={() => setView('map')}
-              className={`h-12 w-12 items-center justify-center rounded-lg ${
-                view === 'map' ? 'bg-white' : ''
-              }`}
-            >
-              <MapIcon size={20} color={view === 'map' ? '#1E5E45' : '#6C727A'} />
-            </TouchableOpacity>
-          </View>
-        </View>
       </View>
 
       {view === 'map' ? (
@@ -633,6 +678,106 @@ export default function DirectoryScreen() {
           serviceTitle={reportingService.title}
         />
       )}
+
+      {/* Filters Bottom Sheet Modal */}
+      <Modal
+        transparent
+        visible={filtersOpen}
+        animationType="slide"
+        onRequestClose={() => setFiltersOpen(false)}
+      >
+        <Pressable
+          className="flex-1 justify-end bg-black/40"
+          onPress={() => setFiltersOpen(false)}
+        >
+          <Pressable
+            className="rounded-t-3xl bg-neutral-surface px-5 pb-8 pt-5"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View className="mb-4 flex-row items-center justify-between">
+              <Text
+                className="text-neutral-textMain"
+                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
+              >
+                Filtros del directorio
+              </Text>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => setFiltersOpen(false)}
+                className="h-10 w-10 items-center justify-center rounded-full bg-neutral-mutedBg"
+              >
+                <X size={18} color="#6C727A" />
+              </TouchableOpacity>
+            </View>
+
+            <Text
+              className="mb-2 text-neutral-textMuted"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+            >
+              RADIO CAMINABLE
+            </Text>
+            <View className="mb-4 flex-row flex-wrap gap-2">
+              {RADII.map((item) => (
+                <Chip
+                  key={item.label}
+                  label={item.label}
+                  isActive={radius === item.value}
+                  onPress={() => setRadius(item.value)}
+                />
+              ))}
+            </View>
+
+            <Text
+              className="mb-2 text-neutral-textMuted"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+            >
+              CATEGORÍA
+            </Text>
+            <View className="mb-5 flex-row flex-wrap gap-1.5">
+              {CATEGORIES.map((item) => (
+                <Chip
+                  key={item}
+                  label={item === 'Todos' ? tp('public.type.ALL') : tpCategory(item)}
+                  isActive={category === item}
+                  onPress={() => setCategory(item)}
+                />
+              ))}
+            </View>
+
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => {
+                  setListingTypeFilter('ALL');
+                  setCategory('Todos');
+                  setRadius(500);
+                  setOnlyFavorites(false);
+                }}
+                className="min-h-[48px] flex-1 items-center justify-center rounded-2xl border border-neutral-border"
+              >
+                <Text
+                  className="text-neutral-textMain"
+                  style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
+                >
+                  Limpiar
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => setFiltersOpen(false)}
+                className="min-h-[48px] flex-1 items-center justify-center rounded-2xl bg-primary"
+              >
+                <Text
+                  className="text-white"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
+                >
+                  Ver resultados ({filteredServices.length})
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
