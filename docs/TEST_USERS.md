@@ -8,27 +8,10 @@ Todos los usuarios residen en **Urbanización Bellamar (Nuevo Chimbote)**, alred
 
 ---
 
-## 1. Juan López (Vecino Nuevo — Solo Capa Pública)
+## 1. Juan López (Dirigente Barrial — Urb. Bellamar)
 * **Teléfono Celular:** `947411396`
 * **Contraseña:** `123456`
 * **Domicilio Georreferenciado:** Calle 23 Mz. Ñ - Lt. 9, Urbanización Bellamar
-* **Estado de Membresía:** `NO_SOLICITADO`
-* **¿Qué probar con este usuario?**
-  1. **Capa Pública (Pestaña "Directorio"):**
-     - Explora la lista y el mapa interactivo (vista mapa y vista satélite) con pines de vecinos cercanos ofreciendo **Servicios**, **Productos** y **Auxilio** (incluido el pin multicolor de Brandon Mauricio).
-     - Filtra por `Servicios`, `Productos`, `Auxilio` y favoritos (`3` guardados).
-     - Abre **Chats** para continuar las conversaciones activas con *Brandon Mauricio* y *Gadiel Zúñiga*.
-  2. **Publicación Rápida (`+`):**
-     - Verás habilitada **Ofrecer un Servicio** y bloqueadas las opciones privadas (*Pedir Ayuda* y *Aporte Solidario*) por no pertenecer aún a la comunidad.
-  3. **Control de Acceso a Capa Privada (Pestaña "Comunidad"):**
-     - Verás la pantalla de bloqueo con candado y el botón **`Solicitar Ingreso a la Junta Vecinal`**.
-
----
-
-## 2. Gadiel Zúñiga (Dirigente Barrial — Urb. Bellamar)
-* **Teléfono Celular:** `971825787`
-* **Contraseña:** `123456`
-* **Domicilio Georreferenciado:** Calle 22 Mz. M - Lt. 4, Urbanización Bellamar
 * **Estado de Membresía:** `DIRIGENTE` (Líder de *Junta Vecinal Urb. Bellamar*)
 * **¿Qué probar con este usuario?**
   1. **Aprobación de Solicitudes (Pestaña "Comunidad"):**
@@ -36,10 +19,26 @@ Todos los usuarios residen en **Urbanización Bellamar (Nuevo Chimbote)**, alred
      - Abre el modal de revisión y aprueba su ingreso a la junta vecinal.
   2. **Capa de Cuidado Vecinal (Pestaña "Comunidad" → Mapa Barrial):**
      - Visualiza el seguimiento preventivo de *Mauro Lázaro* (`SEGUIMIENTO_REQUERIDO`).
-  3. **Muro Solidario y Publicaciones:**
-     - Acceso total a las 3 opciones de **`+` Publicar** y gestión de la comunidad.
-  4. **Protocolo SOS / Emergencias:**
-     - Acceso prioritario al tablero de contingencia vecinal.
+  3. **Capa Pública, Favoritos y Chats:**
+     - Explora el Directorio (Servicios, Productos y Auxilio), sus `3` favoritos guardados y sus `2` chats activos con *Brandon Mauricio* y *Gadiel Zúñiga*.
+  4. **Publicación Rápida (`+`) y Protocolo SOS:**
+     - Acceso total a las 3 opciones de **`+` Publicar** y al tablero de contingencia vecinal.
+
+---
+
+## 2. Gadiel Zúñiga (Vecino Nuevo — Solo Capa Pública)
+* **Teléfono Celular:** `971825787`
+* **Contraseña:** `123456`
+* **Domicilio Georreferenciado:** Calle 22 Mz. M - Lt. 4, Urbanización Bellamar
+* **Estado de Membresía:** `NO_SOLICITADO`
+* **¿Qué probar con este usuario?**
+  1. **Capa Pública (Pestaña "Directorio"):**
+     - Explora la lista y el mapa interactivo (vista mapa y vista satélite) con pines de vecinos cercanos ofreciendo **Servicios**, **Productos** y **Auxilio** (incluido el pin multicolor de Brandon Mauricio).
+     - Abre **Chats** para ver su conversación activa con *Juan López*.
+  2. **Publicación Rápida (`+`):**
+     - Verás habilitada **Ofrecer un Servicio** y bloqueadas las opciones privadas (*Pedir Ayuda* y *Aporte Solidario*) por no pertenecer aún a la comunidad.
+  3. **Control de Acceso a Capa Privada (Pestaña "Comunidad"):**
+     - Verás la pantalla de bloqueo con candado y el botón **`Solicitar Ingreso a la Junta Vecinal`**.
 
 ---
 
@@ -80,7 +79,7 @@ Todos los usuarios residen en **Urbanización Bellamar (Nuevo Chimbote)**, alred
   1. **Capa Pública Activa:**
      - Ofrece un **Servicio** (*Refuerzo escolar y matemáticas*) y un **Producto** (*Muebles pequeños y repisas de madera*) visibles para todo el barrio.
   2. **Estado Pendiente en Comunidad:**
-     - Al entrar a la pestaña **Comunidad**, verá la pantalla de **"Confirmando tu Residencia"** hasta que *Gadiel Zúñiga* lo apruebe desde el panel de dirigencia.
+     - Al entrar a la pestaña **Comunidad**, verá la pantalla de **"Confirmando tu Residencia"** hasta que *Juan López* lo apruebe desde el panel de dirigencia.
 
 ---
 
