@@ -570,68 +570,76 @@ export default function DirectoryScreen() {
             const meta = LISTING_TYPE_META[typeKey];
             const Icon = meta.Icon;
             return (
-              <Pressable
+              <View
                 key={typeKey}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                onPress={() =>
-                  setListingTypeFilter((prev) => (prev === typeKey ? 'ALL' : typeKey))
-                }
-                android_ripple={{
-                  color: active ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.08)',
-                  borderless: false,
-                }}
-                className="min-h-[38px] flex-1 flex-row items-center justify-center overflow-hidden rounded-full border px-2"
+                className="flex-1 overflow-hidden rounded-full border"
                 style={{
                   borderColor: active ? meta.color : '#E5E7EB',
                   backgroundColor: active ? meta.color : meta.bg,
                 }}
               >
-                <Icon size={14} color={active ? '#FFFFFF' : meta.color} />
-                <Text
-                  numberOfLines={1}
-                  className="ml-1"
-                  style={{
-                    fontFamily: 'PlusJakartaSans_700Bold',
-                    fontSize: 12,
-                    color: active ? '#FFFFFF' : meta.color,
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  onPress={() =>
+                    setListingTypeFilter((prev) => (prev === typeKey ? 'ALL' : typeKey))
+                  }
+                  android_ripple={{
+                    color: active ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.08)',
+                    borderless: false,
                   }}
+                  className="min-h-[38px] flex-row items-center justify-center px-2"
                 >
-                  {tp(`public.type.${typeKey}`)}
-                </Text>
-              </Pressable>
+                  <Icon size={14} color={active ? '#FFFFFF' : meta.color} />
+                  <Text
+                    numberOfLines={1}
+                    className="ml-1"
+                    style={{
+                      fontFamily: 'PlusJakartaSans_700Bold',
+                      fontSize: 12,
+                      color: active ? '#FFFFFF' : meta.color,
+                    }}
+                  >
+                    {tp(`public.type.${typeKey}`)}
+                  </Text>
+                </Pressable>
+              </View>
             );
           })}
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={tp('public.favoritesChip')}
-            accessibilityState={{ selected: onlyFavorites }}
-            onPress={() => setOnlyFavorites((prev) => !prev)}
-            android_ripple={{
-              color: onlyFavorites ? 'rgba(217,4,41,0.16)' : 'rgba(0,0,0,0.08)',
-              borderless: false,
-            }}
-            className={`min-h-[38px] flex-row items-center justify-center overflow-hidden rounded-full border px-2.5 ${
+          <View
+            className={`overflow-hidden rounded-full border ${
               onlyFavorites
                 ? 'border-emergency-alert bg-[#FEE2E2]'
                 : 'border-neutral-border bg-neutral-surface'
             }`}
           >
-            <Heart
-              size={14}
-              color={onlyFavorites ? '#D90429' : '#6C727A'}
-              fill={onlyFavorites ? '#D90429' : 'none'}
-            />
-            <Text
-              className={`ml-1 ${
-                onlyFavorites ? 'text-emergency-alert' : 'text-neutral-textMain'
-              }`}
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={tp('public.favoritesChip')}
+              accessibilityState={{ selected: onlyFavorites }}
+              onPress={() => setOnlyFavorites((prev) => !prev)}
+              android_ripple={{
+                color: onlyFavorites ? 'rgba(217,4,41,0.16)' : 'rgba(0,0,0,0.08)',
+                borderless: false,
+              }}
+              className="min-h-[38px] flex-row items-center justify-center px-2.5"
             >
-              ({directory.favorites.length})
-            </Text>
-          </Pressable>
+              <Heart
+                size={14}
+                color={onlyFavorites ? '#D90429' : '#6C727A'}
+                fill={onlyFavorites ? '#D90429' : 'none'}
+              />
+              <Text
+                className={`ml-1 ${
+                  onlyFavorites ? 'text-emergency-alert' : 'text-neutral-textMain'
+                }`}
+                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+              >
+                ({directory.favorites.length})
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
 
