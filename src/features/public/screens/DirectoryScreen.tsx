@@ -511,17 +511,12 @@ export default function DirectoryScreen() {
           </View>
         </View>
 
-        {/* Row 2: Single compact filter strip */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mt-2.5"
-          contentContainerStyle={{ gap: 8, alignItems: 'center' }}
-        >
+        {/* Row 2: Filter strip filling full width and wrapping if expanded */}
+        <View className="mt-2.5 flex-row flex-wrap items-center gap-2">
           <TouchableOpacity
             accessibilityRole="button"
             onPress={() => setFiltersOpen(true)}
-            className={`min-h-[40px] flex-row items-center rounded-full border px-3.5 ${
+            className={`min-h-[40px] flex-grow flex-row items-center justify-center rounded-full border px-3.5 ${
               activeFilterCount > 0
                 ? 'border-primary bg-[#EDF5F1]'
                 : 'border-neutral-border bg-neutral-surface'
@@ -545,7 +540,7 @@ export default function DirectoryScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             onPress={cycleRadius}
-            className="min-h-[40px] flex-row items-center rounded-full border border-neutral-border bg-neutral-mutedBg px-3.5"
+            className="min-h-[40px] flex-grow flex-row items-center justify-center rounded-full border border-neutral-border bg-neutral-mutedBg px-3.5"
           >
             <MapPin size={14} color="#1E5E45" />
             <Text
@@ -560,7 +555,7 @@ export default function DirectoryScreen() {
             accessibilityRole="button"
             accessibilityState={{ selected: onlyFavorites }}
             onPress={() => setOnlyFavorites((prev) => !prev)}
-            className={`min-h-[40px] flex-row items-center rounded-full border px-3.5 ${
+            className={`min-h-[40px] flex-grow flex-row items-center justify-center rounded-full border px-3.5 ${
               onlyFavorites
                 ? 'border-emergency-alert bg-[#FEE2E2]'
                 : 'border-neutral-border bg-neutral-surface'
@@ -580,7 +575,7 @@ export default function DirectoryScreen() {
               {tp('public.favoritesChip')} ({directory.favorites.length})
             </Text>
           </TouchableOpacity>
-        </ScrollView>
+        </View>
 
         {/* Row 3: Quick type selectors (Servicios / Productos / Auxilio) */}
         <View className="mt-2 flex-row items-center gap-2">
