@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import {
   Archive,
   Check,
@@ -63,6 +64,7 @@ import {
 import { NeighborhoodMap } from '../components/NeighborhoodMap';
 import { StateMessage } from '../components/StateMessage';
 import { confirmAction, errorMessage, showMessage } from '../utils';
+import { supabase } from '../../../services/supabase';
 import type { CareStatus } from '../../../types';
 
 const BENEFITS: TranslationKey[] = ['community.benefit1', 'community.benefit2', 'community.benefit3'];
@@ -149,6 +151,22 @@ export default function SolidaryFeedScreen() {
     profile?.lat !== null && profile?.lat !== undefined && profile?.lng !== null && profile?.lng !== undefined
       ? { latitude: profile.lat, longitude: profile.lng }
       : null;
+
+  const { data: searchZoneGeoJson } = useQuery<Record<string, unknown> | null>({
+    queryKey: ['community-search-zone', center?.latitude, center?.longitude],
+    enabled: Boolean(center),
+    staleTime: 60_000,
+    queryFn: async () => {
+      if (!center) return null;
+      const { data, error } = await supabase.rpc('get_search_zone_geojson', {
+        radius_meters: 500,
+        user_home_lat: center.latitude,
+        user_home_lng: center.longitude,
+      });
+      if (error) return null;
+      return (data as Record<string, unknown> | null) ?? null;
+    },
+  });
 
   const handleRequest = async () => {
     try {
@@ -584,11 +602,14 @@ export default function SolidaryFeedScreen() {
             )}
           </ScrollView>
         ) : (
-          <View className="flex-1 pb-28 relative">
+          <View className="flex-1 pb-2 relative">
             <NeighborhoodMap
               posts={posts}
               careAssignments={canSeeCareLayer ? care.assignments : undefined}
               center={center}
+              currentUserId={profile?.id ?? null}
+              searchZoneGeoJson={searchZoneGeoJson ?? null}
+              onSelectPost={(post) => setSelectedPostId(post.id)}
               webHint={t('community.mapWebHint')}
             />
             {canSeeCareLayer && (

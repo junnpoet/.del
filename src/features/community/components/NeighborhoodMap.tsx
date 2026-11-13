@@ -1,9 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { Map as MapIcon } from 'lucide-react-native';
 import { useI18n } from '../../../i18n';
 import { LeafletMap, type LeafletMarkerItem } from '../../../components/ui/LeafletMap';
-import { DEFAULT_REGION, CARE_STATUS_META, careStatusKey, postTypeKey } from '../constants';
+import {
+  CARE_STATUS_META,
+  careStatusKey,
+  DEFAULT_REGION,
+  POST_TYPE_META,
+  postTypeKey,
+} from '../constants';
 import type { SolidaryPost } from '../hooks/useSolidaryFeed';
 import type { CareAssignment } from '../hooks/useCareNetwork';
 
@@ -12,32 +18,87 @@ interface Props {
   /** Capa protegida: solo se pasa si el usuario es dirigente o padrino. */
   careAssignments?: CareAssignment[];
   center?: { latitude: number; longitude: number } | null;
+  currentUserId?: string | null;
+  searchZoneGeoJson?: Record<string, unknown> | null;
+  onSelectPost?: (post: SolidaryPost) => void;
   webHint?: string;
 }
 
-/** Mapa Barrial con publicaciones solidarias y, si corresponde, la Red de Cuidado. */
-export function NeighborhoodMap({ posts = [], careAssignments, center, webHint }: Props) {
+/** Mapa Barrial del Muro Solidario con la misma presentación, zona de comunidad y pines agrupados del Directorio. */
+export function NeighborhoodMap({
+  posts = [],
+  careAssignments,
+  center,
+  currentUserId = null,
+  searchZoneGeoJson = null,
+  onSelectPost,
+  webHint,
+}: Props) {
   const { t, tCategory } = useI18n();
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [focusCoord, setFocusCoord] = useState<{ latitude: number; longitude: number } | null>(null);
+
   const mapCenter = center ?? {
     latitude: DEFAULT_REGION.latitude,
     longitude: DEFAULT_REGION.longitude,
   };
 
-  const markers = useMemo<LeafletMarkerItem[]>(() => {
-    const postMarkers: LeafletMarkerItem[] = posts
-      .filter((post) => post.coordinates)
-      .map((post) => {
-        const badgeText = t(postTypeKey(post.postType));
+  const { markers, groupedPosts } = useMemo(() => {
+    const grouped = new Map<
+      string,
+      { coord: { latitude: number; longitude: number }; items: SolidaryPost[] }
+    >();
+
+    for (const post of posts) {
+      if (!post.coordinates) continue;
+      const key = `${post.coordinates.latitude.toFixed(5)},${post.coordinates.longitude.toFixed(5)}`;
+      const existing = grouped.get(key);
+      if (existing) {
+        existing.items.push(post);
+      } else {
+        grouped.set(key, { coord: post.coordinates, items: [post] });
+      }
+    }
+
+    const postMarkers: LeafletMarkerItem[] = Array.from(grouped.entries()).map(
+      ([key, { coord, items }]) => {
+        const primary = items[0];
+        const uniqueTypes = Array.from(new Set(items.map((item) => item.postType)));
+        const colors = uniqueTypes.map((typeKey) => POST_TYPE_META[typeKey].color);
+        const primaryType = uniqueTypes[0];
+        const iconType =
+          uniqueTypes.length > 1
+            ? 'multi'
+            : primaryType === 'AYUDA'
+            ? 'auxilio'
+            : primaryType === 'DONACION' || primaryType === 'PRESTAMO'
+            ? 'producto'
+            : 'servicio';
+
+        const isOwnHome = Boolean(
+          currentUserId && items.some((item) => item.authorId === currentUserId)
+        );
+        const badgeText = t(postTypeKey(primary.postType));
+
         return {
-          id: `post-${post.id}`,
-          latitude: post.coordinates!.latitude,
-          longitude: post.coordinates!.longitude,
-          color: post.postType === 'AYUDA' ? '#D90429' : '#1E5E45',
+          id: `post-${primary.id}`,
+          latitude: coord.latitude,
+          longitude: coord.longitude,
+          color: colors[0],
+          colors,
+          iconType,
+          count: items.length,
+          isHome: isOwnHome,
+          selected: selectedKey === key,
           badgeText,
-          title: tCategory(post.category),
-          subtitle: `${badgeText} · ${post.authorName ?? t('post.anonymous')}`,
+          title:
+            items.length > 1
+              ? `${primary.authorName ?? t('post.anonymous')} (${items.length} publicaciones)`
+              : tCategory(primary.category),
+          subtitle: `${badgeText} · ${primary.authorName ?? t('post.anonymous')}`,
         };
-      });
+      }
+    );
 
     const careMarkers: LeafletMarkerItem[] = (careAssignments ?? [])
       .filter((item) => item.vulnerable.coordinates)
@@ -49,14 +110,18 @@ export function NeighborhoodMap({ posts = [], careAssignments, center, webHint }
           latitude: item.vulnerable.coordinates!.latitude,
           longitude: item.vulnerable.coordinates!.longitude,
           color: meta.color,
+          iconType: 'auxilio',
           badgeText: label,
           title: item.vulnerable.name,
           subtitle: `${label} · ${t('map.padrino', { name: item.buddy.name ?? t('care.noPadrino') })}`,
         };
       });
 
-    return [...postMarkers, ...careMarkers];
-  }, [careAssignments, posts, t, tCategory]);
+    return {
+      markers: [...postMarkers, ...careMarkers],
+      groupedPosts: grouped,
+    };
+  }, [careAssignments, currentUserId, posts, selectedKey, t, tCategory]);
 
   const webFallback = (
     <View className="flex-1 rounded-3xl items-center justify-center bg-[#E8F0EC] px-8 min-h-[260px]">
@@ -80,8 +145,25 @@ export function NeighborhoodMap({ posts = [], careAssignments, center, webHint }
     <View className="flex-1 rounded-3xl overflow-hidden min-h-[260px]">
       <LeafletMap
         center={mapCenter}
+        focus={focusCoord}
         zoom={15}
+        radiusMeters={500}
+        searchZoneGeoJson={searchZoneGeoJson}
+        showHomePin={Boolean(center)}
+        homeTitle="Tu ubicación"
+        homeSubtitle="Zona activa de tu comunidad"
         markers={markers}
+        onMarkerPress={(id) => {
+          if (!id.startsWith('post-')) return;
+          const postId = id.slice(5);
+          const found = posts.find((p) => p.id === postId);
+          if (!found || !found.coordinates) return;
+          const key = `${found.coordinates.latitude.toFixed(5)},${found.coordinates.longitude.toFixed(5)}`;
+          setSelectedKey(key);
+          setFocusCoord(found.coordinates);
+          const group = groupedPosts.get(key)?.items;
+          onSelectPost?.(group?.[0] ?? found);
+        }}
         webFallback={webFallback}
       />
     </View>
