@@ -3,7 +3,7 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
-  KeyboardAvoidingView,
+  Keyboard,
   Modal,
   Platform,
   Pressable,
@@ -159,6 +159,7 @@ export function LocationPickerModal({
   const [streetLine, setStreetLine] = useState('');
   const [reference, setReference] = useState('');
   const [district, setDistrict] = useState('');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const cardSlideY = useRef(new Animated.Value(420)).current;
   const htmlRef = useRef<string>('');
   const prevVisibleRef = useRef(false);
@@ -175,6 +176,25 @@ export function LocationPickerModal({
       cardSlideY.setValue(420);
     }
   }, [visible, initialCoords.latitude, initialCoords.longitude, cardSlideY]);
+
+  useEffect(() => {
+    if (!visible) {
+      setKeyboardHeight(0);
+      return;
+    }
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [visible]);
 
   useEffect(() => {
     if (!visible) return;
@@ -455,19 +475,21 @@ export function LocationPickerModal({
         {confirmCardOpen && (
           <View className="absolute inset-0 justify-end">
             <Pressable
-              onPress={handleCloseAddressCard}
+              onPress={() => {
+                Keyboard.dismiss();
+                handleCloseAddressCard();
+              }}
               className="absolute inset-0 bg-black/40"
             />
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            <Animated.View
+              style={{
+                transform: [{ translateY: cardSlideY }],
+                marginBottom: keyboardHeight,
+                maxHeight: '85%',
+                paddingBottom: keyboardHeight > 0 ? 12 : Math.max(insets.bottom + 14, 24),
+              }}
+              className="rounded-t-3xl bg-neutral-surface px-5 pt-4 shadow-2xl"
             >
-              <Animated.View
-                style={{
-                  transform: [{ translateY: cardSlideY }],
-                  paddingBottom: Math.max(insets.bottom + 14, 24),
-                }}
-                className="rounded-t-3xl bg-neutral-surface px-5 pt-4 shadow-2xl"
-              >
                 <View className="mb-3 flex-row items-center justify-between">
                   <TouchableOpacity
                     accessibilityRole="button"
@@ -597,7 +619,6 @@ export function LocationPickerModal({
                   </Text>
                 </TouchableOpacity>
               </Animated.View>
-            </KeyboardAvoidingView>
           </View>
         )}
       </View>
