@@ -228,6 +228,8 @@ FOR EACH ROW EXECUTE FUNCTION update_service_rating();
 
 ### 3.3. Búsqueda Geoespacial PostGIS desde Residencia Registrada
 ```sql
+DROP FUNCTION IF EXISTS get_nearby_services(FLOAT, FLOAT, INT);
+
 CREATE OR REPLACE FUNCTION get_nearby_services(
   user_home_lat FLOAT,
   user_home_lng FLOAT,
@@ -239,24 +241,32 @@ RETURNS TABLE (
   provider_name TEXT,
   title TEXT,
   category TEXT,
+  description TEXT,
+  listing_type TEXT,
   rating_avg NUMERIC,
   reviews_total INT,
-  distance_meters FLOAT
+  distance_meters FLOAT,
+  provider_lat FLOAT,
+  provider_lng FLOAT
 ) AS $$
 BEGIN
   RETURN QUERY
-  SELECT 
+  SELECT
     s.id,
-    s.provider_id,
+    u.id,
     u.full_name,
     s.title,
     s.category,
+    s.description,
+    s.listing_type,
     s.rating_average,
     s.reviews_count,
     ROUND(ST_Distance(
       u.home_location,
       ST_SetSRID(ST_MakePoint(user_home_lng, user_home_lat), 4326)::geography
-    )::numeric, 0)::FLOAT AS distance_meters
+    )::numeric, 0)::FLOAT AS distance_meters,
+    ST_Y(u.home_location::geometry)::FLOAT AS provider_lat,
+    ST_X(u.home_location::geometry)::FLOAT AS provider_lng
   FROM services s
   JOIN profiles u ON s.provider_id = u.id
   WHERE ST_DWithin(
@@ -267,6 +277,13 @@ BEGIN
   ORDER BY distance_meters ASC;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+### 3.6. Contratos Adicionales de Oleada 0 (`20261113000000_wave0_contracts.sql`)
+- **`solidary_comments`**: comentarios y aceptaciones sobre `solidary_posts` (`id`, `post_id`, `author_id`, `author_name`, `whatsapp_sender_phone`, `content`, `is_accepted`, `created_at`), con índice `(post_id, created_at)`, RLS por membresía de grupo y publicación idempotente en `supabase_realtime`.
+- **`volunteers`**: registro de voluntarios (`id`, `post_id`, `user_id`, `role_note`, `created_at`, `UNIQUE(post_id, user_id)`), con RLS por membresía de grupo y publicación idempotente en `supabase_realtime`.
+- **`solidary_posts`**: columnas `target_volunteers INT`, `accepted_helper_id UUID`, `is_ai_voice BOOLEAN NOT NULL DEFAULT FALSE`, y política RLS `UPDATE` para el autor o un `dirigente` del grupo.
+- **`services`**: columna `listing_type TEXT NOT NULL DEFAULT 'SERVICIO' CHECK (listing_type IN ('SERVICIO', 'PRODUCTO', 'AUXILIO'))` para pines tricolor en mapa.
 
 ### 3.4. Búsqueda y Recomendación de Grupos Vecinales por Proximidad y Actividad
 ```sql
@@ -508,25 +525,26 @@ flowchart TD
     %% Olvido de Contraseña
     ModeChoice -- No --> OTPFlow["Toca: ¿Olvidaste tu contraseña?<br/>Entrar con WhatsApp"]
     OTPFlow --> RequestOTP["Llama a Edge Function send-whatsapp-otp"]
-    RequestOTP --> MetaDispatch["Meta Cloud API envía OTP de 8 dígitos<br/>al WhatsApp del vecino"]
-    MetaDispatch --> EnterOTP["Ingresa código en la pantalla"]
+    RequestOTP --> EvoDispatch["Evolution API v2.3.7 (Azure) envía OTP<br/>al WhatsApp del vecino"]
+    EvoDispatch --> EnterOTP["Ingresa código en la pantalla"]
     EnterOTP --> VerifyOTP["verifyOtp(type: magiclink)<br/>Crea sesión oficial JWT"]
     VerifyOTP --> FetchProfile
 ```
 
 ### 7.2. Pantalla de Registro y Georreferenciación (`app/(auth)/register.tsx`)
 
-El registro es de carácter **individual y de autoservicio**; no requiere aprobación previa de dirigentes para acceder a la capa pública (directorio de oficios).
+El registro es de carácter **individual y de autoservicio** mediante un stepper en 3 pasos internacionalizado (`useI18n`); no requiere aprobación previa de dirigentes para acceder a la capa pública (directorio de oficios).
 
 | Campo / Control | Tipo | Destino en Base de Datos | Validación / Comportamiento |
 | :--- | :--- | :--- | :--- |
 | **Nombres y Apellidos** | Texto libre | `profiles.full_name` | Obligatorio ($\ge 3$ caracteres). |
-| **Teléfono Celular** | Teléfono (`phone-pad`) | `profiles.phone` y alias `auth.users` | 9 dígitos nacionales. Se normaliza a `<celular>@sumayni.pe`. |
-| **Correo (Opcional)** | Email | `auth.users.email` (si se provee) | Opcional; si se omite, se usa el alias del celular. |
+| **Teléfono Celular** | Teléfono (`phone-pad`) | `profiles.phone` y alias `auth.users` | 9 dígitos nacionales. Se normaliza a `<celular>@sumayni.pe` (autenticación exclusivamente por teléfono/OTP). |
 | **Contraseña** | Texto seguro | `auth.users.encrypted_password` | Mínimo 6 caracteres (hasheada con bcrypt). |
 | **Dirección de Hogar** | Texto | `profiles.home_address` | Dirección descriptiva (calle, número, manzana, lote). |
 | **Punto GPS del Hogar** | Selector / Geolocalización | `profiles.home_location` | Coordenadas obligatorias (`GEOGRAPHY(Point, 4326)`). Define el centro de geocercas caminables. |
 | **Push Token** | Automático | `profiles.push_token` | Token Expo capturado en segundo plano para alertas críticas. |
+
+> **Nota sobre verificación previa por OTP:** En el flujo actual `send-whatsapp-otp` exige una fila existente en `profiles`; la verificación previa de propiedad del número antes del `signUp` requiere una Edge Function dedicada. Si falla la inserción en `profiles`, `signUp` ejecuta `signOut()` para no dejar una sesión autenticada huérfana.
 
 * **Garantía RLS:** La inserción en `profiles` se ejecuta protegida por la política:
   ```sql
@@ -562,7 +580,7 @@ Para erradicar la frustración por contraseñas olvidadas sin depender de SMS de
 [ Edge Function: send-whatsapp-otp ]
             ├── 1. Valida que el celular exista en profiles
             ├── 2. Genera OTP oficial mediante supabase.auth.admin.generateLink({ type: 'magiclink' })
-            └── 3. Despacha mensaje por Meta WhatsApp Cloud API (+51 9XXXXXXXX)
+            └── 3. Despacha mensaje por Evolution API v2.3.7 en Azure (+51 9XXXXXXXX, fallback Meta Cloud API)
             │
             ▼
 [ Mensaje WhatsApp recibido en el móvil: "🔐 Sumayni: Tu código temporal es XXXXXXXX" ]

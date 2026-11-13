@@ -274,13 +274,17 @@ export default function RegisterScreen() {
             className="text-neutral-textMuted uppercase tracking-wider"
             style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11 }}
           >
-            {step === 1 ? 'Paso 1 de 3' : step === 2 ? 'Paso 2 de 3' : 'Paso 3 de 3'}
+            {t('register.stepOf', { step })}
           </Text>
           <Text
             className="text-primary font-bold"
             style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
           >
-            {step === 1 ? '1. Identidad' : step === 2 ? '2. Domicilio' : '3. Seguridad'}
+            {step === 1
+              ? t('register.step1Tab')
+              : step === 2
+              ? t('register.step2Tab')
+              : t('register.step3Tab')}
           </Text>
         </View>
         <View className="flex-row h-1.5 bg-neutral-mutedBg rounded-full overflow-hidden gap-1.5">
@@ -317,13 +321,13 @@ export default function RegisterScreen() {
                   className="text-neutral-textMain"
                   style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
                 >
-                  Datos Personales
+                  {t('register.step1Title')}
                 </Text>
                 <Text
                   className="text-neutral-textMuted mt-1 leading-5"
                   style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
                 >
-                  Tu nombre y WhatsApp permitirán a tus vecinos identificarte y contactarte en el barrio.
+                  {t('register.step1Subtitle')}
                 </Text>
               </View>
 
@@ -348,7 +352,7 @@ export default function RegisterScreen() {
               />
 
               <Button
-                title="Continuar a Domicilio"
+                title={t('register.continueToAddress')}
                 variant="primary"
                 onPress={handleNextFromStep1}
                 className="mt-2"
@@ -364,13 +368,13 @@ export default function RegisterScreen() {
                   className="text-neutral-textMain"
                   style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
                 >
-                  Domicilio y Sector
+                  {t('register.step2Title')}
                 </Text>
                 <Text
                   className="text-neutral-textMuted mt-1 leading-5"
                   style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
                 >
-                  Vinculamos tu cuenta al sector vecinal para alertas de emergencia y reciprocidad comunitaria.
+                  {t('register.step2Subtitle')}
                 </Text>
               </View>
 
@@ -439,7 +443,7 @@ export default function RegisterScreen() {
               />
 
               <Button
-                title="Continuar a Seguridad"
+                title={t('register.continueToSecurity')}
                 variant="primary"
                 onPress={handleNextFromStep2}
                 className="mt-2"
@@ -456,7 +460,7 @@ export default function RegisterScreen() {
                   className="text-neutral-textMuted"
                   style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
                 >
-                  Volver a datos personales
+                  {t('register.backToPersonal')}
                 </Text>
               </TouchableOpacity>
             </Card>
@@ -470,13 +474,13 @@ export default function RegisterScreen() {
                   className="text-neutral-textMain"
                   style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
                 >
-                  Clave de Acceso
+                  {t('register.step3Title')}
                 </Text>
                 <Text
                   className="text-neutral-textMuted mt-1 leading-5"
                   style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
                 >
-                  Crea una contraseña segura para proteger la cuenta de tu hogar.
+                  {t('register.step3Subtitle')}
                 </Text>
               </View>
 
@@ -486,26 +490,26 @@ export default function RegisterScreen() {
                   className="text-neutral-textMain mb-1.5"
                   style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
                 >
-                  Resumen de tu cuenta
+                  {t('register.summaryTitle')}
                 </Text>
                 <Text
                   className="text-neutral-textMuted text-xs"
                   style={{ fontFamily: 'PlusJakartaSans_400Regular' }}
                 >
-                  Titular: <Text className="text-neutral-textMain font-semibold">{fullName}</Text>
+                  {t('register.summaryHolder')} <Text className="text-neutral-textMain font-semibold">{fullName}</Text>
                 </Text>
                 <Text
                   className="text-neutral-textMuted text-xs mt-1"
                   style={{ fontFamily: 'PlusJakartaSans_400Regular' }}
                 >
-                  WhatsApp: <Text className="text-neutral-textMain font-semibold">{phone}</Text>
+                  {t('register.summaryWhatsapp')} <Text className="text-neutral-textMain font-semibold">{phone}</Text>
                 </Text>
                 <Text
                   className="text-neutral-textMuted text-xs mt-1"
                   style={{ fontFamily: 'PlusJakartaSans_400Regular' }}
                   numberOfLines={1}
                 >
-                  Domicilio: <Text className="text-neutral-textMain font-semibold">{homeAddress}</Text>
+                  {t('register.summaryAddress')} <Text className="text-neutral-textMain font-semibold">{homeAddress}</Text>
                 </Text>
               </View>
 
@@ -539,7 +543,7 @@ export default function RegisterScreen() {
                   className="text-neutral-textMuted"
                   style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
                 >
-                  Volver a domicilio
+                  {t('register.backToAddress')}
                 </Text>
               </TouchableOpacity>
             </Card>

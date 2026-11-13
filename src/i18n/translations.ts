@@ -140,6 +140,27 @@ const es = {
   'register.errGeo':
     'La ubicación del domicilio no tiene un formato válido. Vuelve a fijar tu ubicación e inténtalo otra vez.',
   'register.errWith': 'No se pudo completar el registro: {message}',
+  'register.stepOf': 'Paso {step} de 3',
+  'register.step1Tab': '1. Identidad',
+  'register.step2Tab': '2. Domicilio',
+  'register.step3Tab': '3. Seguridad',
+  'register.step1Title': 'Datos Personales',
+  'register.step1Subtitle':
+    'Tu nombre y WhatsApp permitirán a tus vecinos identificarte y contactarte en el barrio.',
+  'register.continueToAddress': 'Continuar a Domicilio',
+  'register.step2Title': 'Domicilio y Sector',
+  'register.step2Subtitle':
+    'Vinculamos tu cuenta al sector vecinal para alertas de emergencia y reciprocidad comunitaria.',
+  'register.continueToSecurity': 'Continuar a Seguridad',
+  'register.backToPersonal': 'Volver a datos personales',
+  'register.step3Title': 'Clave de Acceso',
+  'register.step3Subtitle':
+    'Crea una contraseña segura para proteger la cuenta de tu hogar.',
+  'register.summaryTitle': 'Resumen de tu cuenta',
+  'register.summaryHolder': 'Titular:',
+  'register.summaryWhatsapp': 'WhatsApp:',
+  'register.summaryAddress': 'Domicilio:',
+  'register.backToAddress': 'Volver a domicilio',
 
   // --- Directorio (Capa Pública) ---
   'directory.title': 'Directorio barrial',
@@ -615,6 +636,27 @@ const qu: Record<TranslationKey, string> = {
   'register.errGeo':
     'Wasiykiq kasqanqa mana allin qillqasqachu. Huktawan maypi kasqaykita churay, huktawan ruray.',
   'register.errWith': 'Mana qillqachiyta tukuyta atikurqanchu: {message}',
+  'register.stepOf': '{step} kaq phatmi (3-manta)',
+  'register.step1Tab': '1. Suti',
+  'register.step2Tab': '2. Wasi',
+  'register.step3Tab': '3. Pakasqa',
+  'register.step1Title': 'Sutiyki hinaspa WhatsApp',
+  'register.step1Subtitle':
+    'Sutiykiwan WhatsApp-niykiwanmi llaqtamasikuna riqsisunkiku, rimanakunkichikpas.',
+  'register.continueToAddress': 'Wasi maypi kasqanman riy',
+  'register.step2Title': 'Wasi hinaspa Sector',
+  'register.step2Subtitle':
+    'Wasiykita sector vecinalman watayku emergencia willakuykunapaq yanapanakuypaqpas.',
+  'register.continueToSecurity': 'Pakasqa yaykunaman riy',
+  'register.backToPersonal': 'Sutiykiman kutiy',
+  'register.step3Title': 'Yaykuna pakasqa simi',
+  'register.step3Subtitle':
+    'Wasiykiq cuentanta waqaychanapaq allin pakasqa simita ruray.',
+  'register.summaryTitle': 'Cuentaykiq pisichasqan',
+  'register.summaryHolder': 'Suti:',
+  'register.summaryWhatsapp': 'WhatsApp:',
+  'register.summaryAddress': 'Wasi:',
+  'register.backToAddress': 'Wasiman kutiy',
 
   // --- Directorio ---
   'directory.title': 'Llaqtapi llamk’aqkuna',
