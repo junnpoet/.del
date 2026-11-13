@@ -28,16 +28,22 @@ import { reportReasonLabel, useLeaderDashboard } from '../hooks/useLeaderDashboa
 import { CareAssignmentCard } from '../components/CareAssignmentCard';
 import { StateMessage } from '../components/StateMessage';
 import { SlideToActivate } from '../../emergency/components/SlideToActivate';
+import { useActiveEmergency } from '../../emergency/hooks/useEmergencyRealtime';
 import { confirmAction, errorMessage, showMessage, timeAgo } from '../utils';
 
 type Section = 'requests' | 'members' | 'reports' | 'padrinos' | 'news';
 
-const SECTIONS: { key: Section; labelKey?: TranslationKey; fallbackLabel?: string }[] = [
-  { key: 'requests', labelKey: 'leader.tab.requests' },
-  { key: 'members', fallbackLabel: 'Miembros' },
-  { key: 'reports', labelKey: 'leader.tab.reports' },
-  { key: 'padrinos', labelKey: 'leader.tab.padrinos' },
-  { key: 'news', labelKey: 'leader.tab.news' },
+const SECTIONS: {
+  key: Section;
+  labelKey?: TranslationKey;
+  fallbackLabel?: string;
+  Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+}[] = [
+  { key: 'requests', labelKey: 'leader.tab.requests', Icon: UserPlus },
+  { key: 'members', fallbackLabel: 'Miembros', Icon: Users },
+  { key: 'reports', labelKey: 'leader.tab.reports', Icon: Flag },
+  { key: 'padrinos', labelKey: 'leader.tab.padrinos', Icon: HeartHandshake },
+  { key: 'news', labelKey: 'leader.tab.news', Icon: Megaphone },
 ];
 
 function SectionTitle({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
@@ -74,6 +80,7 @@ export default function LeaderDashboardScreen() {
   const { t, tCategory } = useI18n();
   const { isLeader, state } = useMembership();
   const dashboard = useLeaderDashboard(isLeader);
+  const { activeEvent, resolveEmergency } = useActiveEmergency(dashboard.group?.id);
   const care = useCareNetwork(isLeader);
   const [section, setSection] = useState<Section>('requests');
 
@@ -234,20 +241,53 @@ export default function LeaderDashboardScreen() {
         showBack
       />
 
-      <View className="px-4 pt-3">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <View className="px-4 pt-3 pb-1">
+        <View className="flex-row flex-wrap gap-2">
           {SECTIONS.map((item) => {
+            const active = section === item.key;
             const baseLabel = item.labelKey ? t(item.labelKey) : (item.fallbackLabel ?? '');
+            const count = counts[item.key];
+            const Icon = item.Icon;
             return (
-              <Chip
+              <TouchableOpacity
                 key={item.key}
-                label={counts[item.key] ? `${baseLabel} (${counts[item.key]})` : baseLabel}
-                isActive={section === item.key}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
                 onPress={() => setSection(item.key)}
-              />
+                className={`flex-row items-center rounded-2xl border px-3 py-2 ${
+                  active
+                    ? 'border-emerald-300 bg-emerald-50'
+                    : 'border-neutral-border bg-neutral-surface'
+                }`}
+              >
+                <Icon size={15} color={active ? '#065F46' : '#6C727A'} strokeWidth={2.1} />
+                <Text
+                  className={`ml-1.5 ${active ? 'text-[#065F46]' : 'text-neutral-textMain'}`}
+                  style={{
+                    fontFamily: active ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
+                    fontSize: 13,
+                  }}
+                >
+                  {baseLabel}
+                </Text>
+                {count !== null && count > 0 && (
+                  <View
+                    className={`ml-1.5 px-1.5 py-0.5 rounded-full ${
+                      active ? 'bg-emerald-200' : 'bg-neutral-mutedBg'
+                    }`}
+                  >
+                    <Text
+                      className={active ? 'text-[#065F46]' : 'text-neutral-textMuted'}
+                      style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}
+                    >
+                      {count}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
             );
           })}
-        </ScrollView>
+        </View>
       </View>
 
       <ScrollView contentContainerClassName="p-4 pt-2 pb-16" keyboardShouldPersistTaps="handled">
@@ -256,13 +296,47 @@ export default function LeaderDashboardScreen() {
           <SectionTitle
             icon={<Siren size={20} color="#DC2626" />}
             title="Gobernanza de Emergencia"
-            subtitle="Activa el modo emergencia solo ante contingencias reales en tu sector."
+            subtitle={
+              activeEvent
+                ? `Emergencia activa (${activeEvent.event_type}) en tu sector.`
+                : 'Activa el modo emergencia solo ante contingencias reales en tu sector.'
+            }
           />
-          <SlideToActivate
-            isDirigente={isLeader}
-            groupId={dashboard.group?.id}
-            onActivated={() => router.push('/(main)/community')}
-          />
+          {activeEvent ? (
+            <TouchableOpacity
+              accessibilityRole="button"
+              activeOpacity={0.85}
+              onPress={async () => {
+                const ok = await confirmAction(
+                  'Finalizar contingencia',
+                  '¿Confirmas que la emergencia en tu zona ha terminado?',
+                  'Finalizar'
+                );
+                if (ok) {
+                  try {
+                    await resolveEmergency(activeEvent.id);
+                    showMessage('Contingencia finalizada', 'El modo emergencia se ha cerrado.');
+                  } catch (error) {
+                    showMessage('No se pudo finalizar', errorMessage(error));
+                  }
+                }
+              }}
+              className="mt-1 min-h-[48px] rounded-2xl border border-red-300 bg-white items-center justify-center px-4 py-3"
+            >
+              <Text
+                className="text-[#991B1B]"
+                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
+              >
+                Finalizar contingencia
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <SlideToActivate
+              isDirigente={isLeader}
+              groupId={dashboard.group?.id}
+              onActivated={() => router.push('/(main)/community')}
+            />
+          )}
         </Card>
 
         {/* 1. Solicitudes de unión */}

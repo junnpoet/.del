@@ -185,14 +185,16 @@ export function SlideToActivate({
     <View className="my-3">
       {/* Track Deslizador */}
       <View className="bg-red-950/80 border border-red-500/40 rounded-2xl p-2 relative h-16 justify-center overflow-hidden shadow-lg">
-        <View className="absolute inset-0 items-center justify-center flex-row">
+        <View className="absolute inset-0 pl-16 pr-3 items-center justify-center flex-row">
           <Text
-            className="text-red-300 font-bold tracking-wider uppercase ml-10 mr-1"
-            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            className="text-red-200 font-bold tracking-wide uppercase mr-1 flex-shrink"
+            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
           >
             Desliza para Activar Emergencia
           </Text>
-          <ChevronRight size={16} color="#FCA5A5" strokeWidth={2.5} />
+          <ChevronRight size={15} color="#FCA5A5" strokeWidth={2.5} />
         </View>
 
         {/* Thumb Deslizable */}
@@ -241,7 +243,7 @@ export function SlideToActivate({
                   className="text-red-300 text-sm text-center mt-1 px-4"
                   style={{ fontFamily: 'PlusJakartaSans_400Regular' }}
                 >
-                  Se notificará a todos los vecinos y se activará el Tablero de Ayuda Humanitaria en 5 segundos.
+                  Se notificará a todos los vecinos y se activará el Modo Emergencia en tu comunidad en 5 segundos.
                 </Text>
 
                 <TouchableOpacity
