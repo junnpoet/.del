@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   View,
   Text,
   TouchableOpacity,
@@ -76,7 +77,9 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
   // Voice recording state using expo-audio
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [isRecording, setIsRecording] = useState(false);
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   const [recordedUri, setRecordedUri] = useState<string | null>(null);
+  const [voiceUrgency, setVoiceUrgency] = useState<UrgencyLevel | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categoriesByType = CATEGORIES_BY_PUBLISH_TYPE;
@@ -87,6 +90,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
     setIsCustomCategory(false);
     setCustomCategory('');
     setTitle('');
+    setVoiceUrgency(undefined);
   };
 
   const handleOpenMenu = () => {
@@ -94,7 +98,9 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
     setTitle('');
     setDescription('');
     setRecordedUri(null);
+    setVoiceUrgency(undefined);
     setIsRecording(false);
+    setIsProcessingVoice(false);
     setIsOpen(true);
   };
 
@@ -140,10 +146,34 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       await recorder.stop();
       setAudioModeAsync({ allowsRecording: false }).catch(() => {});
       const uri = recorder.uri;
-      if (uri) {
-        setRecordedUri(uri);
-      } else {
+      if (!uri) {
         showMessage(t('fab.micDeniedTitle'), t('fab.micDenied'));
+        return;
+      }
+
+      setRecordedUri(uri);
+      setIsRecording(false);
+      setIsProcessingVoice(true);
+
+      try {
+        const parsedVoice = await processAudioWithGemini(uri);
+        if (parsedVoice.resumen) {
+          setDescription((prev) => (prev.trim() ? prev : parsedVoice.resumen));
+          if (selectedType === 'SERVICIO' || selectedType === 'PRODUCTO') {
+            const firstSentence = parsedVoice.resumen.split(/[.!?]/)[0].trim();
+            const suggestedTitle = (firstSentence || parsedVoice.resumen).slice(0, 80);
+            setTitle((prev) => (prev.trim() ? prev : suggestedTitle));
+          }
+        }
+        setVoiceUrgency(parsedVoice.urgencia);
+      } catch (voiceErr) {
+        console.warn('[QuickPublishFAB] Fallback sin transcripción Gemini:', voiceErr);
+        showMessage(
+          t('common.attention'),
+          'No se pudo transcribir el audio automáticamente. Puedes escribir el título y detalle manualmente.'
+        );
+      } finally {
+        setIsProcessingVoice(false);
       }
     } catch (err) {
       console.warn('Error stopping recording:', err);
@@ -178,24 +208,12 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
 
     const typedDescription = description.trim();
     const hasCustomDescription = Boolean(typedDescription) && typedDescription !== t('fab.voiceAttached');
-    let finalDescription = hasCustomDescription ? typedDescription : t('fab.voicePost');
-    let resolvedUrgency: UrgencyLevel | undefined;
+    const finalDescription = hasCustomDescription ? typedDescription : t('fab.voicePost');
+    const resolvedUrgency: UrgencyLevel | undefined = voiceUrgency;
     const isVoiceSubmission = Boolean(recordedUri);
 
     setIsSubmitting(true);
     try {
-      if (recordedUri) {
-        try {
-          const parsedVoice = await processAudioWithGemini(recordedUri);
-          if (!hasCustomDescription && parsedVoice.resumen) {
-            finalDescription = parsedVoice.resumen;
-          }
-          resolvedUrgency = parsedVoice.urgencia;
-        } catch (voiceErr) {
-          // Fallback offline o si el servicio de voz no responde: publicar con descripción base
-          console.warn('[QuickPublishFAB] Fallback sin transcripción Gemini:', voiceErr);
-        }
-      }
 
       if (selectedType === 'SERVICIO' || selectedType === 'PRODUCTO') {
         // Oficio o producto para el Directorio público (tabla services, SPEC-03).
@@ -577,7 +595,10 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                     ) : (
                       <TouchableOpacity
                         onPress={startRecording}
-                        className="bg-neutral-textMain px-3.5 py-2 rounded-xl flex-row items-center min-h-[40px]"
+                        disabled={isProcessingVoice}
+                        className={`bg-neutral-textMain px-3.5 py-2 rounded-xl flex-row items-center min-h-[40px] ${
+                          isProcessingVoice ? 'opacity-50' : ''
+                        }`}
                       >
                         <Mic size={15} color="#FFFFFF" />
                         <Text
@@ -590,16 +611,29 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                     )}
                   </View>
 
-                  {recordedUri && !isRecording && (
+                  {isProcessingVoice ? (
                     <View className="flex-row items-center mt-2.5 pt-2 border-t border-neutral-border/60">
-                      <Check size={16} color="#1E5E45" strokeWidth={2.5} />
+                      <ActivityIndicator size="small" color="#1E5E45" />
                       <Text
-                        className="text-neutral-textMain ml-1.5"
+                        className="text-neutral-textMain ml-2"
                         style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
                       >
-                        {t('fab.voiceReady')}
+                        Procesando nota de voz con IA...
                       </Text>
                     </View>
+                  ) : (
+                    recordedUri &&
+                    !isRecording && (
+                      <View className="flex-row items-center mt-2.5 pt-2 border-t border-neutral-border/60">
+                        <Check size={16} color="#1E5E45" strokeWidth={2.5} />
+                        <Text
+                          className="text-neutral-textMain ml-1.5"
+                          style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
+                        >
+                          {t('fab.voiceReady')}
+                        </Text>
+                      </View>
+                    )
                   )}
                 </View>
 
@@ -626,7 +660,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
                   title={t('fab.submit')}
                   variant={selectedType === 'AYUDA' ? 'emergency' : 'primary'}
                   onPress={handleSubmit}
-                  isLoading={isSubmitting}
+                  isLoading={isSubmitting || isProcessingVoice}
                   className="mt-1"
                 />
               </View>
