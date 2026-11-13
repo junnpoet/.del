@@ -390,7 +390,7 @@ export default function LeaderDashboardScreen() {
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: 16,
+          paddingHorizontal: 28,
           paddingTop: 10,
           paddingBottom: Math.max(insets.bottom + 32, 64),
         }}
