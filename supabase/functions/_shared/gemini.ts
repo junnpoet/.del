@@ -7,7 +7,9 @@ export interface ParsedVoicePost {
 
 const GEMINI_FLASH_MODELS = [
   'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
   'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
   'gemini-flash-latest',
 ] as const;
 
@@ -124,6 +126,9 @@ Extrae la intención solidaria clasificándola con exactitud:
 
       if (!response.ok) {
         const errBody = await response.text().catch(() => '');
+        if (response.status === 503 || response.status === 429) {
+          await new Promise((resolve) => setTimeout(resolve, 600));
+        }
         throw new Error(`Gemini HTTP ${response.status} (${model}): ${errBody.slice(0, 240)}`);
       }
 
