@@ -47,6 +47,9 @@ export function useDirectory(radiusMeters: number) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, () => {
         queryClient.invalidateQueries({ queryKey: DIRECTORY_QUERY_KEY });
       })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => {
+        queryClient.invalidateQueries({ queryKey: DIRECTORY_QUERY_KEY });
+      })
       .subscribe();
 
     return () => {
@@ -58,6 +61,8 @@ export function useDirectory(radiusMeters: number) {
     queryKey: [...DIRECTORY_QUERY_KEY, session?.user.id, radiusMeters, coordinateKey],
     enabled: Boolean(session && hasLocation),
     networkMode: 'offlineFirst',
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: async () => {
       if (!homeCoordinates) return [];
       const { data, error } = await supabase.rpc('get_nearby_services', {
@@ -74,6 +79,8 @@ export function useDirectory(radiusMeters: number) {
     queryKey: [...DIRECTORY_QUERY_KEY, 'zone', session?.user.id, radiusMeters, coordinateKey],
     enabled: Boolean(session && hasLocation),
     networkMode: 'offlineFirst',
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: async () => {
       if (!homeCoordinates) return null;
       const { data, error } = await supabase.rpc('get_search_zone_geojson', {
