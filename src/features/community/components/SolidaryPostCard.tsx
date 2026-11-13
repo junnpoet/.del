@@ -153,7 +153,7 @@ export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolve
         <TouchableOpacity
           accessibilityRole="button"
           onPress={() => onCoordinate(post)}
-          className="min-h-[48px] flex-1 flex-row items-center justify-center rounded-2xl bg-primary px-4"
+          className="h-12 flex-1 flex-row items-center justify-center rounded-2xl bg-primary px-4"
         >
           <MessageCircle size={18} color="#FFFFFF" />
           <Text

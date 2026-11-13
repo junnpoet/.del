@@ -181,7 +181,7 @@ export function CommunityActionCard({
         <TouchableOpacity
           accessibilityRole="button"
           onPress={() => onCoordinate(post)}
-          className="flex-1 min-h-[48px] bg-neutral-mutedBg border border-neutral-border rounded-2xl flex-row items-center justify-center px-3"
+          className="flex-1 h-12 bg-neutral-mutedBg border border-neutral-border rounded-2xl flex-row items-center justify-center px-3"
         >
           <MessageCircle size={16} color="#1A1D20" />
           <Text
