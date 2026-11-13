@@ -366,7 +366,7 @@ export default function DirectoryScreen() {
   );
 
   return (
-    <View className={`flex-1 ${zoneEmergency ? 'bg-emergency-background' : 'bg-neutral-background'}`}>
+    <View className={`flex-1 ${zoneEmergency ? 'bg-[#FFF7F7]' : 'bg-neutral-background'}`}>
       <Header
         title={t('directory.title')}
         subtitle={t('directory.subtitle')}

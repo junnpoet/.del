@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter, useSegments } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { channelName, supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
 import type { Database } from '../../../types/database';
@@ -155,26 +154,5 @@ export function useZoneEmergency() {
  */
 export function useEmergencyGlobalMutation() {
   const { profile } = useAuth();
-  const router = useRouter();
-  const segments = useSegments();
-  const { activeEvent } = useActiveEmergency(profile?.group_id);
-  const wasActiveOnBoardRef = useRef(false);
-
-  const isOnEmergencyBoard = segments[0] === 'emergency-board';
-
-  useEffect(() => {
-    if (activeEvent) {
-      if (isOnEmergencyBoard) {
-        wasActiveOnBoardRef.current = true;
-      }
-      return;
-    }
-
-    if (wasActiveOnBoardRef.current && isOnEmergencyBoard) {
-      wasActiveOnBoardRef.current = false;
-      router.replace('/(main)');
-    } else if (!activeEvent) {
-      wasActiveOnBoardRef.current = false;
-    }
-  }, [activeEvent, isOnEmergencyBoard, router]);
+  useActiveEmergency(profile?.group_id);
 }

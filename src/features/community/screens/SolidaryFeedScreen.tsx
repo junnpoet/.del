@@ -36,7 +36,8 @@ import {
 } from '../hooks/useSolidaryFeed';
 import { useCareNetwork } from '../hooks/useCareNetwork';
 import { useJoinRequests } from '../hooks/useLeaderDashboard';
-import { useZoneEmergency } from '../../emergency/hooks/useEmergencyRealtime';
+import { useActiveEmergency, useZoneEmergency } from '../../emergency/hooks/useEmergencyRealtime';
+import { PublicEmergencyInfoModal } from '../../emergency/components/PublicEmergencyInfoModal';
 import { SolidaryPostCard } from '../components/SolidaryPostCard';
 import { CommunityActionCard } from '../components/CommunityActionCard';
 import { CareVolunteerCard } from '../components/CareVolunteerCard';
@@ -63,6 +64,7 @@ export default function SolidaryFeedScreen() {
   const [view, setView] = useState<'feed' | 'map'>('feed');
   const [filter, setFilter] = useState<FeedFilter>('TODOS');
   const [newsOpen, setNewsOpen] = useState(false);
+  const [emergencyInfoOpen, setEmergencyInfoOpen] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   const feed = useSolidaryFeed(isMember);
@@ -71,6 +73,7 @@ export default function SolidaryFeedScreen() {
   const { unreadCount, markAllRead } = useNeighborhoodNewsUnread();
   const care = useCareNetwork(isMember);
   const { zoneEmergency } = useZoneEmergency();
+  const { resolveEmergency } = useActiveEmergency(profile?.group_id);
   const { requests } = useJoinRequests(isLeader);
   const canSeeCareLayer = isLeader || isPadrino || care.assignments.length > 0;
   const pendingRequests = requests.data?.length ?? 0;
@@ -236,7 +239,7 @@ export default function SolidaryFeedScreen() {
 
   /* ---------- Miembro activo o dirigente ---------- */
   return (
-    <View className={`flex-1 ${zoneEmergency ? 'bg-emergency-background' : 'bg-neutral-background'}`}>
+    <View className={`flex-1 ${zoneEmergency ? 'bg-[#FFF7F7]' : 'bg-neutral-background'}`}>
       <Header title={t('community.title')} subtitle={t('community.subtitle')} rightAction={headerActions} />
 
       {isLeader && pendingRequests > 0 && (
@@ -268,43 +271,71 @@ export default function SolidaryFeedScreen() {
 
       <View className="px-4 pt-4 flex-1">
         {zoneEmergency && (
-          <TouchableOpacity
-            accessibilityRole="button"
-            activeOpacity={0.88}
-            onPress={() => router.push('/emergency-board')}
-            className="mb-3 rounded-2xl border border-red-400 bg-red-600 p-3.5 shadow-sm"
-          >
+          <View className="mb-3 rounded-2xl border border-red-200 bg-[#FFF1F2] p-3.5">
             <View className="flex-row items-center justify-between">
-              <View className="flex-1 flex-row items-center pr-3">
-                <View className="mr-3 rounded-xl bg-white/20 p-2">
-                  <AlertTriangle size={20} color="#FFFFFF" />
+              <TouchableOpacity
+                accessibilityRole="button"
+                activeOpacity={0.85}
+                onPress={() => setEmergencyInfoOpen(true)}
+                className="flex-1 flex-row items-center pr-3"
+              >
+                <View className="mr-3 rounded-xl bg-red-100 p-2">
+                  <AlertTriangle size={20} color="#B91C1C" />
                 </View>
                 <View className="flex-1">
                   <Text
-                    className="uppercase tracking-wider text-white"
+                    className="uppercase tracking-wider text-[#991B1B]"
                     style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 12 }}
                   >
                     Emergencia activa · {zoneEmergency.event_type}
                   </Text>
                   <Text
                     numberOfLines={2}
-                    className="mt-0.5 text-white/90"
+                    className="mt-0.5 text-[#7F1D1D]"
                     style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
                   >
-                    Coordina acciones grupales, víveres y auxilio con tu comunidad.
+                    Coordina aquí en el muro. Toca para ver información pública.
                   </Text>
                 </View>
-              </View>
-              <View className="rounded-xl bg-white px-3 py-2">
-                <Text
-                  className="text-red-700"
-                  style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 12 }}
+              </TouchableOpacity>
+              <View className="flex-row items-center gap-2">
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => setEmergencyInfoOpen(true)}
+                  className="rounded-xl bg-red-600 px-3 py-2"
                 >
-                  Tablero
-                </Text>
+                  <Text
+                    className="text-white"
+                    style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+                  >
+                    Ver info
+                  </Text>
+                </TouchableOpacity>
+                {isLeader && (
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={async () => {
+                      if (!zoneEmergency) return;
+                      const ok = await confirmAction(
+                        'Finalizar contingencia',
+                        '¿Confirmas que la emergencia en tu zona ha terminado?',
+                        'Finalizar'
+                      );
+                      if (ok) await resolveEmergency(zoneEmergency.id);
+                    }}
+                    className="rounded-xl border border-red-300 bg-white px-2.5 py-2"
+                  >
+                    <Text
+                      className="text-[#991B1B]"
+                      style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+                    >
+                      Finalizar
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
-          </TouchableOpacity>
+          </View>
         )}
 
         {/* Selector [ Muro Feed | Mapa Barrial ] */}
@@ -459,6 +490,13 @@ export default function SolidaryFeedScreen() {
       </View>
 
       <NeighborhoodNewsModal visible={newsOpen} onClose={() => setNewsOpen(false)} />
+      <PublicEmergencyInfoModal
+        visible={emergencyInfoOpen}
+        onClose={() => setEmergencyInfoOpen(false)}
+        eventType={zoneEmergency?.event_type}
+        description={zoneEmergency?.description}
+        isMember
+      />
       <SolidaryActionSheet
         post={selectedPost}
         currentUserId={profile?.id ?? null}

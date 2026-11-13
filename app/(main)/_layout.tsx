@@ -14,16 +14,16 @@ export default function MainLayout() {
   const bottomPadding = Math.max(insets.bottom, 10);
 
   return (
-    <View className={`flex-1 ${isEmergency ? 'bg-emergency-background' : 'bg-neutral-background'}`}>
+    <View className={`flex-1 ${isEmergency ? 'bg-[#FFF7F7]' : 'bg-neutral-background'}`}>
       <Tabs
         detachInactiveScreens={false}
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: isEmergency ? '#FCA5A5' : '#1A1D20',
-          tabBarInactiveTintColor: isEmergency ? '#9CA3AF' : '#9EA3AE',
+          tabBarActiveTintColor: isEmergency ? '#B91C1C' : '#1A1D20',
+          tabBarInactiveTintColor: isEmergency ? '#9F6B70' : '#9EA3AE',
           tabBarStyle: {
-            backgroundColor: isEmergency ? '#121316' : '#FFFFFF',
-            borderTopColor: isEmergency ? 'rgba(220,38,38,0.45)' : '#F0F2F5',
+            backgroundColor: isEmergency ? '#FFF1F2' : '#FFFFFF',
+            borderTopColor: isEmergency ? '#FECDD3' : '#F0F2F5',
             borderTopWidth: 1,
             height: 56 + bottomPadding,
             paddingBottom: bottomPadding,

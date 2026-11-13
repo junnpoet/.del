@@ -33,14 +33,6 @@ function RootContent() {
         <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(main)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="emergency-board"
-          options={{
-            headerShown: false,
-            presentation: 'fullScreenModal',
-            animation: 'fade',
-          }}
-        />
         <Stack.Screen name="care-network" options={{ headerShown: false }} />
         <Stack.Screen name="leader-dashboard" options={{ headerShown: false }} />
         <Stack.Screen name="accessible" options={{ headerShown: false, gestureEnabled: false }} />

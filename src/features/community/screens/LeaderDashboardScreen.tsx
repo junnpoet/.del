@@ -256,12 +256,12 @@ export default function LeaderDashboardScreen() {
           <SectionTitle
             icon={<Siren size={20} color="#DC2626" />}
             title="Gobernanza de Emergencia"
-            subtitle="Activa el Tablero de Ayuda Humanitaria solo ante contingencias reales en tu sector."
+            subtitle="Activa el modo emergencia solo ante contingencias reales en tu sector."
           />
           <SlideToActivate
             isDirigente={isLeader}
             groupId={dashboard.group?.id}
-            onActivated={() => router.push('/emergency-board')}
+            onActivated={() => router.push('/(main)/community')}
           />
         </Card>
 

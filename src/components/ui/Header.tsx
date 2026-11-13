@@ -40,12 +40,12 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const bgStyles = effectiveEmergency
-    ? 'bg-emergency-background border-b border-red-600/50'
+    ? 'bg-[#FFF1F2] border-b border-red-200'
     : 'bg-neutral-surface border-b border-neutral-border/60';
 
-  const titleStyles = effectiveEmergency ? 'text-white' : 'text-neutral-textMain';
+  const titleStyles = effectiveEmergency ? 'text-[#7F1D1D]' : 'text-neutral-textMain';
   const subtitleStyles = effectiveEmergency
-    ? 'text-emergency-warning'
+    ? 'text-[#B91C1C]'
     : 'text-neutral-textMuted';
 
   return (
@@ -62,13 +62,13 @@ export const Header: React.FC<HeaderProps> = ({
               onPress={handleBack}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               className={`h-10 w-10 rounded-2xl items-center justify-center mr-3 ${
-                effectiveEmergency ? 'bg-white/15' : 'bg-neutral-mutedBg'
+                effectiveEmergency ? 'bg-red-100' : 'bg-neutral-mutedBg'
               }`}
             >
               <ChevronLeft
                 size={22}
                 strokeWidth={2.2}
-                color={effectiveEmergency ? '#FFFFFF' : '#1A1D20'}
+                color={effectiveEmergency ? '#991B1B' : '#1A1D20'}
               />
             </TouchableOpacity>
           )}
@@ -105,10 +105,10 @@ export const Header: React.FC<HeaderProps> = ({
       </View>
 
       {zoneEmergency && (
-        <View className="mt-1.5 flex-row items-center rounded-xl bg-red-600/25 px-2.5 py-1 self-start">
-          <AlertTriangle size={12} color="#FCA5A5" />
+        <View className="mt-1.5 flex-row items-center rounded-xl bg-red-600 px-2.5 py-1 self-start">
+          <AlertTriangle size={12} color="#FFFFFF" />
           <Text
-            className="ml-1.5 uppercase tracking-wider text-red-200"
+            className="ml-1.5 uppercase tracking-wider text-white"
             style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 10.5 }}
           >
             Modo Emergencia · {zoneEmergency.event_type}

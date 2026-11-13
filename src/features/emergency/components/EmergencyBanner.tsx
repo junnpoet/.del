@@ -1,22 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import {
-  AlertTriangle,
-  CheckCircle2,
-  HeartPulse,
-  Info,
-  MapPin,
-  PhoneCall,
-  ShieldAlert,
-  UserPlus,
-  Users,
-  X,
-} from 'lucide-react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { AlertTriangle, CheckCircle2, Info, UserPlus } from 'lucide-react-native';
 import { supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
-import { useI18n } from '../../../i18n';
-import { BottomSheetModal } from '../../../components/ui/BottomSheetModal';
 import { useZoneEmergency } from '../hooks/useEmergencyRealtime';
+import { PublicEmergencyInfoModal } from './PublicEmergencyInfoModal';
 
 interface EmergencyBannerProps {
   isEmergencyActive?: boolean;
@@ -24,13 +12,6 @@ interface EmergencyBannerProps {
   userPhone?: string;
   userName?: string;
   onExpressJoinRequested?: () => void;
-}
-
-interface ActiveEmergencySummary {
-  id: string;
-  group_id: string;
-  event_type: string;
-  description: string | null;
 }
 
 export function EmergencyBanner({
@@ -41,21 +22,11 @@ export function EmergencyBanner({
   onExpressJoinRequested,
 }: EmergencyBannerProps) {
   const { profile, session } = useAuth();
-  const { t } = useI18n();
   const { zoneEmergency } = useZoneEmergency();
   const [targetGroupId, setTargetGroupId] = useState<string | null>(null);
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
-
-  const liveEmergency: ActiveEmergencySummary | null = zoneEmergency
-    ? {
-        id: zoneEmergency.id,
-        group_id: zoneEmergency.group_id,
-        event_type: zoneEmergency.event_type,
-        description: zoneEmergency.description,
-      }
-    : null;
 
   const effectiveIsInGroup =
     isInGroupProp ?? Boolean(profile?.group_id || profile?.role === 'dirigente');
@@ -122,7 +93,7 @@ export function EmergencyBanner({
   }, [effectiveIsInGroup, session]);
 
   const effectiveEmergencyActive =
-    isEmergencyActiveProp ?? Boolean(liveEmergency);
+    isEmergencyActiveProp ?? Boolean(zoneEmergency);
 
   if (!effectiveEmergencyActive || effectiveIsInGroup) {
     return null;
@@ -152,7 +123,7 @@ export function EmergencyBanner({
       onExpressJoinRequested?.();
       Alert.alert(
         'Solicitud Express Enviada',
-        'El dirigente de tu sector ha recibido tu solicitud prioritaria y podrá admitirte de inmediato para acceder a la coordinación de víveres y auxilio.'
+        'El dirigente de tu sector ha recibido tu solicitud prioritaria y podrá admitirte de inmediato para coordinar ayuda con tu comunidad.'
       );
     } catch (err) {
       Alert.alert(
@@ -166,7 +137,7 @@ export function EmergencyBanner({
 
   return (
     <>
-      <View className="mx-4 my-2 rounded-2xl border border-red-400 bg-red-600 p-3.5 shadow-md">
+      <View className="mx-4 my-2 rounded-2xl border border-red-300 bg-red-600 p-3.5 shadow-sm">
         <View className="flex-row items-start">
           <View className="mr-3 mt-0.5 rounded-xl bg-white/20 p-2">
             <AlertTriangle size={20} color="#FFFFFF" />
@@ -179,13 +150,13 @@ export function EmergencyBanner({
               >
                 Alerta de Contingencia
               </Text>
-              {Boolean(liveEmergency?.event_type) && (
+              {Boolean(zoneEmergency?.event_type) && (
                 <View className="rounded-full bg-white/20 px-2 py-0.5">
                   <Text
                     className="uppercase text-white"
                     style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 10.5 }}
                   >
-                    {liveEmergency?.event_type}
+                    {zoneEmergency?.event_type}
                   </Text>
                 </View>
               )}
@@ -248,148 +219,16 @@ export function EmergencyBanner({
         </View>
       </View>
 
-      <BottomSheetModal
+      <PublicEmergencyInfoModal
         visible={infoModalOpen}
         onClose={() => setInfoModalOpen(false)}
-        maxHeight="86%"
-      >
-        <View className="mb-3 flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2">
-            <View className="rounded-full bg-[#FEE2E2] px-3 py-1 flex-row items-center">
-              <ShieldAlert size={14} color="#DC2626" />
-              <Text
-                className="ml-1.5 uppercase text-[#DC2626]"
-                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11.5 }}
-              >
-                {liveEmergency?.event_type || 'Contingencia Activa'}
-              </Text>
-            </View>
-          </View>
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Cerrar información de emergencia"
-            onPress={() => setInfoModalOpen(false)}
-            className="h-10 w-10 items-center justify-center rounded-full bg-neutral-mutedBg"
-          >
-            <X size={18} color="#6C727A" />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 460 }}>
-          <Text
-            className="text-neutral-textMain"
-            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 19 }}
-          >
-            Información Pública de Emergencia
-          </Text>
-          <Text
-            className="mt-1 text-neutral-textMuted"
-            style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13.5, lineHeight: 19 }}
-          >
-            {liveEmergency?.description ||
-              'Puntos de evacuación, botiquines vecinales y números de emergencia disponibles para todo el sector.'}
-          </Text>
-
-          <View className="mt-4 rounded-2xl border border-neutral-border bg-neutral-mutedBg/50 p-3.5">
-            <View className="mb-1 flex-row items-center">
-              <MapPin size={17} color="#1E5E45" />
-              <Text
-                className="ml-2 text-neutral-textMain"
-                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
-              >
-                {t('emergency.zone')}
-              </Text>
-            </View>
-            <Text
-              className="text-neutral-textMuted"
-              style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13, lineHeight: 19 }}
-            >
-              {t('emergency.zoneBody')}
-            </Text>
-          </View>
-
-          <View className="mt-3 rounded-2xl border border-neutral-border bg-neutral-mutedBg/50 p-3.5">
-            <View className="mb-1 flex-row items-center">
-              <HeartPulse size={17} color="#DC2626" />
-              <Text
-                className="ml-2 text-neutral-textMain"
-                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
-              >
-                {t('emergency.kit')}
-              </Text>
-            </View>
-            <Text
-              className="text-neutral-textMuted"
-              style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13, lineHeight: 19 }}
-            >
-              {t('emergency.kitBody')}
-            </Text>
-          </View>
-
-          <View className="mt-3 rounded-2xl border border-neutral-border bg-neutral-mutedBg/50 p-3.5">
-            <View className="mb-1 flex-row items-center">
-              <PhoneCall size={17} color="#D97706" />
-              <Text
-                className="ml-2 text-neutral-textMain"
-                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
-              >
-                {t('emergency.phones')}
-              </Text>
-            </View>
-            <Text
-              className="text-neutral-textMuted"
-              style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13, lineHeight: 19 }}
-            >
-              {t('emergency.phonesBody')}
-            </Text>
-          </View>
-
-          <View className="mt-4 mb-2 rounded-2xl border border-primary/25 bg-[#EDF5F1] p-4">
-            <View className="mb-1.5 flex-row items-center">
-              <Users size={17} color="#1E5E45" />
-              <Text
-                className="ml-2 text-primary"
-                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
-              >
-                Acceso a Grupos de Apoyo Vecinal
-              </Text>
-            </View>
-            <Text
-              className="text-neutral-textMain"
-              style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13, lineHeight: 19 }}
-            >
-              Para coordinar víveres, agua, herramientas de rescate, recibir alertas directas y participar en el Tablero de Ayuda Humanitaria, debes formar parte de la comunidad vecinal de tu sector.
-            </Text>
-          </View>
-        </ScrollView>
-
-        {requested ? (
-          <View className="mt-3 min-h-[48px] flex-row items-center justify-center rounded-2xl bg-neutral-mutedBg px-4">
-            <CheckCircle2 size={18} color="#1E5E45" />
-            <Text
-              className="ml-2 text-primary"
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13.5 }}
-            >
-              Tu solicitud está en revisión por el dirigente
-            </Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            accessibilityRole="button"
-            disabled={loading}
-            onPress={handleExpressJoin}
-            className="mt-3 min-h-[48px] flex-row items-center justify-center rounded-2xl bg-red-600 px-4"
-          >
-            <UserPlus size={18} color="#FFFFFF" />
-            <Text
-              className="ml-2 text-white"
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
-            >
-              {loading ? 'Enviando solicitud...' : 'Solicitar Unión Express a la Comunidad'}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </BottomSheetModal>
+        eventType={zoneEmergency?.event_type}
+        description={zoneEmergency?.description}
+        isMember={false}
+        requested={requested}
+        loadingJoin={loading}
+        onRequestExpressJoin={handleExpressJoin}
+      />
     </>
   );
 }

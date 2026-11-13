@@ -37,6 +37,8 @@ import {
   isAccessibleModeEnabled,
   setAccessibleModeEnabled,
 } from '../../src/features/accessible-mode/storage';
+import { PublicEmergencyInfoModal } from '../../src/features/emergency/components/PublicEmergencyInfoModal';
+import { useZoneEmergency } from '../../src/features/emergency/hooks/useEmergencyRealtime';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -46,6 +48,8 @@ export default function ProfileScreen() {
   const { t } = useI18n();
   const membership = useMembership();
   const [accessibleMode, setAccessibleMode] = useState(false);
+  const [emergencyInfoOpen, setEmergencyInfoOpen] = useState(false);
+  const { zoneEmergency } = useZoneEmergency();
   const isLeader = profile?.role === 'dirigente';
   const isPadrino = profile?.role === 'padrino';
 
@@ -111,7 +115,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View className="flex-1 bg-neutral-background" collapsable={false}>
+    <View className={`flex-1 ${zoneEmergency ? 'bg-[#FFF7F7]' : 'bg-neutral-background'}`} collapsable={false}>
       <Header title={t('profile.title')} subtitle={t('profile.subtitle')} />
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 112 }}>
@@ -268,7 +272,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             className="flex-row items-center justify-between p-3.5 min-h-[48px]"
-            onPress={() => router.push('/emergency-board')}
+            onPress={() => setEmergencyInfoOpen(true)}
           >
             <View className="flex-row items-center flex-1 mr-2">
               <Shield size={18} color="#DC2626" strokeWidth={2} />
@@ -291,6 +295,13 @@ export default function ProfileScreen() {
           icon={<LogOut size={18} color="#1A1D20" />}
         />
       </ScrollView>
+      <PublicEmergencyInfoModal
+        visible={emergencyInfoOpen}
+        onClose={() => setEmergencyInfoOpen(false)}
+        eventType={zoneEmergency?.event_type}
+        description={zoneEmergency?.description}
+        isMember={membershipStatus === 'MIEMBRO' || membershipStatus === 'DIRIGENTE'}
+      />
     </View>
   );
 }
