@@ -147,24 +147,28 @@ export function MapPointBottomSheet({
     }).start();
   };
 
+  const wasOpenRef = useRef(false);
+
   useEffect(() => {
     if (visible && service) {
-      if (!rendered) {
+      if (!wasOpenRef.current) {
+        wasOpenRef.current = true;
         setRendered(true);
         translateY.setValue(closedOffsetRef.current);
+        setIsExpanded(false);
+        Animated.spring(translateY, {
+          toValue: peekOffsetRef.current,
+          damping: 24,
+          stiffness: 260,
+          mass: 0.85,
+          useNativeDriver: true,
+        }).start();
       }
-      setIsExpanded(false);
-      Animated.spring(translateY, {
-        toValue: peekOffsetRef.current,
-        damping: 24,
-        stiffness: 260,
-        mass: 0.85,
-        useNativeDriver: true,
-      }).start();
-    } else if (rendered) {
+    } else if (wasOpenRef.current || rendered) {
+      wasOpenRef.current = false;
       snapTo('closed');
     }
-  }, [visible, service?.service_id, hasMultipleAtPoint]);
+  }, [visible, Boolean(service)]);
 
   useEffect(() => {
     if (!visible || !service) {
@@ -494,9 +498,16 @@ export function MapPointBottomSheet({
                 name: service.provider_name,
               })}
               onPress={() => onConsult(service)}
-              className="h-12 w-12 items-center justify-center rounded-2xl bg-primary"
+              className="min-h-[44px] flex-row items-center justify-center rounded-2xl bg-primary px-3.5"
             >
-              <MessageCircle size={20} color="#FFFFFF" />
+              <MessageCircle size={17} color="#FFFFFF" />
+              <Text
+                numberOfLines={1}
+                className="ml-1.5 text-white"
+                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
+              >
+                {t('service.consult')}
+              </Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
