@@ -7,12 +7,23 @@ SET search_path = public, extensions;
 -- 1. Realtime para la Red de Cuidado: el SOS de un adulto mayor debe llegar
 --    al instante a sus padrinos y a la dirigencia (SPEC-04 §2.4), y el
 --    semáforo 🟢/🟡/🔴 debe actualizarse sin recargar (SPEC-04 §2.3).
-ALTER PUBLICATION supabase_realtime ADD TABLE
-  public.sos_alerts,
-  public.care_assignments;
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.sos_alerts;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.care_assignments;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- 2. Bandeja de denuncias: la §4 solo deja LEER los reportes al dirigente.
 --    Para "revisar" una denuncia necesita poder cambiar su estado.
+DROP POLICY IF EXISTS "Dirigentes actualizan reportes" ON service_reports;
 CREATE POLICY "Dirigentes actualizan reportes" ON service_reports FOR UPDATE TO authenticated
 USING (is_dirigente(auth.uid()))
 WITH CHECK (is_dirigente(auth.uid()));
