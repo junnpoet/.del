@@ -18,14 +18,15 @@ Deno.serve(async (req: Request) => {
   try {
     const { audioBase64, mimeType } = await req.json();
 
-    if (!audioBase64) {
+    if (typeof audioBase64 !== 'string' || !audioBase64.trim()) {
       return new Response(
         JSON.stringify({ error: 'Falta el parámetro audioBase64' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const structuredPost = await processVoiceToPost(audioBase64, mimeType ?? 'audio/m4a');
+    const cleanBase64 = audioBase64.replace(/^data:[^;]+;base64,/, '').trim();
+    const structuredPost = await processVoiceToPost(cleanBase64, mimeType ?? 'audio/m4a');
 
     return new Response(JSON.stringify(structuredPost), {
       status: 200,

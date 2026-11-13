@@ -24,8 +24,11 @@ export function VoiceAssistantButton({ onRecorded, busy = false }: Props) {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const { t } = useI18n();
   const [recording, setRecording] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
 
   const start = async () => {
+    if (transitioning || busy) return;
+    setTransitioning(true);
     try {
       const permission = await requestRecordingPermissionsAsync();
       if (!permission.granted) {
@@ -39,18 +42,24 @@ export function VoiceAssistantButton({ onRecorded, busy = false }: Props) {
     } catch (error) {
       console.warn('No se pudo iniciar la grabación', error);
       onRecorded(null);
+    } finally {
+      setTransitioning(false);
     }
   };
 
   const stop = async () => {
+    if (transitioning) return;
+    setTransitioning(true);
     try {
       await recorder.stop();
+      setAudioModeAsync({ allowsRecording: false }).catch(() => {});
       onRecorded(recorder.uri ?? null);
     } catch (error) {
       console.warn('No se pudo detener la grabación', error);
       onRecorded(null);
     } finally {
       setRecording(false);
+      setTransitioning(false);
     }
   };
 
@@ -58,7 +67,7 @@ export function VoiceAssistantButton({ onRecorded, busy = false }: Props) {
     <TouchableOpacity
       accessibilityRole="button"
       accessibilityLabel={recording ? t('accessible.voiceStopA11y') : t('accessible.voiceStartA11y')}
-      disabled={busy}
+      disabled={busy || transitioning}
       onPress={recording ? stop : start}
       className={`w-full min-h-[84px] rounded-3xl flex-row items-center justify-center px-5 ${
         recording ? 'bg-emergency-alert' : 'bg-neutral-textMain'

@@ -8,10 +8,62 @@ export interface ParsedVoicePost {
 }
 
 const GEMINI_FLASH_MODELS = [
-  'gemini-3.5-flash',
-  'gemini-3.8-flash',
-  'gemini-flash-lite-latest',
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-flash-latest',
 ] as const;
+
+const ALLOWED_POST_TYPES: ReadonlySet<ParsedVoicePost['tipo']> = new Set([
+  'PRESTAMO',
+  'DONACION',
+  'TRUEQUE',
+  'VOLUNTARIADO',
+  'AYUDA',
+]);
+
+const ALLOWED_URGENCIES: ReadonlySet<ParsedVoicePost['urgencia']> = new Set([
+  'BAJA',
+  'MEDIA',
+  'ALTA_CRITICA',
+]);
+
+function normalizeAudioMimeType(mimeType?: string): string {
+  const base = (mimeType ?? '').split(';')[0].trim().toLowerCase();
+  if (!base || base === 'application/octet-stream') return 'audio/m4a';
+  if (base === 'audio/x-m4a') return 'audio/m4a';
+  if (base === 'audio/x-wav') return 'audio/wav';
+  if (base === 'audio/x-aac') return 'audio/aac';
+  if (base === 'audio/mp3') return 'audio/mpeg';
+  if (base === 'audio/3gpp') return 'audio/mp4';
+  return base;
+}
+
+function parseGeminiJson(rawText: string): ParsedVoicePost {
+  const cleaned = rawText
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
+  const parsed = JSON.parse(cleaned) as Partial<ParsedVoicePost>;
+  const resumen = typeof parsed.resumen === 'string' ? parsed.resumen.trim() : '';
+  if (!resumen) {
+    throw new Error('Gemini API response missing resumen');
+  }
+
+  const tipo = ALLOWED_POST_TYPES.has(parsed.tipo as ParsedVoicePost['tipo'])
+    ? (parsed.tipo as ParsedVoicePost['tipo'])
+    : 'AYUDA';
+  const urgencia = ALLOWED_URGENCIES.has(parsed.urgencia as ParsedVoicePost['urgencia'])
+    ? (parsed.urgencia as ParsedVoicePost['urgencia'])
+    : 'MEDIA';
+  const categoria =
+    typeof parsed.categoria === 'string' && parsed.categoria.trim()
+      ? parsed.categoria.trim()
+      : 'General';
+
+  return { tipo, categoria, urgencia, resumen };
+}
 
 export async function processVoiceToPost(audioBase64: string, mimeType: string = 'audio/ogg'): Promise<ParsedVoicePost> {
   const apiKey = Deno.env.get('GEMINI_API_KEY');
@@ -19,6 +71,7 @@ export async function processVoiceToPost(audioBase64: string, mimeType: string =
     throw new Error('GEMINI_API_KEY environment variable is not set');
   }
 
+  const normalizedMimeType = normalizeAudioMimeType(mimeType);
   const ai = new GoogleGenAI({ apiKey });
   let lastError: unknown;
 
@@ -30,7 +83,7 @@ export async function processVoiceToPost(audioBase64: string, mimeType: string =
           {
             role: 'user',
             parts: [
-              { inlineData: { data: audioBase64, mimeType } },
+              { inlineData: { data: audioBase64, mimeType: normalizedMimeType } },
               {
                 text: `Analiza esta nota de voz vecinal en audio para la plataforma barrial Sumayni.
 Extrae la intención solidaria clasificándola con exactitud:
@@ -67,7 +120,7 @@ Extrae la intención solidaria clasificándola con exactitud:
         throw new Error(`Gemini API returned empty response (${model})`);
       }
 
-      return JSON.parse(response.text) as ParsedVoicePost;
+      return parseGeminiJson(response.text);
     } catch (err) {
       lastError = err;
       console.warn(`[gemini] model ${model} failed, trying fallback:`, err);

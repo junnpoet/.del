@@ -35,6 +35,7 @@ export default function AccessibleHomeScreen() {
   const createPost = useCreateSolidaryPost();
   const [sentAlertId, setSentAlertId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
 
   const firstName = profile?.full_name?.split(' ')[0] ?? t('accessible.neighbor');
   const fullName = profile?.full_name ?? t('accessible.someone');
@@ -82,6 +83,7 @@ export default function AccessibleHomeScreen() {
       return;
     }
 
+    setIsProcessingVoice(true);
     try {
       const parsed = await processAudioWithGemini(audioUri);
       publishNeed(parsed.categoria || 'Pedido por voz', parsed.resumen, {
@@ -89,11 +91,14 @@ export default function AccessibleHomeScreen() {
         urgency: parsed.urgencia ?? 'ALTA_CRITICA',
         isAiVoice: true,
       });
-    } catch {
+    } catch (voiceErr) {
+      console.warn('[AccessibleHomeScreen] Fallback sin transcripción Gemini:', voiceErr);
       // Fallback offline o sin respuesta de IA: publica el pedido prioritario para que un vecino llame
       publishNeed('Pedido por voz', t('accessible.voicePost', { name: fullName }), {
         isAiVoice: true,
       });
+    } finally {
+      setIsProcessingVoice(false);
     }
   };
 
@@ -197,7 +202,7 @@ export default function AccessibleHomeScreen() {
       </View>
 
       <View className="mt-2">
-        <VoiceAssistantButton onRecorded={handleVoice} busy={createPost.isPending} />
+        <VoiceAssistantButton onRecorded={handleVoice} busy={isProcessingVoice || createPost.isPending} />
         <View className="flex-row gap-3 mt-3">
           {QUICK_NEEDS.map(({ key, label, category, Icon }) => (
             <TouchableOpacity

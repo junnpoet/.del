@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,12 @@ import { Button } from './Button';
 import { Input } from './Input';
 import { Chip } from './Chip';
 import { BottomSheetModal } from './BottomSheetModal';
-import type { AudioRecorder } from 'expo-audio';
+import {
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+} from 'expo-audio';
 import { useQueryClient } from '@tanstack/react-query';
 import { useI18n } from '../../i18n';
 import { useAuth } from '../../services/auth';
@@ -67,8 +72,8 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
   const [customCategory, setCustomCategory] = useState('');
   const [description, setDescription] = useState('');
 
-  // Voice recording state using expo-audio with graceful fallback
-  const recorderRef = useRef<AudioRecorder | null>(null);
+  // Voice recording state using expo-audio
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedUri, setRecordedUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,17 +91,18 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
     selectPublishType(null);
     setDescription('');
     setRecordedUri(null);
+    setIsRecording(false);
     setIsOpen(true);
   };
 
   const handleClose = async () => {
-    if (recorderRef.current && isRecording) {
+    if (isRecording) {
       try {
-        await recorderRef.current.stop();
+        await recorder.stop();
       } catch {
         // Ignore stop error on close
       }
-      recorderRef.current = null;
+      setAudioModeAsync({ allowsRecording: false }).catch(() => {});
       setIsRecording(false);
     }
     setIsOpen(false);
@@ -104,54 +110,43 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
 
   const startRecording = async () => {
     try {
-      const ExpoAudio = await import('expo-audio');
-      const permission = await ExpoAudio.requestRecordingPermissionsAsync();
+      const permission = await requestRecordingPermissionsAsync();
       if (!permission.granted) {
         showMessage(t('fab.micDeniedTitle'), t('fab.micDenied'));
         return;
       }
 
-      await ExpoAudio.setAudioModeAsync({
+      await setAudioModeAsync({
         allowsRecording: true,
         playsInSilentMode: true,
       });
 
-      const AudioModule = (await import('expo-audio/build/AudioModule')).default;
-      const recorder = new AudioModule.AudioRecorder(
-        ExpoAudio.RecordingPresets.HIGH_QUALITY
-      );
       await recorder.prepareToRecordAsync();
       recorder.record();
-      recorderRef.current = recorder;
+      setRecordedUri(null);
       setIsRecording(true);
     } catch (err) {
-      console.warn('Native audio module fallback active:', err);
-      // Fallback for environments where native audio recorder is unavailable
-      setIsRecording(true);
+      console.warn('Error starting voice recording:', err);
+      setIsRecording(false);
+      showMessage(t('fab.micDeniedTitle'), t('fab.micDenied'));
     }
   };
 
   const stopRecording = async () => {
     try {
-      if (recorderRef.current) {
-        await recorderRef.current.stop();
-        const uri = recorderRef.current.uri || 'file://simulated-voice-note.m4a';
+      await recorder.stop();
+      setAudioModeAsync({ allowsRecording: false }).catch(() => {});
+      const uri = recorder.uri;
+      if (uri) {
         setRecordedUri(uri);
-        recorderRef.current = null;
       } else {
-        setRecordedUri('file://simulated-voice-note.m4a');
-      }
-      setIsRecording(false);
-      if (!description) {
-        setDescription(t('fab.voiceAttached'));
+        showMessage(t('fab.micDeniedTitle'), t('fab.micDenied'));
       }
     } catch (err) {
-      console.warn('Error stopping recording, using fallback URI:', err);
-      setRecordedUri('file://simulated-voice-note.m4a');
+      console.warn('Error stopping recording:', err);
+      showMessage(t('fab.micDeniedTitle'), t('fab.micDenied'));
+    } finally {
       setIsRecording(false);
-      if (!description) {
-        setDescription(t('fab.voiceAttached'));
-      }
     }
   };
 
@@ -178,7 +173,9 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       return;
     }
 
-    let finalDescription = description.trim() || t('fab.voicePost');
+    const typedDescription = description.trim();
+    const hasCustomDescription = Boolean(typedDescription) && typedDescription !== t('fab.voiceAttached');
+    let finalDescription = hasCustomDescription ? typedDescription : t('fab.voicePost');
     let resolvedUrgency: UrgencyLevel | undefined;
     const isVoiceSubmission = Boolean(recordedUri);
 
@@ -187,7 +184,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       if (recordedUri) {
         try {
           const parsedVoice = await processAudioWithGemini(recordedUri);
-          if (!description.trim() && parsedVoice.resumen) {
+          if (!hasCustomDescription && parsedVoice.resumen) {
             finalDescription = parsedVoice.resumen;
           }
           resolvedUrgency = parsedVoice.urgencia;
