@@ -33,7 +33,7 @@ Todos los usuarios residen en **Urbanización Bellamar (Nuevo Chimbote)**, alred
 * **Estado de Membresía:** `MIEMBRO` (Integrado a *Junta Vecinal Urb. Bellamar*)
 * **¿Qué probar con este usuario?**
   1. **Capa Pública y Pin Multicolor (Pestaña "Directorio"):**
-     - Ofrece **Servicios** (*Cerrajería 24h*, *Refuerzo escolar*), **Producto** (*Muebles y repisas de madera*) y **Auxilio** (*Botiquín vecinal y toma de presión*, *Botiquín de emergencia y curaciones*), generando un pin combinado de los 3 colores en el mapa.
+     - Ofrece **Servicio** (*Cerrajería 24h*), **Producto** (*Muebles y repisas de madera*) y **Auxilio** (*Botiquín de emergencia y curaciones*), generando un pin combinado de los 3 colores en el mapa.
      - Abre **Chats** para ver su conversación activa con *Juan López*.
   2. **Capa Privada y Publicación Rápida (`+`):**
      - Acceso completo al **Muro Solidario** (tiene publicada una donación de víveres/frazadas) y a las 3 opciones de **`+` Publicar**.
