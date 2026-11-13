@@ -58,7 +58,10 @@ function mimeTypeToExtension(mimeType: string): string {
 }
 
 function base64ToUint8Array(base64: string): Uint8Array {
-  const binary = atob(base64);
+  const cleanBase64 = base64
+    .replace(/^data:[^;]+;base64,/i, '')
+    .replace(/\s+/g, '');
+  const binary = atob(cleanBase64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i += 1) {
     bytes[i] = binary.charCodeAt(i);
@@ -94,11 +97,11 @@ function parseStructuredPostJson(rawText: string): ParsedVoicePost {
   return { tipo, categoria, urgencia, resumen };
 }
 
-async function processVoiceWithGroq(
+async function transcribeAudioWithGroq(
   audioBase64: string,
   normalizedMimeType: string,
   groqKey: string
-): Promise<ParsedVoicePost> {
+): Promise<string> {
   const bytes = base64ToUint8Array(audioBase64);
   const audioCopy = new Uint8Array(bytes.byteLength);
   audioCopy.set(bytes);
@@ -126,6 +129,34 @@ async function processVoiceWithGroq(
   if (!transcript) {
     throw new Error('Groq Whisper returned empty transcript');
   }
+  return transcript;
+}
+
+export async function transcribeVoiceAudio(
+  audioBase64: string,
+  mimeType = 'audio/ogg'
+): Promise<string> {
+  const groqKey = Deno.env.get('GROQ_API_KEY')?.trim();
+  if (!groqKey) {
+    throw new Error('GROQ_API_KEY is missing for voice transcription');
+  }
+  return transcribeAudioWithGroq(audioBase64, normalizeAudioMimeType(mimeType), groqKey);
+}
+
+const CRITICAL_EMERGENCY_REGEX =
+  /\b(emergencia|urgencia\s+m[eé]dica|auxilio|socorro|ambulancia|infarto|hemorragia|accidente|incendio|peligro|desmay[oó]|no\s+respira|asfixia|desesperad[oa]|en\s+peligro|muy\s+grave)\b/i;
+
+export async function structureTranscriptToPost(transcript: string): Promise<ParsedVoicePost> {
+  const isCriticalTranscript = CRITICAL_EMERGENCY_REGEX.test(transcript);
+  const groqKey = Deno.env.get('GROQ_API_KEY')?.trim();
+  if (!groqKey) {
+    return {
+      tipo: 'AYUDA',
+      categoria: 'General',
+      urgencia: isCriticalTranscript ? 'ALTA_CRITICA' : 'MEDIA',
+      resumen: transcript.trim(),
+    };
+  }
 
   for (const model of GROQ_CHAT_MODELS) {
     try {
@@ -144,7 +175,11 @@ async function processVoiceWithGroq(
             {
               role: 'system',
               content:
-                'Eres el asistente de la plataforma barrial Sumayni. Responde únicamente con un objeto JSON válido con las claves: tipo (PRESTAMO, DONACION, TRUEQUE, VOLUNTARIADO o AYUDA), categoria (rubro breve), urgencia (BAJA, MEDIA o ALTA_CRITICA) y resumen (síntesis clara en 1 o 2 oraciones).',
+                'Eres el asistente de la plataforma barrial Sumayni. Responde únicamente con un objeto JSON válido con las claves: tipo (PRESTAMO, DONACION, TRUEQUE, VOLUNTARIADO o AYUDA), categoria (rubro breve), urgencia (BAJA, MEDIA o ALTA_CRITICA) y resumen (síntesis clara en 1 o 2 oraciones).\n' +
+                'Criterio estricto de urgencia:\n' +
+                '- ALTA_CRITICA: cualquier emergencia médica, accidente, incendio, robo/peligro inmediato, persona en riesgo grave, o uso de palabras como "emergencia", "auxilio", "socorro", "ambulancia", "grave", "urgente".\n' +
+                '- MEDIA: necesidades importantes sin riesgo inmediato (conseguir algo hoy, reparación, apoyo).\n' +
+                '- BAJA: ofertas, trueques, voluntariado o avisos sin prisa.',
             },
             {
               role: 'user',
@@ -167,7 +202,11 @@ async function processVoiceWithGroq(
         throw new Error(`Groq Chat empty response (${model})`);
       }
 
-      return parseStructuredPostJson(content);
+      const parsed = parseStructuredPostJson(content);
+      if (isCriticalTranscript && parsed.urgencia !== 'ALTA_CRITICA') {
+        parsed.urgencia = 'ALTA_CRITICA';
+      }
+      return parsed;
     } catch (err) {
       console.warn(`[groq] model ${model} failed, trying fallback:`, err);
     }
@@ -176,9 +215,18 @@ async function processVoiceWithGroq(
   return {
     tipo: 'AYUDA',
     categoria: 'General',
-    urgencia: 'MEDIA',
+    urgencia: isCriticalTranscript ? 'ALTA_CRITICA' : 'MEDIA',
     resumen: transcript,
   };
+}
+
+async function processVoiceWithGroq(
+  audioBase64: string,
+  normalizedMimeType: string,
+  groqKey: string
+): Promise<ParsedVoicePost> {
+  const transcript = await transcribeAudioWithGroq(audioBase64, normalizedMimeType, groqKey);
+  return structureTranscriptToPost(transcript);
 }
 
 export async function processVoiceToPost(audioBase64: string, mimeType: string = 'audio/ogg'): Promise<ParsedVoicePost> {
@@ -279,4 +327,177 @@ Extrae la intención solidaria clasificándola con exactitud:
   }
 
   throw lastError instanceof Error ? lastError : new Error('All Gemini Flash models failed');
+}
+
+export type WhatsAppTextIntent =
+  | 'SEARCH_SERVICE'
+  | 'SEARCH_POST'
+  | 'SEARCH_BOTH'
+  | 'MY_POSTS'
+  | 'PUBLISH_POST'
+  | 'GREETING_HELP';
+
+export interface InterpretedTextQuery {
+  intent: WhatsAppTextIntent;
+  keywords: string[];
+  summaryForUser: string;
+  postDraft?: ParsedVoicePost;
+}
+
+const ALLOWED_INTENTS: ReadonlySet<WhatsAppTextIntent> = new Set([
+  'SEARCH_SERVICE',
+  'SEARCH_POST',
+  'SEARCH_BOTH',
+  'MY_POSTS',
+  'PUBLISH_POST',
+  'GREETING_HELP',
+]);
+
+function fallbackInterpretText(rawText: string): InterpretedTextQuery {
+  const trimmed = rawText.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (/\b(mis\s+publicaciones|mis\s+pedidos|mis\s+avisos|qu[eé]\s+(publicaciones|pedidos)\s+(he\s+hecho|tengo|publiqu[eé])|qu[eé]\s+publiqu[eé])\b/i.test(lower)) {
+    return {
+      intent: 'MY_POSTS',
+      keywords: [],
+      summaryForUser: 'mis publicaciones',
+    };
+  }
+
+  if (/^(hola|buen[oa]s|hey|hi|ayuda|menu|menú|comandos|qu[eé]\s+puedes\s+hacer)/i.test(lower)) {
+    return {
+      intent: 'GREETING_HELP',
+      keywords: [],
+      summaryForUser: 'ayuda',
+    };
+  }
+
+  if (/^(publicar|publica|aviso|alerta)\s*:/i.test(lower)) {
+    const cleanDesc = trimmed.replace(/^(publicar|publica|aviso|alerta)\s*:\s*/i, '').trim() || trimmed;
+    return {
+      intent: 'PUBLISH_POST',
+      keywords: [],
+      summaryForUser: cleanDesc,
+      postDraft: {
+        tipo: 'AYUDA',
+        categoria: 'Comunidad',
+        urgencia: 'MEDIA',
+        resumen: cleanDesc,
+      },
+    };
+  }
+
+  const stopWords = new Set([
+    'alguien', 'tendra', 'tendrá', 'tiene', 'tienen', 'sabe', 'sabes', 'conoce',
+    'hay', 'donde', 'dónde', 'necesito', 'busco', 'quiero', 'quien', 'quién',
+    'por', 'para', 'con', 'una', 'uno', 'unos', 'unas', 'los', 'las', 'del',
+    'que', 'qué', 'como', 'cómo', 'esta', 'está', 'favor', 'hola', 'buenas',
+  ]);
+
+  const keywords = lower
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 3 && !stopWords.has(w))
+    .slice(0, 4);
+
+  return {
+    intent: 'SEARCH_BOTH',
+    keywords: keywords.length > 0 ? keywords : [trimmed],
+    summaryForUser: keywords[0] ?? trimmed,
+  };
+}
+
+export async function interpretWhatsAppTextQuery(rawText: string): Promise<InterpretedTextQuery> {
+  const groqKey = Deno.env.get('GROQ_API_KEY')?.trim();
+  if (!groqKey) {
+    return fallbackInterpretText(rawText);
+  }
+
+  const systemPrompt =
+    'Eres el clasificador de intención del bot vecinal Sumayni en WhatsApp. ' +
+    'Analiza el mensaje del vecino y responde ÚNICAMENTE con un JSON válido con esta estructura:\n' +
+    '{\n' +
+    '  "intent": "SEARCH_SERVICE" | "SEARCH_POST" | "SEARCH_BOTH" | "MY_POSTS" | "PUBLISH_POST" | "GREETING_HELP",\n' +
+    '  "keywords": ["palabra1", "sinonimo2"],\n' +
+    '  "summaryForUser": "tema breve que busca o pregunta",\n' +
+    '  "postDraft": { "tipo": "PRESTAMO|DONACION|TRUEQUE|VOLUNTARIADO|AYUDA", "categoria": "rubro", "urgencia": "BAJA|MEDIA|ALTA_CRITICA", "resumen": "texto claro" }\n' +
+    '}\n' +
+    'Reglas:\n' +
+    '- Si saluda o pregunta qué puedes hacer ("hola", "ayuda", "qué haces") -> GREETING_HELP.\n' +
+    '- Si pregunta por sus propias publicaciones o pedidos ("qué publicaciones he hecho?", "mis publicaciones", "mis pedidos", "qué publiqué") -> MY_POSTS.\n' +
+    '- Si busca un oficio/profesional ("gasfitero", "electricista", "alguien que arregle caños") -> SEARCH_SERVICE.\n' +
+    '- Si pregunta si alguien tiene/presta/dona algo o hay recursos ("alguien tendrá medicamentos?", "tienen agua?", "alguien presta escalera?") -> SEARCH_BOTH (para buscar en publicaciones solidarias y servicios relacionados).\n' +
+    '- Si pide explícitamente publicar algo ("Publicar: ...", "por favor publica que necesito...") -> PUBLISH_POST e incluye postDraft.\n' +
+    '- En keywords incluye de 1 a 5 palabras raíz o sinónimos útiles en español (ej. para "medicamentos": ["medicamento", "medicina", "pastilla", "botiquin", "salud"]).';
+
+  for (const model of GROQ_CHAT_MODELS) {
+    try {
+      const res = await fetch(`${GROQ_API_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${groqKey}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(10000),
+        body: JSON.stringify({
+          model,
+          temperature: 0.1,
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: rawText },
+          ],
+        }),
+      });
+
+      if (!res.ok) continue;
+
+      const json = (await res.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      const content = json.choices?.[0]?.message?.content?.trim();
+      if (!content) continue;
+
+      const cleaned = content
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .trim()
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/i, '')
+        .trim();
+
+      const parsed = JSON.parse(cleaned) as Partial<InterpretedTextQuery>;
+      const intent = ALLOWED_INTENTS.has(parsed.intent as WhatsAppTextIntent)
+        ? (parsed.intent as WhatsAppTextIntent)
+        : 'SEARCH_BOTH';
+
+      const keywords = Array.isArray(parsed.keywords)
+        ? parsed.keywords
+            .map((k) => (typeof k === 'string' ? k.trim().toLowerCase() : ''))
+            .filter((k) => k.length >= 2)
+            .slice(0, 5)
+        : [];
+
+      const summaryForUser =
+        typeof parsed.summaryForUser === 'string' && parsed.summaryForUser.trim()
+          ? parsed.summaryForUser.trim()
+          : rawText.trim();
+
+      let postDraft: ParsedVoicePost | undefined;
+      if (intent === 'PUBLISH_POST' && parsed.postDraft) {
+        postDraft = parseStructuredPostJson(JSON.stringify(parsed.postDraft));
+      }
+
+      return {
+        intent,
+        keywords: keywords.length > 0 ? keywords : fallbackInterpretText(rawText).keywords,
+        summaryForUser,
+        postDraft,
+      };
+    } catch (err) {
+      console.warn(`[interpretWhatsAppTextQuery] model ${model} failed:`, err);
+    }
+  }
+
+  return fallbackInterpretText(rawText);
 }

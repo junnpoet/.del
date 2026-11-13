@@ -132,7 +132,7 @@ export function SolidaryActionSheet({
   const isKeyboardOpen = keyboardHeight > 0;
   const androidKeyboardLift =
     Platform.OS === 'android' && isKeyboardOpen
-      ? keyboardHeight + Math.max(insets.bottom + 16, 48)
+      ? keyboardHeight + Math.max(insets.bottom, 48)
       : 0;
   const maxSheetHeight = isKeyboardOpen
     ? Math.max(200, windowHeight - (Platform.OS === 'android' ? androidKeyboardLift : keyboardHeight) - insets.top - 16)

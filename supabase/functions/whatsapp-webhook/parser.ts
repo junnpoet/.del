@@ -13,6 +13,8 @@ export interface NormalizedIncomingMessage {
     id?: string;
     base64?: string;
     mimeType?: string;
+    rawKey?: Record<string, unknown>;
+    rawMessage?: Record<string, unknown>;
   };
 }
 
@@ -74,8 +76,10 @@ export function parseIncomingWebhookPayload(body: any): NormalizedIncomingMessag
         type: 'audio',
         audio: {
           id: evoData.key.id,
-          base64: msg.base64 || evoData.base64 || body.base64 || undefined,
+          base64: msg.audioMessage.base64 || msg.base64 || rawMsg.base64 || evoData.base64 || body.base64 || undefined,
           mimeType: msg.audioMessage.mimetype || 'audio/ogg',
+          rawKey: evoData.key,
+          rawMessage: evoData.message,
         },
       };
     }

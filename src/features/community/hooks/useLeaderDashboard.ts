@@ -67,11 +67,14 @@ export function useJoinRequests(enabled: boolean) {
     },
   });
 
-  // Aprobar en 1 tap: la RPC valida que el usuario sea el dirigente del grupo.
+  // Aprobar en 1 tap: crea el perfil si viene de WhatsApp y envía mensaje de bienvenida.
   const approveRequest = useMutation({
     mutationFn: async (requestId: string) => {
-      const { error } = await supabase.rpc('approve_join_request', { request_id: requestId });
+      const { data, error } = await supabase.functions.invoke('approve-join-request', {
+        body: { requestId },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: JOIN_REQUESTS_KEY });
