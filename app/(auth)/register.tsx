@@ -17,6 +17,7 @@ import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { Card } from '../../src/components/ui/Card';
 import { Header } from '../../src/components/ui/Header';
+import { LocationPickerModal, type Coordinates } from '../../src/components/ui/LocationPickerModal';
 import { normalizeNationalPhone, useAuth } from '../../src/services/auth';
 import { useI18n } from '../../src/i18n';
 
@@ -30,7 +31,9 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
-  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [coords, setCoords] = useState<Coordinates | null>(null);
+  const [gpsCoords, setGpsCoords] = useState<Coordinates | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -112,47 +115,68 @@ export default function RegisterScreen() {
     registerPushToken();
   }, []);
 
-  const handleCaptureLocation = async () => {
-    setIsLocating(true);
+  const fetchCurrentGpsCoords = async (): Promise<Coordinates> => {
     try {
       const Location = await import('expo-location');
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(t('register.locationPermTitle'), t('register.locationPerm'));
-        setCoords({ latitude: -12.0125, longitude: -77.0815 });
-        setIsLocating(false);
-        return;
+        const fallback = { latitude: -12.0125, longitude: -77.0815 };
+        setGpsCoords(fallback);
+        return fallback;
       }
 
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
 
-      setCoords({
+      const detected = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
-      });
+      };
+      setGpsCoords(detected);
+      return detected;
+    } catch (err) {
+      console.warn('GPS fallback activated:', err);
+      const fallback = { latitude: -12.0125, longitude: -77.0815 };
+      setGpsCoords(fallback);
+      return fallback;
+    }
+  };
 
+  const handleCaptureLocation = async () => {
+    setIsLocating(true);
+    try {
+      await fetchCurrentGpsCoords();
+      setPickerOpen(true);
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
+  const handleConfirmPickedLocation = async (picked: Coordinates) => {
+    setCoords(picked);
+    setPickerOpen(false);
+    if (homeAddress.trim()) return;
+
+    try {
+      const Location = await import('expo-location');
       const reverse = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
+        latitude: picked.latitude,
+        longitude: picked.longitude,
       }).catch(() => []);
 
-      if (reverse.length > 0 && !homeAddress) {
+      if (reverse.length > 0) {
         const item = reverse[0];
         const suggested = `${item.street || ''} ${item.name || ''}, ${item.district || item.subregion || ''}`.trim();
         if (suggested) {
           setHomeAddress(suggested);
+          return;
         }
       }
-    } catch (err) {
-      console.warn('GPS fallback activated:', err);
-      setCoords({ latitude: -12.0125, longitude: -77.0815 });
-      if (!homeAddress) {
-        setHomeAddress('Jr. Los Jazmines 340, San Martín de Porres');
-      }
-    } finally {
-      setIsLocating(false);
+      setHomeAddress('Jr. Los Jazmines 340, San Martín de Porres');
+    } catch {
+      setHomeAddress('Jr. Los Jazmines 340, San Martín de Porres');
     }
   };
 
@@ -550,6 +574,17 @@ export default function RegisterScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {gpsCoords && (
+        <LocationPickerModal
+          visible={pickerOpen}
+          initialCoords={coords ?? gpsCoords}
+          gpsCoords={gpsCoords}
+          onConfirm={handleConfirmPickedLocation}
+          onClose={() => setPickerOpen(false)}
+          onRecenterGps={fetchCurrentGpsCoords}
+        />
+      )}
     </SafeAreaView>
   );
 }
