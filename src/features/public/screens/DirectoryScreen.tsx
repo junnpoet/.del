@@ -463,20 +463,26 @@ export default function DirectoryScreen() {
       <View className="relative flex-1">
         <View
           pointerEvents="box-none"
-          className={
+          className={`px-4 pb-2.5 pt-2.5 ${
+            view === 'list' ? 'border-b border-neutral-border/60 bg-neutral-surface' : ''
+          }`}
+          style={
             view === 'map'
-              ? 'absolute left-0 right-0 top-0 z-10 px-4 pb-2.5 pt-2.5'
-              : 'border-b border-neutral-border/60 bg-neutral-surface px-4 pb-2.5 pt-2.5'
+              ? { position: 'absolute', left: 0, right: 0, top: 0, zIndex: 10 }
+              : undefined
           }
         >
           {/* Row 1: Search bar + List/Map toggle */}
           <View pointerEvents="box-none" className="flex-row items-center gap-2">
             <View
               className={`min-h-[48px] flex-1 flex-row items-center rounded-2xl px-3 ${
-                view === 'map'
-                  ? 'border border-neutral-border/70 bg-white/95 shadow-sm'
-                  : 'bg-neutral-mutedBg'
+                view === 'map' ? 'border border-neutral-border/70' : 'bg-neutral-mutedBg'
               }`}
+              style={
+                view === 'map'
+                  ? { backgroundColor: 'rgba(255, 255, 255, 0.96)', elevation: 3 }
+                  : undefined
+              }
             >
             <Search size={18} color="#6C727A" />
             <TextInput
@@ -501,10 +507,13 @@ export default function DirectoryScreen() {
 
             <View
               className={`flex-row rounded-2xl p-1 ${
-                view === 'map'
-                  ? 'border border-neutral-border/70 bg-white/95 shadow-sm'
-                  : 'bg-neutral-mutedBg'
+                view === 'map' ? 'border border-neutral-border/70' : 'bg-neutral-mutedBg'
               }`}
+              style={
+                view === 'map'
+                  ? { backgroundColor: 'rgba(255, 255, 255, 0.96)', elevation: 3 }
+                  : undefined
+              }
             >
             <TouchableOpacity
               accessibilityRole="button"
