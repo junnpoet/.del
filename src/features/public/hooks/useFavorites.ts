@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../../services/supabase';
+import { channelName, supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
 
 export const FAVORITES_QUERY_KEY = ['user-favorites'] as const;
@@ -73,7 +73,7 @@ export function useFavorites() {
   useEffect(() => {
     if (!userId) return;
     const channel = supabase
-      .channel(`favorites-live-${userId}`)
+      .channel(channelName(`favorites-live-${userId}`))
       .on(
         'postgres_changes',
         {

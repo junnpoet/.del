@@ -13,3 +13,11 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
+
+/**
+ * Unique Realtime channel name per mount so multiple screens subscribing to the
+ * same table/filter do not collide on a previously subscribed channel instance.
+ */
+export function channelName(base: string): string {
+  return `${base}-${Math.random().toString(36).slice(2, 10)}`;
+}

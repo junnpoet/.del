@@ -22,7 +22,7 @@ import { Button } from '../src/components/ui/Button';
 import { Card } from '../src/components/ui/Card';
 import { useI18n } from '../src/i18n';
 import { useAuth } from '../src/services/auth';
-import { supabase } from '../src/services/supabase';
+import { channelName, supabase } from '../src/services/supabase';
 import { useSosAlert } from '../src/features/accessible-mode/hooks/useSosAlert';
 import { useActiveEmergency } from '../src/features/emergency/hooks/useEmergencyRealtime';
 
@@ -74,7 +74,7 @@ export default function EmergencyBoardScreen() {
     if (!profile?.group_id) return;
 
     const channel = supabase
-      .channel(`emergency-posts-${profile.group_id}`)
+      .channel(channelName(`emergency-posts-${profile.group_id}`))
       .on(
         'postgres_changes',
         {

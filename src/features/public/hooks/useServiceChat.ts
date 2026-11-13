@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../../services/supabase';
+import { channelName, supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
 import type { Database } from '../../../types/database';
 
@@ -99,7 +99,7 @@ export function useServiceChat(conversationId: string) {
     if (!conversationId) return;
 
     const channel = supabase
-      .channel(`chat-room-${conversationId}`)
+      .channel(channelName(`chat-room-${conversationId}`))
       .on(
         'postgres_changes',
         {

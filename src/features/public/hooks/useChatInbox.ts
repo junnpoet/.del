@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../../services/supabase';
+import { channelName, supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
 
 export interface InboxConversation {
@@ -43,7 +43,7 @@ export function useChatInbox() {
     if (!userId) return;
 
     const channel = supabase
-      .channel(`chat-inbox-${userId}`)
+      .channel(channelName(`chat-inbox-${userId}`))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'chat_conversations' },

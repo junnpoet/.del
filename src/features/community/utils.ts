@@ -77,14 +77,7 @@ export function timeAgo(iso: string | null | undefined): string {
   return days === 1 ? tr('time.yesterday') : tr('time.days', { n: days });
 }
 
-/**
- * Nombre de canal Realtime único por montaje: si dos pantallas del stack usan el
- * mismo hook a la vez, supabase-js reutilizaría el canal ya suscrito y fallaría
- * al añadirle callbacks.
- */
-export function channelName(base: string): string {
-  return `${base}-${Math.random().toString(36).slice(2, 10)}`;
-}
+export { channelName } from '../../services/supabase';
 
 export function errorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) {

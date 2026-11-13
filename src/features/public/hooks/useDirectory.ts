@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../../services/supabase';
+import { channelName, supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
 import { useFavorites } from './useFavorites';
 import type { Database } from '../../../types/database';
@@ -40,7 +40,7 @@ export function useDirectory(radiusMeters: number) {
   useEffect(() => {
     if (!session) return;
     const channel = supabase
-      .channel('directory-live')
+      .channel(channelName('directory-live'))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, () => {
         queryClient.invalidateQueries({ queryKey: DIRECTORY_QUERY_KEY });
       })

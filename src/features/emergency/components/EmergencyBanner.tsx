@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { AlertTriangle, UserPlus, CheckCircle2 } from 'lucide-react-native';
-import { supabase } from '../../../services/supabase';
+import { channelName, supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
 
 interface EmergencyBannerProps {
@@ -87,7 +87,7 @@ export function EmergencyBanner({
     void checkLiveEmergency();
 
     const channel = supabase
-      .channel('public-emergency-banner')
+      .channel(channelName('public-emergency-banner'))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'emergency_events' },

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSegments } from 'expo-router';
-import { supabase } from '../../../services/supabase';
+import { channelName, supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
 import type { Database } from '../../../types/database';
 
@@ -44,7 +44,7 @@ export function useActiveEmergency(groupId: string | null | undefined) {
     if (!groupId) return;
 
     const channel = supabase
-      .channel(`emergency-events-${groupId}`)
+      .channel(channelName(`emergency-events-${groupId}`))
       .on(
         'postgres_changes',
         {
