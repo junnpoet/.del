@@ -172,6 +172,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = useCallback(async (input: SignUpInput) => {
     const nationalDigits = normalizeNationalPhone(input.phone);
+    if (nationalDigits.length !== 9) {
+      throw new Error('Ingresa un número celular peruano de 9 dígitos.');
+    }
     const email = phoneToAuthEmail(nationalDigits);
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -190,7 +193,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       group_id: null,
       push_token: input.pushToken ?? null,
     });
-    if (profileError) throw profileError;
+    if (profileError) {
+      // Evita dejar una sesión autenticada sin fila en `profiles` si falla la inserción.
+      await supabase.auth.signOut().catch(() => {});
+      throw profileError;
+    }
 
     setProfile(await fetchProfile(data.user.id));
   }, []);
