@@ -11,6 +11,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -150,6 +151,7 @@ export function LocationPickerModal({
   onRecenterGps,
 }: LocationPickerModalProps) {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const webViewRef = useRef<{ injectJavaScript: (script: string) => void } | null>(null);
   const [selectedCoords, setSelectedCoords] = useState<Coordinates>(initialCoords);
   const [isRecentering, setIsRecentering] = useState(false);
@@ -484,8 +486,21 @@ export function LocationPickerModal({
             <Animated.View
               style={{
                 transform: [{ translateY: cardSlideY }],
-                marginBottom: keyboardHeight,
-                maxHeight: '85%',
+                marginBottom:
+                  keyboardHeight > 0
+                    ? keyboardHeight + (Platform.OS === 'android' ? Math.max(insets.bottom, 16) : 0)
+                    : 0,
+                maxHeight:
+                  keyboardHeight > 0
+                    ? Math.max(
+                        windowHeight -
+                          keyboardHeight -
+                          (Platform.OS === 'android' ? Math.max(insets.bottom, 16) : 0) -
+                          Math.max(insets.top, 24) -
+                          16,
+                        260
+                      )
+                    : windowHeight * 0.85,
                 paddingBottom: keyboardHeight > 0 ? 12 : Math.max(insets.bottom + 14, 24),
               }}
               className="rounded-t-3xl bg-neutral-surface px-5 pt-4 shadow-2xl"
@@ -546,7 +561,7 @@ export function LocationPickerModal({
                   <ScrollView
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
-                    style={{ maxHeight: 280 }}
+                    style={{ flexShrink: 1 }}
                   >
                     <View className="mb-3">
                       <Text
