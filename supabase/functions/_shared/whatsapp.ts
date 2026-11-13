@@ -3,12 +3,48 @@ export interface WhatsAppMediaPayload {
   mimeType: string;
 }
 
+async function sendViaEvolutionApi(to: string, text: string): Promise<boolean | null> {
+  const baseUrl = Deno.env.get('EVOLUTION_API_URL')?.replace(/\s+/g, '').replace(/\/+$/, '');
+  const apiKey = Deno.env.get('EVOLUTION_API_KEY')?.trim();
+  const instance = Deno.env.get('EVOLUTION_INSTANCE_NAME')?.trim();
+
+  if (!baseUrl || !apiKey || !instance) {
+    return null;
+  }
+
+  const url = `${baseUrl}/message/sendText/${encodeURIComponent(instance)}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'apikey': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      number: to,
+      text,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error(`[WhatsApp:Evolution] Failed to send message to ${to}:`, errorBody);
+    return false;
+  }
+
+  return true;
+}
+
 export async function sendWhatsAppText(to: string, text: string): Promise<boolean> {
+  const evolutionResult = await sendViaEvolutionApi(to, text);
+  if (evolutionResult !== null) {
+    return evolutionResult;
+  }
+
   const token = Deno.env.get('META_ACCESS_TOKEN');
   const phoneNumberId = Deno.env.get('META_PHONE_NUMBER_ID');
 
   if (!token || !phoneNumberId) {
-    console.warn('[WhatsApp] Missing META_ACCESS_TOKEN or META_PHONE_NUMBER_ID');
+    console.warn('[WhatsApp] Missing Evolution API or Meta Cloud API credentials');
     return false;
   }
 

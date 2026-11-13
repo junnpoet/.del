@@ -70,17 +70,22 @@ Deno.serve(async (req: Request) => {
 
     const otpCode = linkData.properties.email_otp;
 
-    // 3. Despachar mensaje por Meta WhatsApp Cloud API
+    // 3. Despachar mensaje por WhatsApp
     const message = `🔐 *Sumayni Barrio*\n\nHola ${profile.full_name}, tu código de acceso temporal es:\n\n*${otpCode}*\n\nIngrésalo en la app para entrar sin contraseña. Válido por 10 minutos.`;
     const whatsappSent = await sendWhatsAppText(fullE164, message);
+
+    if (!whatsappSent) {
+      return new Response(
+        JSON.stringify({ error: 'No se pudo enviar el código por WhatsApp. Verifica que el bot esté conectado.' }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         phone: nationalDigits,
-        whatsappSent,
-        // Devuelve el código para que en pruebas/demo el evaluador siempre pueda ingresar
-        devOtp: otpCode,
+        whatsappSent: true,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
