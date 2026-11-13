@@ -93,6 +93,7 @@ export default function SolidaryFeedScreen() {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [supportGroupsOpen, setSupportGroupsOpen] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [selectedPointPosts, setSelectedPointPosts] = useState<SolidaryPost[]>([]);
 
   const feed = useSolidaryFeed(isMember);
   const updatePostStatus = useUpdatePostStatus();
@@ -618,7 +619,10 @@ export default function SolidaryFeedScreen() {
               center={center}
               currentUserId={profile?.id ?? null}
               searchZoneGeoJson={searchZoneGeoJson ?? null}
-              onSelectPost={(post) => setSelectedPostId(post.id)}
+              onSelectPost={(post, group) => {
+                setSelectedPostId(post.id);
+                setSelectedPointPosts(group);
+              }}
               webHint={t('community.mapWebHint')}
             />
             {canSeeCareLayer && (
@@ -675,7 +679,12 @@ export default function SolidaryFeedScreen() {
       <SolidaryActionSheet
         post={selectedPost}
         currentUserId={profile?.id ?? null}
-        onClose={() => setSelectedPostId(null)}
+        pointPosts={selectedPointPosts}
+        onSelectPointPost={(post) => setSelectedPostId(post.id)}
+        onClose={() => {
+          setSelectedPostId(null);
+          setSelectedPointPosts([]);
+        }}
       />
     </View>
   );

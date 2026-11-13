@@ -21,11 +21,19 @@ import { errorMessage, openWhatsapp, showMessage, timeAgo } from '../utils';
 interface Props {
   post: SolidaryPost | null;
   currentUserId: string | null;
+  pointPosts?: SolidaryPost[];
+  onSelectPointPost?: (post: SolidaryPost) => void;
   onClose: () => void;
 }
 
 /** Panel inferior de coordinación en tiempo real para un pedido solidario (SPEC-04 §2.3). */
-export function SolidaryActionSheet({ post, currentUserId, onClose }: Props) {
+export function SolidaryActionSheet({
+  post,
+  currentUserId,
+  pointPosts = [],
+  onSelectPointPost,
+  onClose,
+}: Props) {
   const { t, tCategory } = useI18n();
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState('');
@@ -91,6 +99,50 @@ export function SolidaryActionSheet({ post, currentUserId, onClose }: Props) {
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {pointPosts.length > 1 && onSelectPointPost && (
+              <View className="mb-3">
+                <Text
+                  className="text-neutral-textMuted mb-1.5"
+                  style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}
+                >
+                  Publicaciones en este hogar ({pointPosts.length})
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8 }}
+                >
+                  {pointPosts.map((item) => {
+                    const active = item.id === post.id;
+                    return (
+                      <TouchableOpacity
+                        key={item.id}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                        onPress={() => onSelectPointPost(item)}
+                        className={`rounded-xl border px-3 py-2 ${
+                          active
+                            ? 'border-emerald-300 bg-emerald-50'
+                            : 'border-neutral-border bg-neutral-surface'
+                        }`}
+                      >
+                        <Text
+                          numberOfLines={1}
+                          className={active ? 'text-[#065F46]' : 'text-neutral-textMain'}
+                          style={{
+                            fontFamily: active ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
+                            fontSize: 12.5,
+                          }}
+                        >
+                          {t(postTypeKey(item.postType))} · {tCategory(item.category)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
             <View className="bg-neutral-surface border border-neutral-border rounded-2xl p-3.5 mb-3">
               <View className="flex-row flex-wrap items-center gap-1.5 mb-2">
                 <View className="px-2.5 py-1 rounded-lg" style={{ backgroundColor: statusMeta.tint }}>

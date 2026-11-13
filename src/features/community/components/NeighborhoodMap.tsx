@@ -20,7 +20,7 @@ interface Props {
   center?: { latitude: number; longitude: number } | null;
   currentUserId?: string | null;
   searchZoneGeoJson?: Record<string, unknown> | null;
-  onSelectPost?: (post: SolidaryPost) => void;
+  onSelectPost?: (post: SolidaryPost, group: SolidaryPost[]) => void;
   webHint?: string;
 }
 
@@ -90,7 +90,6 @@ export function NeighborhoodMap({
           count: items.length,
           isHome: isOwnHome,
           selected: selectedKey === key,
-          badgeText,
           title:
             items.length > 1
               ? `${primary.authorName ?? t('post.anonymous')} (${items.length} publicaciones)`
@@ -111,7 +110,6 @@ export function NeighborhoodMap({
           longitude: item.vulnerable.coordinates!.longitude,
           color: meta.color,
           iconType: 'auxilio',
-          badgeText: label,
           title: item.vulnerable.name,
           subtitle: `${label} · ${t('map.padrino', { name: item.buddy.name ?? t('care.noPadrino') })}`,
         };
@@ -161,8 +159,8 @@ export function NeighborhoodMap({
           const key = `${found.coordinates.latitude.toFixed(5)},${found.coordinates.longitude.toFixed(5)}`;
           setSelectedKey(key);
           setFocusCoord(found.coordinates);
-          const group = groupedPosts.get(key)?.items;
-          onSelectPost?.(group?.[0] ?? found);
+          const group = groupedPosts.get(key)?.items ?? [found];
+          onSelectPost?.(group[0] ?? found, group);
         }}
         webFallback={webFallback}
       />
