@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Text,
   TextInput,
@@ -12,15 +11,25 @@ import { Modal } from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
 import { supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
+import { usePublicI18n, type PublicTranslationKey } from '../i18n';
 
-const REPORT_REASONS = [
-  'Cobro abusivo',
-  'No se presentó',
-  'Perfil falso/Sospechoso',
-  'Falta de respeto',
-] as const;
+export type ReportReasonCode =
+  | 'COBRO_ABUSIVO'
+  | 'INCUMPLIMIENTO'
+  | 'PERFIL_FALSO'
+  | 'FALTA_RESPETO'
+  | 'OTRO';
 
-type ReportReason = (typeof REPORT_REASONS)[number];
+const REPORT_REASONS: readonly {
+  code: ReportReasonCode;
+  labelKey: PublicTranslationKey;
+}[] = [
+  { code: 'COBRO_ABUSIVO', labelKey: 'report.reason.COBRO_ABUSIVO' },
+  { code: 'INCUMPLIMIENTO', labelKey: 'report.reason.INCUMPLIMIENTO' },
+  { code: 'PERFIL_FALSO', labelKey: 'report.reason.PERFIL_FALSO' },
+  { code: 'FALTA_RESPETO', labelKey: 'report.reason.FALTA_RESPETO' },
+  { code: 'OTRO', labelKey: 'report.reason.OTRO' },
+];
 
 interface ReportModalProps {
   visible: boolean;
@@ -36,11 +45,11 @@ export function ReportModal({
   onClose,
   serviceId,
   providerName,
-  serviceTitle,
   onReportSuccess,
 }: ReportModalProps) {
   const { session } = useAuth();
-  const [selectedReason, setSelectedReason] = useState<ReportReason | null>(null);
+  const { tp } = usePublicI18n();
+  const [selectedReason, setSelectedReason] = useState<ReportReasonCode | null>(null);
   const [details, setDetails] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -57,11 +66,11 @@ export function ReportModal({
 
   const handleSubmit = async () => {
     if (!session?.user?.id) {
-      Alert.alert('Sesión requerida', 'Debes iniciar sesión para reportar una incidencia.');
+      Alert.alert(tp('report.authTitle'), tp('report.authBody'));
       return;
     }
     if (!selectedReason) {
-      Alert.alert('Selecciona un motivo', 'Por favor elige una de las razones de la lista.');
+      Alert.alert(tp('report.missingReasonTitle'), tp('report.missingReasonBody'));
       return;
     }
 
@@ -77,28 +86,24 @@ export function ReportModal({
 
       if (error) throw error;
 
-      Alert.alert(
-        'Reporte enviado',
-        'Tu reporte ha sido remitido a la dirigencia vecinal para su revisión comunitaria.',
-        [
-          {
-            text: 'Entendido',
-            onPress: () => {
-              handleClose();
-              onReportSuccess?.();
-            },
+      Alert.alert(tp('report.successTitle'), tp('report.successBody'), [
+        {
+          text: tp('report.understood'),
+          onPress: () => {
+            handleClose();
+            onReportSuccess?.();
           },
-        ]
-      );
+        },
+      ]);
     } catch (err: any) {
-      Alert.alert('Error', err?.message ?? 'No se pudo enviar el reporte. Inténtalo de nuevo.');
+      Alert.alert(tp('report.errorTitle'), err?.message ?? tp('report.errorBody'));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <Modal visible={visible} onClose={handleClose} title="Reportar Servicio">
+    <Modal visible={visible} onClose={handleClose} title={tp('report.title')}>
       <View className="pt-2">
         <View className="mb-4 flex-row items-center rounded-2xl bg-[#FEF3C7] p-3">
           <AlertTriangle size={20} color="#D97706" />
@@ -107,8 +112,8 @@ export function ReportModal({
             style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13, lineHeight: 18 }}
           >
             {providerName
-              ? `Reportarás la atención brindada por ${providerName}. La dirigencia revisará el caso.`
-              : 'Tu reporte será evaluado por los dirigentes vecinales del sector.'}
+              ? tp('report.warningWithProvider', { name: providerName })
+              : tp('report.warningGeneric')}
           </Text>
         </View>
 
@@ -116,19 +121,19 @@ export function ReportModal({
           className="mb-2 text-neutral-textMain"
           style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
         >
-          Motivo principal:
+          {tp('report.reasonLabel')}
         </Text>
 
-        <View className="space-y-2 mb-4">
-          {REPORT_REASONS.map((reason) => {
-            const isSelected = selectedReason === reason;
+        <View className="gap-2 mb-4">
+          {REPORT_REASONS.map(({ code, labelKey }) => {
+            const isSelected = selectedReason === code;
             return (
               <TouchableOpacity
-                key={reason}
+                key={code}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
-                onPress={() => setSelectedReason(reason)}
-                className={`flex-row items-center justify-between rounded-2xl border p-3.5 ${
+                onPress={() => setSelectedReason(code)}
+                className={`min-h-[48px] flex-row items-center justify-between rounded-2xl border px-3.5 py-2.5 ${
                   isSelected
                     ? 'border-primary bg-primary/5'
                     : 'border-neutral-border bg-neutral-surface'
@@ -143,7 +148,7 @@ export function ReportModal({
                     fontSize: 14,
                   }}
                 >
-                  {reason}
+                  {tp(labelKey)}
                 </Text>
                 {isSelected && <CheckCircle size={18} color="#1E5E45" />}
               </TouchableOpacity>
@@ -155,15 +160,15 @@ export function ReportModal({
           className="mb-1.5 text-neutral-textMain"
           style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
         >
-          Detalles adicionales (opcional):
+          {tp('report.detailsLabel')}
         </Text>
         <TextInput
-          accessibilityLabel="Detalles adicionales del reporte"
+          accessibilityLabel={tp('report.detailsLabel')}
           multiline
           numberOfLines={3}
           value={details}
           onChangeText={setDetails}
-          placeholder="Describe brevemente lo ocurrido para ayudar a la dirigencia..."
+          placeholder={tp('report.detailsPlaceholder')}
           placeholderTextColor="#9EA3AE"
           className="rounded-2xl border border-neutral-border bg-neutral-mutedBg/40 p-3 text-neutral-textMain min-h-[76px]"
           style={{
@@ -175,18 +180,18 @@ export function ReportModal({
 
         <View className="mt-5 flex-row gap-2">
           <Button
-            title="Cancelar"
+            title={tp('report.cancel')}
             variant="outline"
             onPress={handleClose}
-            className="flex-1"
+            className="flex-1 min-h-[48px]"
           />
           <Button
-            title={submitting ? 'Enviando...' : 'Enviar reporte'}
+            title={submitting ? tp('report.submitting') : tp('report.submit')}
             variant="emergency"
             onPress={handleSubmit}
             disabled={!selectedReason || submitting}
             isLoading={submitting}
-            className="flex-1"
+            className="flex-1 min-h-[48px]"
           />
         </View>
       </View>

@@ -26,6 +26,7 @@ import {
   ServiceReview,
 } from '../hooks/useServiceChat';
 import { ReportModal } from '../components/ReportModal';
+import { usePublicI18n } from '../i18n';
 
 function formatMessageTime(iso: string | null): string {
   if (!iso) return '';
@@ -50,6 +51,7 @@ function ReviewRequestCard({
   onSubmitReview,
   isSubmitting,
 }: ReviewRequestCardProps) {
+  const { tp } = usePublicI18n();
   const [selectedRating, setSelectedRating] = useState<number>(5);
   const [comment, setComment] = useState('');
 
@@ -57,7 +59,7 @@ function ReviewRequestCard({
     return (
       <View className="my-2 rounded-3xl border border-[#1E5E45]/20 bg-[#EDF5F1] p-4 shadow-sm">
         <View className="flex-row items-center">
-          <View className="h-8 w-8 items-center justify-center rounded-full bg-[#1E5E45]">
+          <View className="h-9 w-9 items-center justify-center rounded-full bg-[#1E5E45]">
             <Check size={18} color="#FFFFFF" />
           </View>
           <View className="ml-3 flex-1">
@@ -65,22 +67,25 @@ function ReviewRequestCard({
               className="text-[#1E5E45]"
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
             >
-              Visto Bueno Vecinal Registrado
+              {tp('chat.reviewDoneTitle')}
             </Text>
-            <Text
-              className="text-neutral-textMuted"
-              style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
-            >
-              Calificación otorgada: {existingReview.rating} de 5 estrellas ⭐
-            </Text>
+            <View className="mt-0.5 flex-row items-center">
+              <Star size={14} color="#EAB308" fill="#EAB308" />
+              <Text
+                className="ml-1 text-neutral-textMuted"
+                style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
+              >
+                {tp('chat.reviewDoneBody', { rating: existingReview.rating ?? 5 })}
+              </Text>
+            </View>
           </View>
         </View>
         {existingReview.comment ? (
           <Text
-            className="mt-2.5 rounded-xl bg-white/70 p-2 text-neutral-textMain italic"
+            className="mt-2.5 rounded-xl bg-white/70 p-2.5 text-neutral-textMain"
             style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
           >
-            "{existingReview.comment}"
+            {`"${existingReview.comment}"`}
           </Text>
         ) : null}
       </View>
@@ -93,17 +98,17 @@ function ReviewRequestCard({
         <View className="flex-row items-center">
           <ShieldCheck size={20} color="#D97706" />
           <Text
-            className="ml-2 font-bold text-[#92400E]"
+            className="ml-2 text-[#92400E]"
             style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
           >
-            Solicitud de Visto Bueno enviada
+            {tp('chat.reviewPendingTitle')}
           </Text>
         </View>
         <Text
-          className="mt-1 text-[#92400E]/80"
-          style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, lineHeight: 17 }}
+          className="mt-1 text-[#92400E]"
+          style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, lineHeight: 18 }}
         >
-          Esperando a que tu vecino califique y confirme la atención en 1 tap.
+          {tp('chat.reviewPendingBody')}
         </Text>
       </View>
     );
@@ -113,7 +118,7 @@ function ReviewRequestCard({
     return (
       <View className="my-3 rounded-3xl border-2 border-primary/30 bg-neutral-surface p-4 shadow-md">
         <View className="flex-row items-center">
-          <View className="h-9 w-9 items-center justify-center rounded-2xl bg-primary/10">
+          <View className="h-10 w-10 items-center justify-center rounded-2xl bg-primary/10">
             <ShieldCheck size={20} color="#1E5E45" />
           </View>
           <View className="ml-3 flex-1">
@@ -121,13 +126,13 @@ function ReviewRequestCard({
               className="text-primary"
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
             >
-              Visto Bueno Vecinal en 1 Tap
+              {tp('chat.reviewCardTitle')}
             </Text>
             <Text
               className="text-neutral-textMuted"
               style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
             >
-              ¿{providerName} completó el trabajo?
+              {tp('chat.reviewCardQuestion', { name: providerName })}
             </Text>
           </View>
         </View>
@@ -136,7 +141,7 @@ function ReviewRequestCard({
           className="mt-3 text-neutral-textMain"
           style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
         >
-          Selecciona tu calificación:
+          {tp('chat.reviewSelectRating')}
         </Text>
 
         <View className="mt-2 flex-row items-center justify-center gap-2 py-1">
@@ -146,9 +151,9 @@ function ReviewRequestCard({
               <TouchableOpacity
                 key={star}
                 accessibilityRole="button"
-                accessibilityLabel={`${star} estrellas`}
+                accessibilityLabel={tp('chat.reviewStarA11y', { n: star })}
                 onPress={() => setSelectedRating(star)}
-                className="h-11 w-11 items-center justify-center rounded-2xl bg-neutral-mutedBg"
+                className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
               >
                 <Star
                   size={24}
@@ -161,21 +166,21 @@ function ReviewRequestCard({
         </View>
 
         <TextInput
-          accessibilityLabel="Comentario breve sobre el servicio"
-          placeholder="Comentario breve (ej. 'Puntual y excelente trabajo')..."
+          accessibilityLabel={tp('chat.reviewCommentPlaceholder')}
+          placeholder={tp('chat.reviewCommentPlaceholder')}
           placeholderTextColor="#9EA3AE"
           value={comment}
           onChangeText={setComment}
-          className="mt-3 rounded-2xl border border-neutral-border bg-neutral-mutedBg/30 p-2.5 text-neutral-textMain"
+          className="mt-3 min-h-[48px] rounded-2xl border border-neutral-border bg-neutral-mutedBg/30 px-3 py-2.5 text-neutral-textMain"
           style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
         />
 
         <TouchableOpacity
           accessibilityRole="button"
-          accessibilityLabel="Otorgar Visto Bueno Vecinal"
+          accessibilityLabel={tp('chat.reviewSubmitA11y')}
           disabled={isSubmitting}
           onPress={() => onSubmitReview(selectedRating, comment)}
-          className="mt-3 min-h-[46px] flex-row items-center justify-center rounded-2xl bg-primary px-4 shadow-sm active:opacity-90"
+          className="mt-3 min-h-[48px] flex-row items-center justify-center rounded-2xl bg-primary px-4 shadow-sm active:opacity-90"
         >
           {isSubmitting ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
@@ -186,7 +191,7 @@ function ReviewRequestCard({
                 className="ml-2 text-white"
                 style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
               >
-                Otorgar Visto Bueno ({selectedRating} ⭐)
+                {tp('chat.reviewSubmitBtn', { rating: selectedRating })}
               </Text>
             </>
           )}
@@ -201,6 +206,7 @@ function ReviewRequestCard({
 export function ServiceChatScreen({ conversationId }: { conversationId: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { tp } = usePublicI18n();
   const flatListRef = useRef<FlatList>(null);
   const [inputText, setInputText] = useState('');
   const [reportModalVisible, setReportModalVisible] = useState(false);
@@ -220,10 +226,10 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
     isSubmittingReview,
   } = useServiceChat(conversationId);
 
-  const providerName = conversation?.provider?.full_name ?? 'Prestador de Oficio';
-  const serviceTitle = conversation?.service?.title ?? 'Servicio Vecinal';
+  const providerName = conversation?.provider?.full_name ?? tp('chat.defaultProvider');
+  const serviceTitle = conversation?.service?.title ?? tp('chat.defaultService');
   const counterpartName = isProvider
-    ? conversation?.client?.full_name ?? 'Vecino Cliente'
+    ? conversation?.client?.full_name ?? tp('chat.defaultClient')
     : providerName;
 
   const handleSend = async () => {
@@ -250,15 +256,14 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
       <View className="flex-row items-center border-b border-neutral-border/70 bg-neutral-surface px-4 py-3">
         <TouchableOpacity
           accessibilityRole="button"
-          accessibilityLabel="Volver al directorio"
+          accessibilityLabel={tp('chat.backA11y')}
           onPress={() => router.back()}
-          hitSlop={12}
-          className="mr-3 h-10 w-10 items-center justify-center rounded-2xl bg-neutral-mutedBg"
+          className="mr-3 h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
         >
           <ArrowLeft size={20} color="#1A1D20" />
         </TouchableOpacity>
 
-        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 mr-3">
+        <View className="mr-3 h-11 w-11 items-center justify-center rounded-2xl bg-primary/10">
           <Text
             className="text-primary"
             style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 }}
@@ -288,10 +293,9 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
         {conversation?.service_id && (
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="Reportar irregularidad o prestador"
+            accessibilityLabel={tp('chat.reportA11y')}
             onPress={() => setReportModalVisible(true)}
-            hitSlop={12}
-            className="h-10 w-10 items-center justify-center rounded-2xl bg-neutral-mutedBg"
+            className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
           >
             <Flag size={18} color="#D90429" />
           </TouchableOpacity>
@@ -303,17 +307,17 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
         <View className="border-b border-neutral-border/40 bg-[#EDF5F1] px-4 py-2.5">
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="Solicitar Visto Bueno Vecinal al cliente"
+            accessibilityLabel={tp('chat.requestReviewA11y')}
             onPress={requestReview}
             disabled={isSending}
-            className="min-h-[40px] flex-row items-center justify-center rounded-xl bg-primary px-3 shadow-xs"
+            className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-primary px-4 shadow-xs"
           >
-            <ShieldCheck size={16} color="#FFFFFF" />
+            <ShieldCheck size={18} color="#FFFFFF" />
             <Text
               className="ml-2 text-white"
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
             >
-              Solicitar Visto Bueno Vecinal
+              {tp('chat.requestReviewBtn')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -321,7 +325,7 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
 
       {/* Message List */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
@@ -349,9 +353,9 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
 
             return (
               <View
-                className={`mb-3 max-w-[80%] rounded-3xl px-4 py-2.5 ${
+                className={`mb-3 max-w-[82%] rounded-3xl px-4 py-2.5 ${
                   isMe
-                    ? 'self-end rounded-br-sm bg-primary text-white'
+                    ? 'self-end rounded-br-sm bg-primary'
                     : 'self-start rounded-bl-sm border border-neutral-border/60 bg-neutral-surface'
                 }`}
               >
@@ -362,10 +366,10 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
                   {item.content}
                 </Text>
                 <Text
-                  className={`mt-1 text-right text-[10px] ${
-                    isMe ? 'text-white/70' : 'text-neutral-textLight'
+                  className={`mt-1 text-right ${
+                    isMe ? 'text-white/80' : 'text-neutral-textLight'
                   }`}
-                  style={{ fontFamily: 'PlusJakartaSans_500Medium' }}
+                  style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
                 >
                   {formatMessageTime(item.created_at)}
                 </Text>
@@ -373,7 +377,7 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
             );
           }}
           ListEmptyComponent={
-            <View className="items-center justify-center py-16 px-6">
+            <View className="items-center justify-center px-6 py-16">
               <View className="h-14 w-14 items-center justify-center rounded-3xl bg-primary/10">
                 <ShieldCheck size={28} color="#1E5E45" />
               </View>
@@ -381,13 +385,13 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
                 className="mt-3 text-center text-neutral-textMain"
                 style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 }}
               >
-                Conversación segura y de proximidad
+                {tp('chat.emptyTitle')}
               </Text>
               <Text
                 className="mt-1 text-center text-neutral-textMuted"
-                style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13, lineHeight: 18 }}
+                style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13, lineHeight: 19 }}
               >
-                Acuerda los detalles directamente con tu vecino sin comisiones ni intermediarios.
+                {tp('chat.emptyBody')}
               </Text>
             </View>
           }
@@ -398,28 +402,27 @@ export function ServiceChatScreen({ conversationId }: { conversationId: string }
           className="border-t border-neutral-border/60 bg-neutral-surface px-4 py-2.5"
           style={{ paddingBottom: Math.max(insets.bottom, 12) }}
         >
-          <View className="flex-row items-center rounded-2xl bg-neutral-mutedBg px-3">
+          <View className="flex-row items-center rounded-2xl bg-neutral-mutedBg pl-3 pr-1.5 py-1">
             <TextInput
-              accessibilityLabel="Escribir mensaje"
+              accessibilityLabel={tp('chat.inputA11y')}
               value={inputText}
               onChangeText={setInputText}
-              placeholder="Escribe un mensaje a tu vecino..."
+              placeholder={tp('chat.inputPlaceholder')}
               placeholderTextColor="#9EA3AE"
-              className="min-h-[44px] flex-1 py-2 text-neutral-textMain"
+              className="min-h-[48px] flex-1 py-2 text-neutral-textMain"
               style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 14 }}
               multiline
             />
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityLabel="Enviar mensaje"
+              accessibilityLabel={tp('chat.sendA11y')}
               onPress={handleSend}
               disabled={!inputText.trim() || isSending}
-              hitSlop={8}
-              className={`h-9 w-9 items-center justify-center rounded-xl ${
+              className={`h-12 w-12 items-center justify-center rounded-xl ${
                 inputText.trim() ? 'bg-primary' : 'bg-neutral-border/50'
               }`}
             >
-              <Send size={16} color={inputText.trim() ? '#FFFFFF' : '#9EA3AE'} />
+              <Send size={18} color={inputText.trim() ? '#FFFFFF' : '#9EA3AE'} />
             </TouchableOpacity>
           </View>
         </View>

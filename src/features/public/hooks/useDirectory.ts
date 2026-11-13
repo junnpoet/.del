@@ -1,14 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
-import { parseGeoPoint } from '../../../services/geo';
 import { useFavorites } from './useFavorites';
 import type { Database } from '../../../types/database';
+import type { ListingType } from '../../../types';
 
-type NearbyService = Database['public']['Functions']['get_nearby_services']['Returns'][number];
+export type NearbyService =
+  Database['public']['Functions']['get_nearby_services']['Returns'][number];
 
 export const DIRECTORY_QUERY_KEY = ['nearby-services'] as const;
+
+export function normalizeListingType(value?: string | null): ListingType {
+  if (value === 'PRODUCTO' || value === 'AUXILIO') return value;
+  return 'SERVICIO';
+}
 
 export function useDirectory(radiusMeters: number) {
   const { profile, session } = useAuth();
@@ -18,8 +24,10 @@ export function useDirectory(radiusMeters: number) {
   // Hiperlocalidad Sumayni: la distancia y el radio se calculan SIEMPRE
   // desde el hogar registrado en el perfil, nunca desde el GPS transitorio.
   const homeCoordinates =
-    profile?.lat !== null && profile?.lat !== undefined &&
-    profile?.lng !== null && profile?.lng !== undefined
+    profile?.lat !== null &&
+    profile?.lat !== undefined &&
+    profile?.lng !== null &&
+    profile?.lng !== undefined
       ? { latitude: profile.lat, longitude: profile.lng }
       : null;
 
@@ -62,34 +70,24 @@ export function useDirectory(radiusMeters: number) {
     },
   });
 
-  const locations = useQuery<Record<string, { latitude: number; longitude: number }>>({
-    queryKey: ['service-locations', services.data?.map((service) => service.service_id).join(',')],
-    enabled: Boolean(services.data?.length),
-    queryFn: async () => {
-      const providerIds = Array.from(
-        new Set((services.data ?? []).map((service) => service.provider_id))
-      );
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, home_location')
-        .in('id', providerIds);
-      if (error) throw error;
-
-      const byProvider: Record<string, { latitude: number; longitude: number }> = {};
-      (data ?? []).forEach((provider) => {
-        const point = parseGeoPoint(provider.home_location);
-        if (point) {
-          byProvider[provider.id] = { latitude: point.lat, longitude: point.lng };
-        }
-      });
-
-      return Object.fromEntries(
-        (services.data ?? [])
-          .filter((service) => byProvider[service.provider_id])
-          .map((service) => [service.service_id, byProvider[service.provider_id]])
-      );
-    },
-  });
+  // Wave 0: get_nearby_services ya incluye provider_lat y provider_lng
+  const locations = useMemo(() => {
+    const map: Record<string, { latitude: number; longitude: number }> = {};
+    for (const item of services.data ?? []) {
+      if (
+        typeof item.provider_lat === 'number' &&
+        typeof item.provider_lng === 'number' &&
+        Number.isFinite(item.provider_lat) &&
+        Number.isFinite(item.provider_lng)
+      ) {
+        map[item.service_id] = {
+          latitude: item.provider_lat,
+          longitude: item.provider_lng,
+        };
+      }
+    }
+    return map;
+  }, [services.data]);
 
   return {
     services: services.data ?? [],
@@ -102,7 +100,7 @@ export function useDirectory(radiusMeters: number) {
     isFavorite: favoritesManager.isFavorite,
     toggleFavorite: favoritesManager.toggleFavorite,
     isTogglingFavorite: favoritesManager.isTogglingFavorite,
-    locations: locations.data ?? {},
+    locations,
     hasLocation,
     coordinates: homeCoordinates,
   };

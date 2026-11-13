@@ -196,7 +196,7 @@ export function useServiceChat(conversationId: string) {
         await supabase.from('chat_messages').insert({
           conversation_id: conversationId,
           sender_id: userId,
-          content: `¡He otorgado el Visto Bueno Vecinal con calificación ${rating}/5! ⭐`,
+          content: `Visto Bueno Vecinal otorgado (${rating}/5).`,
           is_review_request: false,
         });
 
