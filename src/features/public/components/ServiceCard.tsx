@@ -34,6 +34,7 @@ interface ServiceCardProps {
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onConsult: () => void;
+  onViewMore?: () => void;
   onReport?: () => void;
   isTogglingFavorite?: boolean;
 }
@@ -43,6 +44,7 @@ export function ServiceCard({
   isFavorite,
   onToggleFavorite,
   onConsult,
+  onViewMore,
   onReport,
   isTogglingFavorite = false,
 }: ServiceCardProps) {
@@ -183,20 +185,37 @@ export function ServiceCard({
         </View>
       </View>
 
-      <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityLabel={t('service.consultA11y', { name: service.provider_name })}
-        onPress={onConsult}
-        className="mt-4 min-h-[48px] flex-row items-center justify-center rounded-2xl bg-primary px-4"
-      >
-        <MessageCircle size={18} color="#FFFFFF" />
-        <Text
-          className="ml-2 text-white"
-          style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
+      <View className="mt-4 flex-row items-center gap-2">
+        {onViewMore && (
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={onViewMore}
+            className="min-h-[48px] flex-1 items-center justify-center rounded-2xl border border-neutral-border bg-neutral-mutedBg px-3"
+          >
+            <Text
+              className="text-neutral-textMain"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13.5 }}
+            >
+              Ver más
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={t('service.consultA11y', { name: service.provider_name })}
+          onPress={onConsult}
+          className="min-h-[48px] flex-1 flex-row items-center justify-center rounded-2xl bg-primary px-4"
         >
-          {t('service.consult')}
-        </Text>
-      </TouchableOpacity>
+          <MessageCircle size={18} color="#FFFFFF" />
+          <Text
+            className="ml-2 text-white"
+            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
+          >
+            {t('service.consult')}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </Card>
   );
 }

@@ -39,6 +39,7 @@ import {
 } from '../hooks/useDirectory';
 import { LISTING_TYPE_META, ServiceCard } from '../components/ServiceCard';
 import { ReportModal } from '../components/ReportModal';
+import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import { useI18n } from '../../../i18n';
 import { usePublicI18n } from '../i18n';
 import { useAuth } from '../../../services/auth';
@@ -67,6 +68,7 @@ function NativeMap({
   onSelectMarker,
   onClosePreview,
   onConsult,
+  onViewMore,
   onReport,
   isFavorite,
   onToggleFavorite,
@@ -80,6 +82,7 @@ function NativeMap({
   onSelectMarker: (service: NearbyService) => void;
   onClosePreview: () => void;
   onConsult: (service: NearbyService) => void;
+  onViewMore: (service: NearbyService) => void;
   onReport: (service: NearbyService) => void;
   isFavorite: (serviceId: string) => boolean;
   onToggleFavorite: (serviceId: string) => void;
@@ -312,22 +315,37 @@ function NativeMap({
             </View>
           </View>
 
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={t('service.consultA11y', {
-              name: selectedService.provider_name,
-            })}
-            onPress={() => onConsult(selectedService)}
-            className="mt-3 min-h-[48px] flex-row items-center justify-center rounded-2xl bg-primary px-4"
-          >
-            <MessageCircle size={18} color="#FFFFFF" />
-            <Text
-              className="ml-2 text-white"
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
+          <View className="mt-3 flex-row items-center gap-2">
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={() => onViewMore(selectedService)}
+              className="min-h-[48px] flex-1 items-center justify-center rounded-2xl border border-neutral-border bg-neutral-mutedBg px-3"
             >
-              {t('service.consult')}
-            </Text>
-          </TouchableOpacity>
+              <Text
+                className="text-neutral-textMain"
+                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13.5 }}
+              >
+                Ver más
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={t('service.consultA11y', {
+                name: selectedService.provider_name,
+              })}
+              onPress={() => onConsult(selectedService)}
+              className="min-h-[48px] flex-1 flex-row items-center justify-center rounded-2xl bg-primary px-4"
+            >
+              <MessageCircle size={18} color="#FFFFFF" />
+              <Text
+                className="ml-2 text-white"
+                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
+              >
+                {t('service.consult')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -346,6 +364,7 @@ export default function DirectoryScreen() {
   const [view, setView] = useState<'list' | 'map'>('list');
   const [openingChatId, setOpeningChatId] = useState<string | null>(null);
   const [selectedMapService, setSelectedMapService] = useState<NearbyService | null>(null);
+  const [detailService, setDetailService] = useState<NearbyService | null>(null);
   const [reportingService, setReportingService] = useState<NearbyService | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -540,7 +559,7 @@ export default function DirectoryScreen() {
           {/* Row 1: Search bar + List/Map toggle */}
           <View pointerEvents="box-none" className="flex-row items-center gap-2">
             <View
-              className={`min-h-[48px] flex-1 flex-row items-center rounded-2xl px-3 ${
+              className={`h-12 flex-1 flex-row items-center rounded-2xl px-3 ${
                 view === 'map' ? 'border border-neutral-border/70' : 'bg-neutral-mutedBg'
               }`}
               style={
@@ -552,7 +571,7 @@ export default function DirectoryScreen() {
             <Search size={18} color="#6C727A" />
             <TextInput
               accessibilityLabel={t('directory.search')}
-              className="ml-2 flex-1 py-2 text-neutral-textMain"
+              className="ml-2 flex-1 py-0 text-neutral-textMain"
               placeholder={t('directory.search')}
               placeholderTextColor="#9EA3AE"
               value={query}
@@ -593,7 +612,7 @@ export default function DirectoryScreen() {
           </View>
 
             <View
-              className={`flex-row rounded-2xl p-1 ${
+              className={`h-12 flex-row items-center rounded-2xl p-1 ${
                 view === 'map' ? 'border border-neutral-border/70' : 'bg-neutral-mutedBg'
               }`}
               style={
@@ -718,6 +737,7 @@ export default function DirectoryScreen() {
           onSelectMarker={(svc) => setSelectedMapService(svc)}
           onClosePreview={() => setSelectedMapService(null)}
           onConsult={handleConsult}
+          onViewMore={(svc) => setDetailService(svc)}
           onReport={(svc) => setReportingService(svc)}
           isFavorite={directory.isFavorite}
           onToggleFavorite={directory.toggleFavorite}
@@ -732,6 +752,7 @@ export default function DirectoryScreen() {
               isFavorite={directory.favorites.includes(item.service_id)}
               onToggleFavorite={() => directory.toggleFavorite(item.service_id)}
               onConsult={() => handleConsult(item)}
+              onViewMore={() => setDetailService(item)}
               onReport={() => setReportingService(item)}
               isTogglingFavorite={directory.isTogglingFavorite}
             />
@@ -769,6 +790,13 @@ export default function DirectoryScreen() {
           serviceTitle={reportingService.title}
         />
       )}
+
+      <ServiceDetailModal
+        visible={Boolean(detailService)}
+        service={detailService}
+        onClose={() => setDetailService(null)}
+        onConsult={handleConsult}
+      />
 
       {/* Filters Bottom Sheet Modal */}
       <BottomSheetModal visible={filtersOpen} onClose={() => setFiltersOpen(false)}>
