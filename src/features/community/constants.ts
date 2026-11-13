@@ -36,6 +36,14 @@ export const POST_STATUS_META: Record<PostStatus, { color: string; tint: string 
   RESOLVED: { color: '#4B5563', tint: '#E5E7EB' },
 };
 
+export const POST_TYPE_META: Record<PostType, { color: string; bg: string }> = {
+  AYUDA: { color: '#B91C1C', bg: '#FEE2E2' },
+  PRESTAMO: { color: '#0284C7', bg: '#E0F2FE' },
+  DONACION: { color: '#D97706', bg: '#FEF3C7' },
+  TRUEQUE: { color: '#1E5E45', bg: '#EDF5F1' },
+  VOLUNTARIADO: { color: '#1E5E45', bg: '#EDF5F1' },
+};
+
 export const CARE_STATUS_META: Record<CareStatus, { color: string; tint: string }> = {
   AL_DIA: { color: '#16A34A', tint: '#DCFCE7' },
   SEGUIMIENTO_REQUERIDO: { color: '#D97706', tint: '#FEF3C7' },
