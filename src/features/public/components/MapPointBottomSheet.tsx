@@ -435,19 +435,21 @@ export function MapPointBottomSheet({
           </View>
         </View>
 
-        {/* Peeked Summary Row + Icon-only Consult Button */}
-        <View className="mt-2.5 flex-row items-center justify-between">
+        {/* Full-width Title */}
+        <Text
+          numberOfLines={isExpanded ? 2 : 1}
+          className="mt-2.5 text-neutral-textMain"
+          style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 17 }}
+        >
+          {service.title}
+        </Text>
+
+        {/* Peeked Details + Consult Button Row */}
+        <View className="mt-1.5 flex-row items-center justify-between">
           <View className="flex-1 pr-3">
             <Text
-              numberOfLines={isExpanded ? 2 : 1}
-              className="text-neutral-textMain"
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 17 }}
-            >
-              {service.title}
-            </Text>
-            <Text
               numberOfLines={1}
-              className="mt-0.5 text-neutral-textMuted"
+              className="text-neutral-textMuted"
               style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
             >
               {service.provider_name} · {tpCategory(service.category)}
