@@ -2,71 +2,89 @@
 
 Para probar los diferentes roles y capas de la aplicación ([docs/PROPUESTA.md](file:///home/lucille/Workspace/3_Hackathons/5_Hackathon_El_Comercio_2026/docs/PROPUESTA.md)), ingresa a la pantalla de **Iniciar Sesión** con cualquiera de los siguientes números de celular y la contraseña unificada:
 
-> 🔑 **Contraseña para todos los usuarios de prueba:** `Sumayni2026!`
+> 🔑 **Contraseña para todos los usuarios de prueba:** `123456`
+
+Todos los usuarios residen en **Urbanización Bellamar (Nuevo Chimbote)**, alrededor de la ubicación de **Juan López** y dentro de la cobertura de la **Junta Vecinal Urb. Bellamar**.
 
 ---
 
-## 1. Carmen Rosa Mamani (Vecina Nueva - Solo Capa Pública)
-* **Teléfono Celular:** `998877665`
-* **Contraseña:** `Sumayni2026!`
-* **Domicilio Georreferenciado:** Jr. Los Jazmines 340, Sector 4 (San Martín de Porres)
+## 1. Juan López (Vecino Nuevo — Solo Capa Pública)
+* **Teléfono Celular:** `947411396`
+* **Contraseña:** `123456`
+* **Domicilio Georreferenciado:** Calle 23 Mz. Ñ - Lt. 9, Urbanización Bellamar
 * **Estado de Membresía:** `NO_SOLICITADO`
 * **¿Qué probar con este usuario?**
-  1. **Capa Pública (Pestaña "Directorio")**:
-     - Explora el mapa interactivo con pines de oficios (gasfitería, electricidad, costura, carpintería, cerrajería).
-     - Cambia el radio caminable (300 m, 500 m, 1 km) y observa el círculo de geocerca centrado en su casa.
-     - Selecciona a *Don Segundo Morales* y pulsa **`Contactar`** o **`Dar Visto Bueno`**.
-     - Guarda servicios en favoritos con el icono de marcador.
-  2. **Control de Acceso a Capa Privada (Pestaña "Comunidad")**:
-     - Verás la pantalla de bloqueo de comunidad privada con candado y beneficios.
-     - Presiona **`[ Solicitar Ingreso a la Junta Vecinal ]`** para enviar la solicitud de validación de domicilio a la dirigencia.
+  1. **Capa Pública (Pestaña "Directorio"):**
+     - Explora la lista y el mapa interactivo (vista mapa y vista satélite) con pines de vecinos cercanos ofreciendo **Servicios**, **Productos** y **Auxilio** (incluido el pin multicolor de Brandon Mauricio).
+     - Filtra por `Servicios`, `Productos`, `Auxilio` y favoritos (`3` guardados).
+     - Abre **Chats** para continuar las conversaciones activas con *Brandon Mauricio* y *Gadiel Zúñiga*.
+  2. **Publicación Rápida (`+`):**
+     - Verás habilitada **Ofrecer un Servicio** y bloqueadas las opciones privadas (*Pedir Ayuda* y *Aporte Solidario*) por no pertenecer aún a la comunidad.
+  3. **Control de Acceso a Capa Privada (Pestaña "Comunidad"):**
+     - Verás la pantalla de bloqueo con candado y el botón **`Solicitar Ingreso a la Junta Vecinal`**.
 
 ---
 
-## 2. Elena Mendoza (Dirigenta Barrial - Sector 4)
-* **Teléfono Celular:** `991122334`
-* **Contraseña:** `Sumayni2026!`
-* **Domicilio Georreferenciado:** Jr. Los Jazmines 310, Mz. D Lt. 4
-* **Estado de Membresía:** `DIRIGENTE`
+## 2. Gadiel Zúñiga (Dirigente Barrial — Urb. Bellamar)
+* **Teléfono Celular:** `971825787`
+* **Contraseña:** `123456`
+* **Domicilio Georreferenciado:** Calle 22 Mz. M - Lt. 4, Urbanización Bellamar
+* **Estado de Membresía:** `DIRIGENTE` (Líder de *Junta Vecinal Urb. Bellamar*)
 * **¿Qué probar con este usuario?**
-  1. **Aprobación de Solicitudes (Pestaña "Comunidad")**:
-     - Al entrar verás el banner destacado: **`Panel de Dirigencia (2 solicitudes pendientes)`**.
-     - Presiona **`Revisar`** para abrir el modal de validación y aprueba a *Carmen Rosa Mamani* o *Jorge Huamán*.
-  2. **Capa de Cuidado Vecinal (Pestaña "Comunidad" -> Vista Mapa)**:
-     - Cambia a **Mapa Barrial** para ver los hogares en seguimiento preventivo con semáforo de salud:
-       - 🟢 **Verde (Al día):** Don Manuel Huertas (visitado por su padrino).
-       - 🟡 **Amarillo (Seguimiento):** Sra. Teófila Gómez (entrega de víveres pendiente).
-       - 🔴 **Rojo (Alerta Activa):** Don Jacinto Valdés (pedido de auxilio/compra urgente).
-  3. **Activación de Emergencia**:
-     - Acceso prioritario al protocolo SOS y contingencia humanitaria.
+  1. **Aprobación de Solicitudes (Pestaña "Comunidad"):**
+     - Verás el banner de dirigencia con **1 solicitud pendiente** (*Ronaldinho Villanueva*).
+     - Abre el modal de revisión y aprueba su ingreso a la junta vecinal.
+  2. **Capa de Cuidado Vecinal (Pestaña "Comunidad" → Mapa Barrial):**
+     - Visualiza el seguimiento preventivo de *Mauro Lázaro* (`SEGUIMIENTO_REQUERIDO`).
+  3. **Muro Solidario y Publicaciones:**
+     - Acceso total a las 3 opciones de **`+` Publicar** y gestión de la comunidad.
+  4. **Protocolo SOS / Emergencias:**
+     - Acceso prioritario al tablero de contingencia vecinal.
 
 ---
 
-## 3. Don Segundo Morales (Prestador de Oficio - Gasfitería)
-* **Teléfono Celular:** `987654321`
-* **Contraseña:** `Sumayni2026!`
-* **Domicilio Georreferenciado:** Jr. Los Jazmines 380, Sector 4
-* **Estado de Membresía:** `MIEMBRO` (con Visto Bueno Vecinal)
+## 3. Brandon Mauricio (Miembro Verificado y Prestador Multioferta)
+* **Teléfono Celular:** `935860401`
+* **Contraseña:** `123456`
+* **Domicilio Georreferenciado:** Av. Pacífico Mz. K - Lt. 12, Urbanización Bellamar
+* **Estado de Membresía:** `MIEMBRO`
 * **¿Qué probar con este usuario?**
-  1. Aparece como prestador destacado a **180 m a pie** en el directorio público con calificación 4.9 y el sello *"Visto Bueno Barrial"*.
-  2. En la pestaña **Comunidad**, tiene acceso total al Muro Solidario para prestar herramientas (escalera, llaves de tubo) o trueque.
-  3. Puede usar el botón flotante **`+ Publicar`** para ofrecer nuevos servicios o ayuda por voz.
+  1. **Pin Multicolor en Directorio:**
+     - Tiene publicados **Servicios** (*Gasfitería*, *Electricidad*) y un **Producto** (*Kit de caños y repuestos PVC*) en la misma ubicación, ideal para probar el pin combinado en el mapa.
+  2. **Muro Solidario y Red de Cuidado:**
+     - Es miembro verificado con acceso completo al Muro Solidario (préstamo de escalera/taladro y voluntariado) y figura como **padrino** de *Mauro Lázaro*.
+  3. **Chats:**
+     - Tiene conversación activa con *Juan López* sobre reparación de fugas.
 
 ---
 
-## 4. Don Jacinto Valdés (Adulto Mayor - 82 años)
-* **Teléfono Celular:** `976543210`
-* **Contraseña:** `Sumayni2026!`
-* **Domicilio Georreferenciado:** Calle Las Dalias 120, Mz. C Lt. 8
-* **Estado de Membresía:** `MIEMBRO` (Persona Vulnerable Registrada)
+## 4. Mauro Lázaro (Adulto Mayor / Persona Vulnerable)
+* **Teléfono Celular:** `907530293`
+* **Contraseña:** `123456`
+* **Domicilio Georreferenciado:** Calle 24 Mz. O - Lt. 6, Urbanización Bellamar
+* **Estado de Membresía:** `MIEMBRO` (`is_vulnerable: true`)
 * **¿Qué probar con este usuario?**
-  1. **Modo Asistido / Adulto Mayor Activo**:
-     - Cuenta con su solicitud de apoyo publicada en el Muro Solidario (*"Apoyo para compras de mercado pesadas"*).
-     - Si presionas el botón superior **`SOS`**, entras al Tablero de Contingencia con acceso inmediato a sus padrinos vecinales.
+  1. **Modo Asistido / Adulto Mayor:**
+     - Cuenta con una solicitud activa de **AYUDA** en el Muro Solidario (*"Apoyo para subir dos bidones de agua..."*) con comentarios y voluntario asignado (*Brandon Mauricio*).
+  2. **Red de Cuidado y SOS:**
+     - Está registrado en seguimiento preventivo (`SEGUIMIENTO_REQUERIDO`) y puede activar el botón **`SOS`** para el Tablero de Contingencia.
+
+---
+
+## 5. Ronaldinho Villanueva (Vecino con Solicitud Pendiente)
+* **Teléfono Celular:** `947646767`
+* **Contraseña:** `123456`
+* **Domicilio Georreferenciado:** Jr. Los Cipreses Mz. L - Lt. 3, Urbanización Bellamar
+* **Estado de Membresía:** `PENDIENTE` (Solicitud enviada a *Junta Vecinal Urb. Bellamar*)
+* **¿Qué probar con este usuario?**
+  1. **Capa Pública Activa:**
+     - Ofrece un **Servicio** (*Refuerzo escolar y matemáticas*) y un **Producto** (*Muebles pequeños y repisas de madera*) visibles para todo el barrio.
+  2. **Estado Pendiente en Comunidad:**
+     - Al entrar a la pestaña **Comunidad**, verá la pantalla de **"Confirmando tu Residencia"** hasta que *Gadiel Zúñiga* lo apruebe desde el panel de dirigencia.
 
 ---
 
 ## ¿Cómo cambiar de usuario?
-1. Ve a la pestaña **Mi Perfil** (ícono de usuario en la barra inferior).
+1. Ve a la pestaña **Perfil** (ícono de usuario en la barra inferior).
 2. Desplázate al final y presiona **`Cerrar Sesión`**.
-3. En la pantalla de inicio, ingresa cualquiera de los 4 números de celular indicados arriba con la contraseña `Sumayni2026!` y presiona **`Ingresar a mi Barrio`**.
+3. En la pantalla de inicio de sesión, ingresa cualquiera de los 5 números de celular indicados arriba con la contraseña `123456` y presiona **`Ingresar a mi Barrio`**.
