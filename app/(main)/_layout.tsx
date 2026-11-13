@@ -11,7 +11,10 @@ export default function MainLayout() {
   const { t } = useI18n();
   const { zoneEmergency } = useZoneEmergency();
   const isEmergency = Boolean(zoneEmergency);
-  const bottomPadding = Math.max(insets.bottom, 10);
+  const TAB_ITEM_HEIGHT = 50;
+  const TAB_VERTICAL_GAP = 6;
+  const bottomInset = insets.bottom;
+  const bottomPadding = bottomInset + TAB_VERTICAL_GAP;
 
   return (
     <View className={`flex-1 ${isEmergency ? 'bg-[#FFF7F7]' : 'bg-neutral-background'}`}>
@@ -25,13 +28,15 @@ export default function MainLayout() {
             backgroundColor: isEmergency ? '#FFF1F2' : '#FFFFFF',
             borderTopColor: isEmergency ? '#FECDD3' : '#F0F2F5',
             borderTopWidth: 1,
-            height: 56 + bottomPadding,
+            height: TAB_ITEM_HEIGHT + TAB_VERTICAL_GAP * 2 + bottomInset,
             paddingBottom: bottomPadding,
-            paddingTop: 6,
+            paddingTop: TAB_VERTICAL_GAP,
+            paddingHorizontal: 6,
           },
           tabBarItemStyle: {
             flex: 1,
-            height: 50,
+            height: TAB_ITEM_HEIGHT,
+            marginHorizontal: 3,
             overflow: 'hidden',
             borderRadius: 16,
           },
@@ -39,18 +44,17 @@ export default function MainLayout() {
             <Pressable
               {...(props as any)}
               android_ripple={{
-                color: 'rgba(0, 0, 0, 0.05)',
+                color: isEmergency ? 'rgba(185, 28, 28, 0.08)' : 'rgba(0, 0, 0, 0.05)',
                 borderless: false,
               }}
-              style={({ pressed }) => [
+              style={[
                 props.style,
                 {
                   flex: 1,
                   width: '100%',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  alignSelf: 'center',
-                  height: 48,
+                  height: TAB_ITEM_HEIGHT,
                   overflow: 'hidden',
                   borderRadius: 16,
                 },
