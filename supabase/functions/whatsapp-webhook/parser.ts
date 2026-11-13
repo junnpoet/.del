@@ -24,7 +24,7 @@ export function parseIncomingWebhookPayload(body: any): NormalizedIncomingMessag
   if (!body || typeof body !== 'object') return null;
 
   // 1. Formato Evolution API v2
-  const evoData = body.data;
+  const evoData = Array.isArray(body.data) ? body.data[0] : body.data;
   if (evoData?.key?.remoteJid) {
     const event = typeof body.event === 'string' ? body.event.toLowerCase() : '';
     if (event && event !== 'messages.upsert' && event !== 'messages_upsert') {
@@ -36,11 +36,21 @@ export function parseIncomingWebhookPayload(body: any): NormalizedIncomingMessag
       return null;
     }
 
-    const fromPhone = remoteJid.split('@')[0].replace(/\D/g, '');
+    // Evolution v2.2+ puede enviar @lid en remoteJid y el número real en remoteJidAlt
+    const preferredJid: string =
+      remoteJid.endsWith('@lid') && typeof evoData.key.remoteJidAlt === 'string'
+        ? evoData.key.remoteJidAlt
+        : remoteJid;
+    const fromPhone = preferredJid.split('@')[0].replace(/\D/g, '');
     if (!fromPhone) return null;
 
     const contactName: string = evoData.pushName || 'Vecino';
-    const msg = evoData.message || {};
+    const rawMsg = evoData.message || {};
+    const msg =
+      rawMsg.ephemeralMessage?.message ||
+      rawMsg.viewOnceMessage?.message ||
+      rawMsg.viewOnceMessageV2?.message ||
+      rawMsg;
 
     if (msg.locationMessage) {
       return {
