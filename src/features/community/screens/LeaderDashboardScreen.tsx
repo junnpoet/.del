@@ -24,6 +24,7 @@ import { useCareNetwork, type CareAssignment } from '../hooks/useCareNetwork';
 import { reportReasonLabel, useLeaderDashboard } from '../hooks/useLeaderDashboard';
 import { CareAssignmentCard } from '../components/CareAssignmentCard';
 import { StateMessage } from '../components/StateMessage';
+import { SlideToActivate } from '../../emergency/components/SlideToActivate';
 import { confirmAction, errorMessage, showMessage, timeAgo } from '../utils';
 
 type Section = 'requests' | 'reports' | 'padrinos' | 'news';
@@ -226,6 +227,20 @@ export default function LeaderDashboardScreen() {
       </View>
 
       <ScrollView contentContainerClassName="p-4 pt-2 pb-16" keyboardShouldPersistTaps="handled">
+        {/* Gobernanza de Emergencia exclusiva para Dirigente (SPEC-05 §2.1) */}
+        <Card className="p-4 mb-4 border-red-200 bg-red-50/40">
+          <SectionTitle
+            icon={<Siren size={20} color="#DC2626" />}
+            title="Gobernanza de Emergencia"
+            subtitle="Activa el Tablero de Ayuda Humanitaria solo ante contingencias reales en tu sector."
+          />
+          <SlideToActivate
+            isDirigente={isLeader}
+            groupId={dashboard.group?.id}
+            onActivated={() => router.push('/emergency-board')}
+          />
+        </Card>
+
         {/* 1. Solicitudes de unión */}
         {section === 'requests' && (
           <>

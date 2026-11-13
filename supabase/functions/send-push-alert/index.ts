@@ -100,12 +100,11 @@ Deno.serve(async (req: Request) => {
       if (userId) {
         const { data: assignments } = await supabase
           .from('care_assignments')
-          .select('padrino_id')
-          .eq('vulnerable_id', userId)
-          .eq('status', 'ACTIVE');
+          .select('buddy_profile_id')
+          .eq('vulnerable_profile_id', userId);
 
         if (assignments && assignments.length > 0) {
-          const padrinoIds = assignments.map((a) => a.padrino_id);
+          const padrinoIds = assignments.map((a) => a.buddy_profile_id);
           const { data: padrinos } = await supabase
             .from('profiles')
             .select('push_token')

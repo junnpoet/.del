@@ -2,9 +2,45 @@ import { getServiceSupabaseClient } from '../_shared/supabaseClient.ts';
 import {
   sendWhatsAppText,
   fetchWhatsAppAudioAsBase64,
-  sendWhatsAppTemplate,
 } from '../_shared/whatsapp.ts';
 import { processVoiceToPost, ParsedVoicePost } from '../_shared/gemini.ts';
+import { parseIncomingWebhookPayload } from './parser.ts';
+
+async function fetchEvolutionAudioBase64(messageId: string): Promise<{ base64: string; mimeType: string }> {
+  const baseUrl = Deno.env.get('EVOLUTION_API_URL')?.replace(/\s+/g, '').replace(/\/+$/, '');
+  const apiKey = Deno.env.get('EVOLUTION_API_KEY')?.trim();
+  const instance = Deno.env.get('EVOLUTION_INSTANCE_NAME')?.trim();
+
+  if (!baseUrl || !apiKey || !instance) {
+    throw new Error('Evolution API credentials missing for audio download');
+  }
+
+  const res = await fetch(`${baseUrl}/chat/getBase64FromMediaMessage/${encodeURIComponent(instance)}`, {
+    method: 'POST',
+    headers: {
+      'apikey': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message: { key: { id: messageId } },
+      convertToMp4: false,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Evolution API media error: ${await res.text()}`);
+  }
+
+  const payload = await res.json();
+  if (!payload?.base64) {
+    throw new Error('Evolution API did not return audio base64');
+  }
+
+  return {
+    base64: payload.base64,
+    mimeType: payload.mimetype || 'audio/ogg',
+  };
+}
 
 Deno.serve(async (req: Request) => {
   const url = new URL(req.url);
@@ -28,47 +64,59 @@ Deno.serve(async (req: Request) => {
     return new Response('Forbidden', { status: 403 });
   }
 
-  // 2. Recepción de eventos y mensajes (POST)
+  // 2. Recepción de eventos y mensajes (POST: Evolution API v2 o Meta Cloud API)
   if (req.method === 'POST') {
     try {
       const body = await req.json();
-      const change = body.entry?.[0]?.changes?.[0]?.value;
-      const message = change?.messages?.[0];
+      const message = parseIncomingWebhookPayload(body);
 
-      // Ignorar eventos que no son mensajes entrantes (ej. entrega de mensajes, statuses)
       if (!message) {
         return new Response('EVENT_RECEIVED', { status: 200 });
       }
 
-      const fromPhone = message.from;
-      const contactName = change?.contacts?.[0]?.profile?.name || 'Vecino';
+      const { fromPhone, contactName } = message;
+      const nationalPhone = fromPhone.length === 11 && fromPhone.startsWith('51')
+        ? fromPhone.slice(2)
+        : fromPhone;
       const supabase = getServiceSupabaseClient();
 
       // Verificar si el vecino ya está registrado en profiles
       const { data: profile } = await supabase
         .from('profiles')
         .select('id, full_name, group_id, phone')
-        .eq('phone', fromPhone)
+        .or(`phone.eq.${fromPhone},phone.eq.${nationalPhone}`)
         .maybeSingle();
 
-      // CASO A: Onboarding y Admisión para vecinos sin la app móvil
+      // CASO A: Onboarding y Admisión para vecinos sin grupo asignado
       if (!profile || !profile.group_id) {
-        if (message.type === 'location') {
+        if (message.type === 'location' && message.location) {
           const { latitude, longitude, address } = message.location;
 
-          // Buscar el grupo vecinal más cercano
-          const { data: nearestGroups } = await supabase
-            .from('neighborhood_groups')
-            .select('id, name, sector_name')
-            .limit(1);
+          let targetGroupId: string | null = null;
 
-          const targetGroupId = nearestGroups?.[0]?.id;
+          // Resolver grupo cercano usando PostGIS (get_nearby_groups) antes del fallback
+          const { data: nearbyGroups } = await supabase.rpc('get_nearby_groups', {
+            user_lat: latitude,
+            user_lng: longitude,
+            radius_meters: 3000,
+          });
+
+          if (nearbyGroups && nearbyGroups.length > 0) {
+            targetGroupId = nearbyGroups[0].group_id;
+          } else {
+            const { data: fallbackGroups } = await supabase
+              .from('neighborhood_groups')
+              .select('id')
+              .limit(1);
+            targetGroupId = fallbackGroups?.[0]?.id ?? null;
+          }
 
           if (targetGroupId) {
             await supabase.from('group_join_requests').insert({
               group_id: targetGroupId,
+              user_id: profile?.id ?? null,
               whatsapp_phone: fromPhone,
-              full_name: contactName,
+              full_name: profile?.full_name ?? contactName,
               address: address || `Coordenadas: ${latitude}, ${longitude}`,
               is_from_whatsapp: true,
               status: 'PENDING',
@@ -77,38 +125,52 @@ Deno.serve(async (req: Request) => {
 
             await sendWhatsAppText(
               fromPhone,
-              `📍 ¡Ubicación recibida, ${contactName}!\n\nHemos enviado tu solicitud al dirigente de tu cuadra para admitirte en la red barrial de Sumayni. Te notificaremos por aquí en cuanto seas confirmado.`
+              `Ubicación recibida, ${contactName}. Hemos enviado tu solicitud al dirigente de tu cuadra para admitirte en la red barrial de Sumayni. Te notificaremos por aquí en cuanto seas confirmado.`
             );
           } else {
             await sendWhatsAppText(
               fromPhone,
-              '📍 Ubicación recibida. Estamos configurando tu sector vecinal y pronto te daremos acceso.'
+              'Ubicación recibida. Estamos configurando tu sector vecinal y pronto te daremos acceso.'
             );
           }
 
           return new Response('EVENT_RECEIVED', { status: 200 });
         }
 
-        // Si envía texto sin registrarse, instruir cómo compartir ubicación
         if (message.type === 'text') {
           await sendWhatsAppText(
             fromPhone,
-            `¡Hola ${contactName}! Soy Sumayni, la red comunitaria de confianza de tu barrio. 🤝\n\nPara conectarte con tu junta vecinal y acceder a oficios locales o auxilio, por favor comparte tu ubicación tocando el clip 📎 > Ubicación de WhatsApp.`
+            `Hola ${contactName}, soy Sumayni, la red comunitaria de confianza de tu barrio. Para conectarte con tu junta vecinal y acceder a oficios locales o auxilio, por favor comparte tu ubicación tocando el clip de adjuntar > Ubicación en WhatsApp.`
           );
           return new Response('EVENT_RECEIVED', { status: 200 });
         }
       }
 
       // CASO B: Nota de voz recibida (Publicación asistida por IA Gemini)
-      if (message.type === 'audio') {
-        const audioId = message.audio?.id;
-        if (!audioId) return new Response('AUDIO_ID_MISSING', { status: 400 });
-
-        await sendWhatsAppText(fromPhone, '🎙️ Procesando tu nota de voz con Inteligencia Artificial...');
+      if (message.type === 'audio' && message.audio) {
+        await sendWhatsAppText(fromPhone, 'Procesando tu nota de voz con Inteligencia Artificial...');
 
         try {
-          const { base64, mimeType } = await fetchWhatsAppAudioAsBase64(audioId);
-          const parsedPost: ParsedVoicePost = await processVoiceToPost(base64, mimeType);
+          let audioBase64 = message.audio.base64;
+          let mimeType = message.audio.mimeType || 'audio/ogg';
+
+          if (!audioBase64) {
+            if (message.source === 'evolution' && message.audio.id) {
+              const evoAudio = await fetchEvolutionAudioBase64(message.audio.id);
+              audioBase64 = evoAudio.base64;
+              mimeType = evoAudio.mimeType;
+            } else if (message.audio.id) {
+              const metaAudio = await fetchWhatsAppAudioAsBase64(message.audio.id);
+              audioBase64 = metaAudio.base64;
+              mimeType = metaAudio.mimeType;
+            }
+          }
+
+          if (!audioBase64) {
+            throw new Error('No audio payload available');
+          }
+
+          const parsedPost: ParsedVoicePost = await processVoiceToPost(audioBase64, mimeType);
 
           await supabase.from('solidary_posts').insert({
             author_id: profile?.id ?? null,
@@ -120,18 +182,19 @@ Deno.serve(async (req: Request) => {
             description: parsedPost.resumen,
             urgency: parsedPost.urgencia,
             is_from_whatsapp: true,
+            is_ai_voice: true,
             status: 'OPEN',
           });
 
           await sendWhatsAppText(
             fromPhone,
-            `✅ Tu requerimiento fue publicado en el Muro Barrial:\n\n📋 *${parsedPost.tipo}* (${parsedPost.categoria})\n💬 "${parsedPost.resumen}"\n🚨 Urgencia: ${parsedPost.urgencia}\n\nTus vecinos de la comunidad ya pueden verlo y responderte.`
+            `Tu requerimiento fue publicado en el Muro Barrial:\n\n*${parsedPost.tipo}* (${parsedPost.categoria})\n"${parsedPost.resumen}"\nUrgencia: ${parsedPost.urgencia}\n\nTus vecinos de la comunidad ya pueden verlo y responderte.`
           );
         } catch (voiceError) {
           console.error('[WhatsApp Voice Pipeline Error]:', voiceError);
           await sendWhatsAppText(
             fromPhone,
-            '⚠️ No pudimos procesar con claridad tu audio. Por favor intenta enviarlo nuevamente con menor ruido de fondo o escríbenos tu pedido en texto.'
+            'No pudimos procesar con claridad tu audio. Por favor intenta enviarlo nuevamente con menor ruido de fondo o escríbenos tu pedido en texto.'
           );
         }
 
@@ -139,8 +202,8 @@ Deno.serve(async (req: Request) => {
       }
 
       // CASO C: Consulta por texto ("gasfitero", "electricista", "botiquin")
-      if (message.type === 'text') {
-        const rawText = message.text?.body?.trim() || '';
+      if (message.type === 'text' && message.text) {
+        const rawText = message.text.trim();
         const query = rawText.toLowerCase();
 
         const { data: services } = await supabase
@@ -161,7 +224,7 @@ Deno.serve(async (req: Request) => {
           .limit(3);
 
         if (services && services.length > 0) {
-          let reply = `🔍 Encontramos estos oficios recomendados en tu sector para "${rawText}":\n\n`;
+          let reply = `Encontramos estos oficios recomendados en tu sector para "${rawText}":\n\n`;
 
           for (const s of services) {
             // @ts-ignore profiles is joined
@@ -169,12 +232,13 @@ Deno.serve(async (req: Request) => {
             // @ts-ignore profiles is joined
             const rawPhone = s.profiles?.phone || '';
             const cleanPhone = rawPhone.replace(/\D/g, '');
+            const waPhone = cleanPhone.length === 9 ? `51${cleanPhone}` : cleanPhone;
 
-            reply += `🛠 *${s.title}* (${s.category})\n`;
-            reply += `👤 ${providerName}\n`;
-            reply += `⭐ ${s.rating_average ?? '5.0'} (${s.reviews_count ?? 1} vistos buenos)\n`;
-            if (cleanPhone) {
-              reply += `📲 Contacto directo: https://wa.me/${cleanPhone}\n`;
+            reply += `*${s.title}* (${s.category})\n`;
+            reply += `Prestador: ${providerName}\n`;
+            reply += `Valoración: ${s.rating_average ?? '5.0'} (${s.reviews_count ?? 1} vistos buenos)\n`;
+            if (waPhone) {
+              reply += `Contacto directo: https://wa.me/${waPhone}\n`;
             }
             reply += `\n`;
           }
@@ -226,7 +290,7 @@ export async function broadcastEmergencyAlert(
 
     const success = await sendWhatsAppText(
       p.phone,
-      `🚨 *ALERTA DE EMERGENCIA COMUNITARIA: ${eventType.toUpperCase()}* 🚨\n\n` +
+      `*ALERTA DE EMERGENCIA COMUNITARIA: ${eventType.toUpperCase()}*\n\n` +
       `${description}\n\n` +
       `Por favor mantén la calma, revisa el Tablero de Ayuda de Sumayni y acude a los puntos de encuentro seguros fijados por tu junta barrial.`
     );

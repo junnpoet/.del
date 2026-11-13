@@ -20,12 +20,9 @@ import {
 } from 'lucide-react-native';
 import { supabase } from '../../../services/supabase';
 import { useAuth } from '../../../services/auth';
+import type { EmergencyType } from '../../../types';
 
-export type EmergencyEventType =
-  | 'SISMO_TERREMOTO'
-  | 'INUNDACION_HUAICO'
-  | 'INCENDIO'
-  | 'CORTE_SERVICIOS';
+export type EmergencyEventType = EmergencyType;
 
 interface SlideToActivateProps {
   groupId?: string;
@@ -41,14 +38,14 @@ const EVENT_OPTIONS: {
   color: string;
 }[] = [
   {
-    type: 'SISMO_TERREMOTO',
+    type: 'SISMO',
     label: 'Sismo / Terremoto',
     description: 'Evacuación y concentración en losas seguras',
     icon: Activity,
     color: '#DC2626',
   },
   {
-    type: 'INUNDACION_HUAICO',
+    type: 'HUAICO',
     label: 'Inundación / Huaico',
     description: 'Riesgo fluvial y bloqueo de accesos barriales',
     icon: Droplets,
@@ -68,6 +65,13 @@ const EVENT_OPTIONS: {
     icon: ZapOff,
     color: '#7C3AED',
   },
+  {
+    type: 'INSEGURIDAD',
+    label: 'Emergencia de Seguridad',
+    description: 'Alerta vecinal coordinada y respaldo comunitario',
+    icon: ShieldAlert,
+    color: '#9333EA',
+  },
 ];
 
 export function SlideToActivate({
@@ -77,7 +81,7 @@ export function SlideToActivate({
 }: SlideToActivateProps) {
   const { session } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedType, setSelectedType] = useState<EmergencyEventType>('SISMO_TERREMOTO');
+  const [selectedType, setSelectedType] = useState<EmergencyEventType>('SISMO');
   const [countdown, setCountdown] = useState<number | null>(null);
 
   // Pan Responder para el deslizador
@@ -147,13 +151,26 @@ export function SlideToActivate({
       if (groupId) {
         const { data: { user } } = await supabase.auth.getUser();
         const userId = user?.id || session?.user?.id || '00000000-0000-0000-0000-000000000000';
-        await supabase.from('emergency_events').insert({
+        const description = `Activación de contingencia vecinal: ${eventType}`;
+        const { error } = await supabase.from('emergency_events').insert({
           group_id: groupId,
           event_type: eventType,
-          description: `Activación de contingencia vecinal: ${eventType}`,
+          description,
           status: 'ACTIVE',
           activated_by: userId,
         });
+        if (!error) {
+          void supabase.functions.invoke('send-push-alert', {
+            body: {
+              type: 'EMERGENCY_MODE',
+              groupId,
+              userId,
+              title: `Alerta de Emergencia: ${eventType}`,
+              body: 'El dirigente de tu sector activó el Tablero de Ayuda Humanitaria.',
+              data: { eventType },
+            },
+          });
+        }
       }
     } catch (err) {
       console.warn('Simulando activación local sin backend:', err);
@@ -170,11 +187,12 @@ export function SlideToActivate({
       <View className="bg-red-950/80 border border-red-500/40 rounded-2xl p-2 relative h-16 justify-center overflow-hidden shadow-lg">
         <View className="absolute inset-0 items-center justify-center flex-row">
           <Text
-            className="text-red-300 font-bold text-sm tracking-wider uppercase ml-10"
-            style={{ fontFamily: 'PlusJakartaSans_700Bold' }}
+            className="text-red-300 font-bold tracking-wider uppercase ml-10 mr-1"
+            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
           >
-            Desliza para Activar Emergencia ➔
+            Desliza para Activar Emergencia
           </Text>
+          <ChevronRight size={16} color="#FCA5A5" strokeWidth={2.5} />
         </View>
 
         {/* Thumb Deslizable */}

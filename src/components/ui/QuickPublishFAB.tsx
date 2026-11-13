@@ -17,11 +17,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useI18n } from '../../i18n';
 import { useAuth } from '../../services/auth';
 import { supabase } from '../../services/supabase';
-import type { PostType } from '../../types';
+import type { UrgencyLevel } from '../../types';
 import {
   CATEGORIES_BY_PUBLISH_TYPE,
   SOLIDARY_POST_TYPE_BY_CATEGORY,
 } from '../../constants/categories';
+import { processAudioWithGemini } from '../../services/voicePost';
 import { useCreateSolidaryPost } from '../../features/community/hooks/useSolidaryFeed';
 import { DIRECTORY_QUERY_KEY } from '../../features/public/hooks/useDirectory';
 import { errorMessage, showMessage } from '../../features/community/utils';
@@ -163,9 +164,25 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       return;
     }
 
-    const finalDescription = description.trim() || t('fab.voicePost');
+    let finalDescription = description.trim() || t('fab.voicePost');
+    let resolvedUrgency: UrgencyLevel | undefined;
+    const isVoiceSubmission = Boolean(recordedUri);
+
     setIsSubmitting(true);
     try {
+      if (recordedUri) {
+        try {
+          const parsedVoice = await processAudioWithGemini(recordedUri);
+          if (!description.trim() && parsedVoice.resumen) {
+            finalDescription = parsedVoice.resumen;
+          }
+          resolvedUrgency = parsedVoice.urgencia;
+        } catch (voiceErr) {
+          // Fallback offline o si el servicio de voz no responde: publicar con descripción base
+          console.warn('[QuickPublishFAB] Fallback sin transcripción Gemini:', voiceErr);
+        }
+      }
+
       if (selectedType === 'SERVICIO') {
         // Oficio para el Directorio público (tabla services, SPEC-03).
         const { error } = await supabase.from('services').insert({
@@ -182,6 +199,8 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
           postType: selectedType === 'AYUDA' ? 'AYUDA' : SOLIDARY_POST_TYPE_BY_CATEGORY[category] ?? 'DONACION',
           category,
           description: finalDescription,
+          urgency: resolvedUrgency,
+          isAiVoice: isVoiceSubmission,
         });
       }
 

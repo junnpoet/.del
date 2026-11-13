@@ -12,6 +12,8 @@ import { SosHoldButton } from '../components/SosHoldButton';
 import { VoiceAssistantButton } from '../components/VoiceAssistantButton';
 import { useSosAlert } from '../hooks/useSosAlert';
 import { setAccessibleModeEnabled } from '../storage';
+import { processAudioWithGemini } from '../../../services/voicePost';
+import type { PostType, UrgencyLevel } from '../../../types';
 
 // La categoría se guarda en español (valor de base de datos); la etiqueta se traduce.
 const QUICK_NEEDS: { key: string; label: TranslationKey; category: string; Icon: typeof Pill }[] = [
@@ -55,23 +57,44 @@ export default function AccessibleHomeScreen() {
     });
   };
 
-  const publishNeed = (category: string, description: string) =>
+  const publishNeed = (
+    category: string,
+    description: string,
+    options?: { postType?: PostType; urgency?: UrgencyLevel; isAiVoice?: boolean }
+  ) =>
     createPost.mutate(
-      { postType: 'AYUDA', category, description, urgency: 'ALTA_CRITICA' },
+      {
+        postType: options?.postType ?? 'AYUDA',
+        category,
+        description,
+        urgency: options?.urgency ?? 'ALTA_CRITICA',
+        isAiVoice: options?.isAiVoice,
+      },
       {
         onSuccess: () => showMessage(t('accessible.needSentTitle'), t('accessible.needSent')),
         onError: (error) => showMessage(t('accessible.needFailed'), errorMessage(error)),
       }
     );
 
-  const handleVoice = (audioUri: string | null) => {
+  const handleVoice = async (audioUri: string | null) => {
     if (!audioUri) {
       showMessage(t('accessible.micUnavailableTitle'), t('accessible.micUnavailable'));
       return;
     }
-    // El audio se procesa en el pipeline de voz (SPEC-05). Mientras tanto,
-    // el pedido queda visible para que un vecino llame y escuche la necesidad.
-    publishNeed('Pedido por voz', t('accessible.voicePost', { name: fullName }));
+
+    try {
+      const parsed = await processAudioWithGemini(audioUri);
+      publishNeed(parsed.categoria || 'Pedido por voz', parsed.resumen, {
+        postType: parsed.tipo ?? 'AYUDA',
+        urgency: parsed.urgencia ?? 'ALTA_CRITICA',
+        isAiVoice: true,
+      });
+    } catch {
+      // Fallback offline o sin respuesta de IA: publica el pedido prioritario para que un vecino llame
+      publishNeed('Pedido por voz', t('accessible.voicePost', { name: fullName }), {
+        isAiVoice: true,
+      });
+    }
   };
 
   const exitAccessibleMode = async () => {

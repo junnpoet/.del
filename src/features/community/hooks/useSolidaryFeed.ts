@@ -114,6 +114,7 @@ export interface NewSolidaryPost {
   category: string;
   description: string;
   urgency?: UrgencyLevel;
+  isAiVoice?: boolean;
 }
 
 /** Publica en el muro. Usa networkMode offlineFirst del queryClient (outbox). */
@@ -131,6 +132,7 @@ export function useCreateSolidaryPost() {
         category: input.category,
         description: input.description,
         urgency: input.urgency ?? 'MEDIA',
+        is_ai_voice: Boolean(input.isAiVoice),
       });
       if (error) throw error;
     },

@@ -18,10 +18,12 @@ import { QuickPublishFAB } from '../src/components/ui/QuickPublishFAB';
 import { DemoProvider } from '../src/services/demoStore';
 import { AuthProvider } from '../src/services/auth';
 import { LanguageProvider } from '../src/i18n';
+import { useEmergencyGlobalMutation } from '../src/features/emergency/hooks/useEmergencyRealtime';
 
 function RootContent() {
   const segments = useSegments();
   const isMainTab = segments[0] === '(main)';
+  useEmergencyGlobalMutation();
 
   return (
     <View className="flex-1 bg-neutral-background">
