@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as ImagePicker from 'expo-image-picker';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronLeft,
@@ -165,21 +165,36 @@ export function EmergencySupportGroupsModal({
 
   const handlePickImage = async () => {
     if (readOnly) return;
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
+    if (!requireOptionalNativeModule('ExponentImagePicker')) {
       Alert.alert(
-        'Permiso necesario',
-        'Autoriza el acceso a tus fotos para enviar imágenes en el chat grupal.'
+        'Módulo de galería no disponible',
+        'El cliente de desarrollo actual no incluye ExponentImagePicker. Recompila el dev client (npx expo run:android) para habilitar el envío de fotos.'
       );
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.75,
-      allowsEditing: false,
-    });
-    if (!result.canceled && result.assets[0]?.uri) {
-      setPendingImageUri(result.assets[0].uri);
+    try {
+      const ImagePicker = await import('expo-image-picker');
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert(
+          'Permiso necesario',
+          'Autoriza el acceso a tus fotos para enviar imágenes en el chat grupal.'
+        );
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.75,
+        allowsEditing: false,
+      });
+      if (!result.canceled && result.assets[0]?.uri) {
+        setPendingImageUri(result.assets[0].uri);
+      }
+    } catch {
+      Alert.alert(
+        'No se pudo abrir la galería',
+        'Verifica los permisos o recompila el dev client para usar el selector de imágenes.'
+      );
     }
   };
 
