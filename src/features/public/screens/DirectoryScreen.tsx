@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Easing,
   FlatList,
   Modal,
   Platform,
@@ -287,18 +288,45 @@ export default function DirectoryScreen() {
   const [reportingService, setReportingService] = useState<NearbyService | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const insets = useSafeAreaInsets();
-  const sheetTranslateY = React.useRef(new Animated.Value(320)).current;
+  const backdropOpacity = React.useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = React.useRef(new Animated.Value(360)).current;
 
-  useEffect(() => {
-    if (filtersOpen) {
-      sheetTranslateY.setValue(320);
+  const openFilters = () => {
+    backdropOpacity.setValue(0);
+    sheetTranslateY.setValue(360);
+    setFiltersOpen(true);
+    Animated.parallel([
+      Animated.timing(backdropOpacity, {
+        toValue: 1,
+        duration: 140,
+        useNativeDriver: true,
+      }),
       Animated.timing(sheetTranslateY, {
         toValue: 0,
-        duration: 220,
+        duration: 170,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
-      }).start();
-    }
-  }, [filtersOpen, sheetTranslateY]);
+      }),
+    ]).start();
+  };
+
+  const closeFilters = () => {
+    Animated.parallel([
+      Animated.timing(backdropOpacity, {
+        toValue: 0,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sheetTranslateY, {
+        toValue: 360,
+        duration: 140,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start(({ finished }) => {
+      if (finished) setFiltersOpen(false);
+    });
+  };
 
   const activeFilterCount =
     (listingTypeFilter !== 'ALL' ? 1 : 0) +
@@ -536,7 +564,7 @@ export default function DirectoryScreen() {
         >
           <TouchableOpacity
             accessibilityRole="button"
-            onPress={() => setFiltersOpen(true)}
+            onPress={openFilters}
             className={`min-h-[40px] flex-row items-center rounded-full border px-3.5 ${
               activeFilterCount > 0
                 ? 'border-primary bg-[#EDF5F1]'
@@ -698,24 +726,34 @@ export default function DirectoryScreen() {
       <Modal
         transparent
         visible={filtersOpen}
-        animationType="fade"
+        animationType="none"
         statusBarTranslucent
-        onRequestClose={() => setFiltersOpen(false)}
+        onRequestClose={closeFilters}
       >
-        <Pressable
-          className="flex-1 justify-end bg-black/40"
-          onPress={() => setFiltersOpen(false)}
-        >
+        <View className="flex-1 justify-end">
+          <Animated.View
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              backgroundColor: 'rgba(0,0,0,0.4)',
+              opacity: backdropOpacity,
+            }}
+          >
+            <Pressable className="flex-1" onPress={closeFilters} />
+          </Animated.View>
+
           <Animated.View
             style={{
               transform: [{ translateY: sheetTranslateY }],
               maxHeight: '85%',
             }}
           >
-            <Pressable
+            <View
               className="rounded-t-3xl bg-neutral-surface px-5 pt-5"
               style={{ paddingBottom: Math.max(insets.bottom + 16, 28) }}
-              onPress={(e) => e.stopPropagation()}
             >
               <View className="mb-4 flex-row items-center justify-between">
                 <Text
@@ -726,7 +764,7 @@ export default function DirectoryScreen() {
                 </Text>
                 <TouchableOpacity
                   accessibilityRole="button"
-                  onPress={() => setFiltersOpen(false)}
+                  onPress={closeFilters}
                   className="h-10 w-10 items-center justify-center rounded-full bg-neutral-mutedBg"
                 >
                   <X size={18} color="#6C727A" />
@@ -789,7 +827,7 @@ export default function DirectoryScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   accessibilityRole="button"
-                  onPress={() => setFiltersOpen(false)}
+                  onPress={closeFilters}
                   className="min-h-[48px] flex-1 items-center justify-center rounded-2xl bg-primary"
                 >
                   <Text
@@ -800,9 +838,9 @@ export default function DirectoryScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
-            </Pressable>
+            </View>
           </Animated.View>
-        </Pressable>
+        </View>
       </Modal>
     </View>
   );
