@@ -12,8 +12,6 @@ import {
 } from 'react-native';
 import {
   Camera,
-  ChevronDown,
-  ChevronUp,
   Flag,
   Heart,
   MapPin,
@@ -282,12 +280,20 @@ export function MapPointBottomSheet({
     outputRange: [capFabLift, capFabLift, peekFabLift, 0],
     extrapolate: 'clamp',
   });
+  const fadeEndOffset = Math.max(capOffsetForFab, Math.round(safePeekOffsetForFab * 0.55));
+  const fadeStartOffset = Math.max(fadeEndOffset + 1, Math.round(safePeekOffsetForFab * 0.88));
+  const fabOpacity = translateY.interpolate({
+    inputRange: [0, fadeEndOffset, fadeStartOffset, closedOffset],
+    outputRange: [0, 0, 1, 1],
+    extrapolate: 'clamp',
+  });
 
   return (
     <>
       <QuickPublishFAB
         baseBottom={16}
         animatedTranslateY={fabTranslateY}
+        animatedOpacity={fabOpacity}
         zIndex={35}
         pointerEvents={isExpanded ? 'none' : 'auto'}
       />
@@ -322,41 +328,21 @@ export function MapPointBottomSheet({
 
         {/* Top Badge + Actions */}
         <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2">
-            <View
-              className="flex-row items-center rounded-full px-3 py-1"
-              style={{ backgroundColor: meta.bg }}
+          <View
+            className="flex-row items-center rounded-full px-3 py-1"
+            style={{ backgroundColor: meta.bg }}
+          >
+            <TypeIcon size={14} color={meta.color} />
+            <Text
+              className="ml-1.5"
+              style={{
+                fontFamily: 'PlusJakartaSans_700Bold',
+                fontSize: 12,
+                color: meta.color,
+              }}
             >
-              <TypeIcon size={14} color={meta.color} />
-              <Text
-                className="ml-1.5"
-                style={{
-                  fontFamily: 'PlusJakartaSans_700Bold',
-                  fontSize: 12,
-                  color: meta.color,
-                }}
-              >
-                {tp(`public.type.${listingType}`)}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={() => snapTo(isExpanded ? 'peek' : 'expanded')}
-              className="flex-row items-center rounded-full bg-neutral-mutedBg px-2.5 py-1"
-            >
-              {isExpanded ? (
-                <ChevronDown size={14} color="#6C727A" />
-              ) : (
-                <ChevronUp size={14} color="#6C727A" />
-              )}
-              <Text
-                className="ml-1 text-neutral-textMuted"
-                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11.5 }}
-              >
-                {isExpanded ? 'Minimizar' : 'Desliza'}
-              </Text>
-            </TouchableOpacity>
+              {tp(`public.type.${listingType}`)}
+            </Text>
           </View>
 
           <View className="flex-row items-center gap-1.5">
