@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -22,6 +25,7 @@ interface Props {
   post: SolidaryPost | null;
   currentUserId: string | null;
   pointPosts?: SolidaryPost[];
+  showBackdrop?: boolean;
   onSelectPointPost?: (post: SolidaryPost) => void;
   onClose: () => void;
 }
@@ -31,13 +35,60 @@ export function SolidaryActionSheet({
   post,
   currentUserId,
   pointPosts = [],
+  showBackdrop = false,
   onSelectPointPost,
   onClose,
 }: Props) {
   const { t, tCategory } = useI18n();
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState('');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView> | null>(null);
   const { comments, addComment, acceptSupport } = useSolidaryComments(post?.id ?? null);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates?.height ?? 0);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (post && showBackdrop) {
+      backdropOpacity.setValue(0);
+      Animated.timing(backdropOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      backdropOpacity.setValue(0);
+    }
+  }, [post, showBackdrop, backdropOpacity]);
+
+  const handleClose = () => {
+    if (showBackdrop) {
+      Animated.timing(backdropOpacity, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }).start(() => onClose());
+    } else {
+      onClose();
+    }
+  };
 
   if (!post) return null;
 
@@ -63,16 +114,29 @@ export function SolidaryActionSheet({
     );
   };
 
+  const bottomPadding =
+    Platform.OS === 'android' && keyboardHeight > 0
+      ? keyboardHeight + 10
+      : Math.max(insets.bottom + 14, 24);
+
   return (
-    <Modal visible={Boolean(post)} animationType="slide" transparent onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        className="flex-1 justify-end"
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <View
-          className="bg-neutral-background rounded-t-3xl max-h-[88%] px-4 pt-5 border-t border-neutral-border shadow-2xl"
-          style={{ paddingBottom: Math.max(insets.bottom + 14, 24) }}
+    <Modal visible={Boolean(post)} animationType="slide" transparent onRequestClose={handleClose}>
+      <View className="flex-1 justify-end">
+        {showBackdrop && (
+          <Animated.View
+            style={{ opacity: backdropOpacity }}
+            className="absolute inset-0 bg-black/45"
+          />
+        )}
+        <KeyboardAvoidingView
+          className="flex-1 justify-end"
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
+          <Pressable className="flex-1" onPress={handleClose} />
+          <View
+            className="bg-neutral-background rounded-t-3xl max-h-[88%] px-4 pt-5 border-t border-neutral-border shadow-2xl"
+            style={{ paddingBottom: bottomPadding }}
+          >
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-1 mr-3">
               <Text
@@ -91,14 +155,14 @@ export function SolidaryActionSheet({
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel={t('common.closeModal')}
-              onPress={onClose}
+              onPress={handleClose}
               className="min-w-[48px] min-h-[48px] rounded-2xl bg-neutral-surface border border-neutral-border items-center justify-center"
             >
               <X size={20} color="#1A1D20" />
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {pointPosts.length > 1 && onSelectPointPost && (
               <View className="mb-3">
                 <Text
@@ -310,8 +374,9 @@ export function SolidaryActionSheet({
               </TouchableOpacity>
             </View>
           )}
-        </View>
-      </KeyboardAvoidingView>
+          </View>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }

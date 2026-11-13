@@ -680,6 +680,7 @@ export default function SolidaryFeedScreen() {
         post={selectedPost}
         currentUserId={profile?.id ?? null}
         pointPosts={selectedPointPosts}
+        showBackdrop={selectedPointPosts.length === 0}
         onSelectPointPost={(post) => setSelectedPostId(post.id)}
         onClose={() => {
           setSelectedPostId(null);
