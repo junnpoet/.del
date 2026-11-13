@@ -269,14 +269,10 @@ export default function DirectoryScreen() {
     }
 
     if (session.user.id === service.provider_id) {
-      Alert.alert(
-        'Tu propia publicación',
-        'Puedes responder a tus vecinos desde la bandeja de Mensajes.',
-        [
-          { text: tp('public.inboxButton'), onPress: () => router.push('/chat') },
-          { text: 'Cerrar', style: 'cancel' },
-        ]
-      );
+      router.push({
+        pathname: '/chat',
+        params: { serviceId: service.service_id, serviceTitle: service.title },
+      });
       return;
     }
 
@@ -586,6 +582,7 @@ export default function DirectoryScreen() {
           renderItem={({ item }) => (
             <ServiceCard
               service={item}
+              isOwn={Boolean(session?.user?.id && item.provider_id === session.user.id)}
               isFavorite={directory.favorites.includes(item.service_id)}
               onToggleFavorite={() => directory.toggleFavorite(item.service_id)}
               onConsult={() => handleConsult(item)}

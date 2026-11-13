@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeft,
   ChevronRight,
@@ -31,6 +31,10 @@ function formatRelativeTime(iso: string | null): string {
 
 export function ChatInboxScreen() {
   const router = useRouter();
+  const { serviceId, serviceTitle: filteredServiceTitle } = useLocalSearchParams<{
+    serviceId?: string;
+    serviceTitle?: string;
+  }>();
   const insets = useSafeAreaInsets();
   const { tp } = usePublicI18n();
   const {
@@ -44,14 +48,17 @@ export function ChatInboxScreen() {
 
   const filtered = useMemo(() => {
     if (!currentUserId) return [];
+    const byService = serviceId
+      ? conversations.filter((c) => c.service_id === serviceId)
+      : conversations;
     if (roleFilter === 'PROVIDER') {
-      return conversations.filter((c) => c.provider_id === currentUserId);
+      return byService.filter((c) => c.provider_id === currentUserId);
     }
     if (roleFilter === 'CLIENT') {
-      return conversations.filter((c) => c.client_id === currentUserId);
+      return byService.filter((c) => c.client_id === currentUserId);
     }
-    return conversations;
-  }, [conversations, currentUserId, roleFilter]);
+    return byService;
+  }, [conversations, currentUserId, roleFilter, serviceId]);
 
   const filterTabs: { key: RoleFilter; label: string }[] = [
     { key: 'ALL', label: tp('inbox.filterAll') },
@@ -186,10 +193,13 @@ export function ChatInboxScreen() {
               {tp('inbox.title')}
             </Text>
             <Text
+              numberOfLines={1}
               className="text-neutral-textMuted"
               style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
             >
-              {tp('inbox.subtitle')}
+              {serviceId
+                ? `Chats de: ${filteredServiceTitle ?? 'esta publicación'}`
+                : tp('inbox.subtitle')}
             </Text>
           </View>
         </View>

@@ -32,6 +32,7 @@ export const LISTING_TYPE_META: Record<
 
 interface ServiceCardProps {
   service: NearbyService;
+  isOwn?: boolean;
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onConsult: () => void;
@@ -43,6 +44,7 @@ interface ServiceCardProps {
 
 export function ServiceCard({
   service,
+  isOwn = false,
   isFavorite,
   onToggleFavorite,
   onConsult,
@@ -84,30 +86,45 @@ export function ServiceCard({
         </View>
 
         <View className="flex-row items-center gap-1.5">
-          {onReport && (
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={tp('public.reportA11y', { name: service.provider_name })}
-              onPress={onReport}
-              className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
-            >
-              <Flag size={18} color="#6C727A" />
-            </TouchableOpacity>
+          {isOwn ? (
+            onEdit && (
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Edición"
+                onPress={onEdit}
+                className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
+              >
+                <Pencil size={18} color="#1A1D20" />
+              </TouchableOpacity>
+            )
+          ) : (
+            <>
+              {onReport && (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel={tp('public.reportA11y', { name: service.provider_name })}
+                  onPress={onReport}
+                  className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
+                >
+                  <Flag size={18} color="#6C727A" />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={isFavorite ? t('service.favRemove') : t('service.favAdd')}
+                accessibilityState={{ busy: isTogglingFavorite }}
+                disabled={isTogglingFavorite}
+                onPress={onToggleFavorite}
+                className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
+              >
+                <Heart
+                  size={20}
+                  color={isFavorite ? '#D90429' : '#6C727A'}
+                  fill={isFavorite ? '#D90429' : 'none'}
+                />
+              </TouchableOpacity>
+            </>
           )}
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={isFavorite ? t('service.favRemove') : t('service.favAdd')}
-            accessibilityState={{ busy: isTogglingFavorite }}
-            disabled={isTogglingFavorite}
-            onPress={onToggleFavorite}
-            className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
-          >
-            <Heart
-              size={20}
-              color={isFavorite ? '#D90429' : '#6C727A'}
-              fill={isFavorite ? '#D90429' : 'none'}
-            />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -177,35 +194,20 @@ export function ServiceCard({
             ({service.reviews_total ?? 0})
           </Text>
         </View>
-        <View className="flex-row items-center">
-          <MapPin size={15} color="#6C727A" />
-          <Text
-            className="ml-1 text-neutral-textMuted"
-            style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}
-          >
-            {t('service.distance', { n: Math.round(service.distance_meters) })}
-          </Text>
-        </View>
+        {!isOwn && (
+          <View className="flex-row items-center">
+            <MapPin size={15} color="#6C727A" />
+            <Text
+              className="ml-1 text-neutral-textMuted"
+              style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}
+            >
+              {t('service.distance', { n: Math.round(service.distance_meters) })}
+            </Text>
+          </View>
+        )}
       </View>
 
       <View className="mt-4 flex-row items-center gap-2">
-        {onEdit && (
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={onEdit}
-            className="min-h-[48px] flex-row items-center justify-center rounded-2xl border border-neutral-border bg-neutral-mutedBg px-3.5"
-          >
-            <Pencil size={15} color="#1A1D20" />
-            <Text
-              numberOfLines={1}
-              className="ml-1.5 text-neutral-textMain"
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13.5 }}
-            >
-              Edición
-            </Text>
-          </TouchableOpacity>
-        )}
-
         {onViewMore && (
           <TouchableOpacity
             accessibilityRole="button"
@@ -224,7 +226,9 @@ export function ServiceCard({
 
         <TouchableOpacity
           accessibilityRole="button"
-          accessibilityLabel={t('service.consultA11y', { name: service.provider_name })}
+          accessibilityLabel={
+            isOwn ? 'Ver Chats' : t('service.consultA11y', { name: service.provider_name })
+          }
           onPress={onConsult}
           className="min-h-[48px] flex-1 flex-row items-center justify-center rounded-2xl bg-primary px-4"
         >
@@ -234,7 +238,7 @@ export function ServiceCard({
             className="ml-2 text-center text-white"
             style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
           >
-            {t('service.consult')}
+            {isOwn ? 'Ver Chats' : t('service.consult')}
           </Text>
         </TouchableOpacity>
       </View>
