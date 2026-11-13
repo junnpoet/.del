@@ -2,9 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
+  Archive,
   Check,
   CheckCircle,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Clock,
   Gift,
@@ -15,6 +17,7 @@ import {
   LogIn,
   Map as MapIcon,
   Megaphone,
+  Pin,
   Repeat,
   Settings,
   Users,
@@ -42,7 +45,13 @@ import {
 } from '../hooks/useSolidaryFeed';
 import { useCareNetwork } from '../hooks/useCareNetwork';
 import { useJoinRequests } from '../hooks/useLeaderDashboard';
-import { useActiveEmergency, useZoneEmergency } from '../../emergency/hooks/useEmergencyRealtime';
+import {
+  useActiveEmergency,
+  usePastEmergencies,
+  useZoneEmergency,
+} from '../../emergency/hooks/useEmergencyRealtime';
+import { EmergencySupportGroupsModal } from '../components/EmergencySupportGroupsModal';
+import { SolidaryArchiveModal } from '../components/SolidaryArchiveModal';
 import { SolidaryPostCard } from '../components/SolidaryPostCard';
 import { CommunityActionCard } from '../components/CommunityActionCard';
 import { CareVolunteerCard } from '../components/CareVolunteerCard';
@@ -77,6 +86,8 @@ export default function SolidaryFeedScreen() {
   const [filter, setFilter] = useState<FeedFilter>('TODOS');
   const [filterOpen, setFilterOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [supportGroupsOpen, setSupportGroupsOpen] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   const feed = useSolidaryFeed(isMember);
@@ -86,15 +97,23 @@ export default function SolidaryFeedScreen() {
   const care = useCareNetwork(isMember);
   const { zoneEmergency } = useZoneEmergency();
   const { resolveEmergency } = useActiveEmergency(profile?.group_id);
+  const { pastEvents: pastEmergencies, refetch: refetchPastEmergencies } = usePastEmergencies(
+    profile?.group_id
+  );
   const { requests } = useJoinRequests(isLeader);
   const canSeeCareLayer = isLeader || isPadrino || care.assignments.length > 0;
   const pendingRequests = requests.data?.length ?? 0;
 
-  // Filtrado en memoria: cambiar de chip no recarga ni vuelve a consultar.
+  // Filtrado en memoria: activas en el muro y resueltas en Archivo.
   const posts = useMemo(() => {
     const all = feed.data ?? [];
-    return all.filter((post) => matchesFeedFilter(post.postType, filter));
+    return all.filter((post) => post.status !== 'RESOLVED' && matchesFeedFilter(post.postType, filter));
   }, [feed.data, filter]);
+
+  const resolvedPosts = useMemo(() => {
+    const all = feed.data ?? [];
+    return all.filter((post) => post.status === 'RESOLVED');
+  }, [feed.data]);
 
   const selectedPost = useMemo(
     () => (selectedPostId ? (feed.data ?? []).find((p) => p.id === selectedPostId) ?? null : null),
@@ -152,7 +171,10 @@ export default function SolidaryFeedScreen() {
                 '¿Confirmas que la emergencia en tu zona ha terminado?',
                 'Finalizar'
               );
-              if (ok) await resolveEmergency(zoneEmergency.id);
+              if (ok) {
+                await resolveEmergency(zoneEmergency.id);
+                void refetchPastEmergencies();
+              }
             }}
             className="min-h-[44px] rounded-2xl border border-red-300 bg-white px-3 items-center justify-center"
           >
@@ -277,8 +299,24 @@ export default function SolidaryFeedScreen() {
       )}
 
       <View className="px-4 pt-4 flex-1">
-        {/* Accesos comunitarios: Red de Cuidado Vecinal y Anuncios */}
-        <View className="flex-row gap-2 mb-3">
+        {/* Accesos comunitarios: Anuncios (solo ícono), Red de Cuidado Vecinal y Archivo */}
+        <View className="flex-row items-center gap-2 mb-3">
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('feed.newsButtonA11y')}
+            onPress={handleOpenNews}
+            className="w-11 h-11 rounded-2xl border border-neutral-border bg-neutral-surface items-center justify-center relative"
+          >
+            <Megaphone size={18} color="#1E5E45" />
+            {unreadCount > 0 && (
+              <View className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-emergency-alert items-center justify-center">
+                <Text className="text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 10.5 }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
           {canSeeCareLayer && (
             <TouchableOpacity
               accessibilityRole="button"
@@ -296,99 +334,91 @@ export default function SolidaryFeedScreen() {
               </Text>
             </TouchableOpacity>
           )}
+
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel={t('feed.newsButtonA11y')}
-            onPress={handleOpenNews}
-            className={`${canSeeCareLayer ? 'px-4' : 'flex-1'} min-h-[44px] flex-row items-center justify-center rounded-2xl border border-neutral-border bg-neutral-surface py-2 relative`}
+            accessibilityLabel="Archivo"
+            onPress={() => {
+              void refetchPastEmergencies();
+              setArchiveOpen(true);
+            }}
+            className={`${canSeeCareLayer ? 'px-3.5' : 'flex-1'} min-h-[44px] flex-row items-center justify-center rounded-2xl border border-neutral-border bg-neutral-surface py-2`}
           >
-            <Megaphone size={16} color="#1E5E45" />
+            <Archive size={16} color="#4B5563" />
             <Text
               numberOfLines={1}
-              className="ml-2 text-neutral-textMain"
+              className="ml-1.5 text-neutral-textMain"
               style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12.5 }}
             >
-              Anuncios
+              Archivo
             </Text>
-            {unreadCount > 0 && (
-              <View className="ml-1.5 min-w-[20px] h-5 px-1.5 rounded-full bg-emergency-alert items-center justify-center">
-                <Text className="text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}>
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </Text>
-              </View>
-            )}
           </TouchableOpacity>
         </View>
 
-        {/* Selector [ Muro Feed | Mapa Barrial ] */}
-        <View className="flex-row bg-neutral-mutedBg p-1 rounded-2xl mb-3">
-          {(
-            [
-              { key: 'feed', label: t('community.feed'), Icon: LayoutGrid },
-              { key: 'map', label: t('community.map'), Icon: MapIcon },
-            ] as const
-          ).map(({ key, label, Icon }) => {
-            const active = view === key;
-            return (
-              <TouchableOpacity
-                key={key}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-                onPress={() => setView(key)}
-                className={`flex-1 flex-row items-center justify-center min-h-[48px] rounded-xl ${
-                  active ? 'bg-neutral-surface' : ''
-                }`}
-              >
-                <Icon size={16} color={active ? '#1A1D20' : '#6C727A'} strokeWidth={2} />
-                <Text
-                  className={`ml-1.5 ${active ? 'text-neutral-textMain' : 'text-neutral-textMuted'}`}
-                  style={{
-                    fontFamily: active ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
-                    fontSize: 14,
-                  }}
-                >
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Lista desplegable de categorías de publicaciones */}
+        {/* Fila de Categorías (desplegable) + Selector Muro / Mapa (solo ícono) */}
         <View className="mb-3">
-          {(() => {
-            const SelectedIcon = FILTER_ICONS[filter];
-            const selectedMeta = FEED_FILTER_META[filter];
-            return (
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityState={{ expanded: filterOpen }}
-                onPress={() => setFilterOpen((prev) => !prev)}
-                className="min-h-[48px] flex-row items-center justify-between rounded-2xl border border-neutral-border bg-neutral-surface px-3.5 py-2"
-              >
-                <View className="flex-row items-center flex-1 mr-2">
-                  <View
-                    className="w-8 h-8 rounded-xl items-center justify-center mr-2.5"
-                    style={{ backgroundColor: selectedMeta.tint }}
+          <View className="flex-row items-center gap-2">
+            <View className="flex-1">
+              {(() => {
+                const SelectedIcon = FILTER_ICONS[filter];
+                const selectedMeta = FEED_FILTER_META[filter];
+                return (
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: filterOpen }}
+                    onPress={() => setFilterOpen((prev) => !prev)}
+                    className="min-h-[46px] flex-row items-center justify-between rounded-2xl border border-neutral-border bg-neutral-surface px-3 py-1.5"
                   >
-                    <SelectedIcon size={16} color={selectedMeta.color} strokeWidth={2.2} />
-                  </View>
-                  <Text
-                    numberOfLines={1}
-                    className="text-neutral-textMain"
-                    style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13.5 }}
+                    <View className="flex-row items-center flex-1 mr-2">
+                      <View
+                        className="w-8 h-8 rounded-xl items-center justify-center mr-2.5"
+                        style={{ backgroundColor: selectedMeta.tint }}
+                      >
+                        <SelectedIcon size={16} color={selectedMeta.color} strokeWidth={2.2} />
+                      </View>
+                      <Text
+                        numberOfLines={1}
+                        className="text-neutral-textMain"
+                        style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13.5 }}
+                      >
+                        {t(feedFilterKey(filter))}
+                      </Text>
+                    </View>
+                    {filterOpen ? (
+                      <ChevronUp size={18} color="#6C727A" />
+                    ) : (
+                      <ChevronDown size={18} color="#6C727A" />
+                    )}
+                  </TouchableOpacity>
+                );
+              })()}
+            </View>
+
+            <View className="flex-row items-center bg-neutral-mutedBg p-1 rounded-2xl">
+              {(
+                [
+                  { key: 'feed', label: t('community.feed'), Icon: LayoutGrid },
+                  { key: 'map', label: t('community.map'), Icon: MapIcon },
+                ] as const
+              ).map(({ key, label, Icon }) => {
+                const active = view === key;
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    accessibilityRole="tab"
+                    accessibilityLabel={label}
+                    accessibilityState={{ selected: active }}
+                    onPress={() => setView(key)}
+                    className={`w-10 h-10 items-center justify-center rounded-xl ${
+                      active ? 'bg-neutral-surface' : ''
+                    }`}
                   >
-                    {t(feedFilterKey(filter))}
-                  </Text>
-                </View>
-                {filterOpen ? (
-                  <ChevronUp size={18} color="#6C727A" />
-                ) : (
-                  <ChevronDown size={18} color="#6C727A" />
-                )}
-              </TouchableOpacity>
-            );
-          })()}
+                    <Icon size={18} color={active ? '#1A1D20' : '#6C727A'} strokeWidth={2.1} />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
 
           {filterOpen && (
             <View className="mt-1.5 rounded-2xl border border-neutral-border bg-neutral-surface p-1.5 shadow-sm">
@@ -440,6 +470,51 @@ export default function SolidaryFeedScreen() {
             contentContainerClassName="pb-28 pt-1"
             refreshControl={<RefreshControl refreshing={feed.isRefetching} onRefresh={() => void feed.refetch()} />}
           >
+            {zoneEmergency && (
+              <TouchableOpacity
+                accessibilityRole="button"
+                activeOpacity={0.88}
+                onPress={() => setSupportGroupsOpen(true)}
+                className="mb-3 rounded-2xl border border-red-200 bg-[#FFF1F2] p-4"
+              >
+                <View className="flex-row items-center justify-between mb-2">
+                  <View className="flex-row items-center rounded-xl bg-red-600 px-2.5 py-1">
+                    <Pin size={12} color="#FFFFFF" />
+                    <Text
+                      className="ml-1.5 text-white uppercase tracking-wider"
+                      style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 10.5 }}
+                    >
+                      Publicación fijada · Emergencia en curso
+                    </Text>
+                  </View>
+                </View>
+                <Text
+                  className="text-[#7F1D1D]"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 }}
+                >
+                  Grupos de apoyo · {zoneEmergency.event_type}
+                </Text>
+                {zoneEmergency.description ? (
+                  <Text
+                    numberOfLines={2}
+                    className="text-[#991B1B] mt-1"
+                    style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
+                  >
+                    {zoneEmergency.description}
+                  </Text>
+                ) : null}
+                <View className="mt-3 pt-2.5 border-t border-red-200 flex-row items-center justify-between">
+                  <Text
+                    className="text-[#B91C1C]"
+                    style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
+                  >
+                    Abrir grupos de apoyo de la emergencia
+                  </Text>
+                  <ChevronRight size={16} color="#B91C1C" />
+                </View>
+              </TouchableOpacity>
+            )}
+
             {feed.isLoading ? (
               <StateMessage loading title={t('community.loadingFeed')} />
             ) : feed.isError ? (
@@ -539,6 +614,25 @@ export default function SolidaryFeedScreen() {
       </View>
 
       <NeighborhoodNewsModal visible={newsOpen} onClose={() => setNewsOpen(false)} />
+      <EmergencySupportGroupsModal
+        visible={supportGroupsOpen}
+        onClose={() => setSupportGroupsOpen(false)}
+        eventId={zoneEmergency?.id}
+        eventType={zoneEmergency?.event_type}
+        description={zoneEmergency?.description}
+      />
+      <SolidaryArchiveModal
+        visible={archiveOpen}
+        onClose={() => setArchiveOpen(false)}
+        resolvedPosts={resolvedPosts}
+        pastEmergencies={pastEmergencies}
+        currentUserId={profile?.id ?? null}
+        onCoordinate={(post) => {
+          setArchiveOpen(false);
+          setSelectedPostId(post.id);
+        }}
+        onToggleVolunteer={(post, joined) => handleToggleVolunteer(post, joined)}
+      />
       <SolidaryActionSheet
         post={selectedPost}
         currentUserId={profile?.id ?? null}

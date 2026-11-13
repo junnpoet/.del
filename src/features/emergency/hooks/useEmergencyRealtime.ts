@@ -84,6 +84,45 @@ export function useActiveEmergency(groupId: string | null | undefined) {
   return { activeEvent, loading, refetch: fetchActive, resolveEmergency };
 }
 
+/**
+ * Consulta emergencias pasadas (finalizadas) de la comunidad para el Archivo.
+ */
+export function usePastEmergencies(groupId: string | null | undefined) {
+  const [pastEvents, setPastEvents] = useState<EmergencyEventRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchPast = useCallback(async () => {
+    if (!groupId) {
+      setPastEvents([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('emergency_events')
+        .select('*')
+        .eq('group_id', groupId)
+        .eq('status', 'RESOLVED')
+        .order('activated_at', { ascending: false })
+        .limit(20);
+
+      if (!error && data) {
+        setPastEvents(data);
+      }
+    } catch {
+      // Fallback silencioso
+    } finally {
+      setLoading(false);
+    }
+  }, [groupId]);
+
+  useEffect(() => {
+    void fetchPast();
+  }, [fetchPast]);
+
+  return { pastEvents, loading, refetch: fetchPast };
+}
+
 export interface ZoneEmergencyInfo {
   id: string;
   group_id: string;
