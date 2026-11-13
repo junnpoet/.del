@@ -111,10 +111,10 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View className="flex-1 bg-neutral-background">
+    <View className="flex-1 bg-neutral-background" collapsable={false}>
       <Header title={t('profile.title')} subtitle={t('profile.subtitle')} />
 
-      <ScrollView contentContainerClassName="p-4 pb-28">
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 112 }}>
         {/* Active User Card */}
         <Card className="p-4 mb-3 flex-row items-center shadow-sm">
           <View className="w-14 h-14 rounded-full bg-neutral-mutedBg items-center justify-center mr-3.5">

@@ -13,6 +13,7 @@ export default function MainLayout() {
   return (
     <View className="flex-1 bg-neutral-background">
       <Tabs
+        detachInactiveScreens={false}
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: '#1A1D20',
