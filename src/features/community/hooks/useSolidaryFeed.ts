@@ -34,6 +34,7 @@ export interface SolidaryPost {
   contactPhone: string | null;
   coordinates: { latitude: number; longitude: number } | null;
   commentsCount: number;
+  commenterIds: string[];
   volunteers: PostVolunteer[];
   createdAt: string | null;
 }
@@ -65,7 +66,7 @@ export function useSolidaryFeed(enabled: boolean) {
       let query = supabase
         .from('solidary_posts')
         .select(
-          'id, post_type, category, description, urgency, status, is_from_whatsapp, is_ai_voice, target_volunteers, accepted_helper_id, author_id, whatsapp_sender_name, whatsapp_sender_phone, created_at, author:profiles!solidary_posts_author_id_fkey(full_name, phone, home_location), solidary_comments(id), volunteers(id, user_id, role_note, created_at, user:profiles!volunteers_user_id_fkey(full_name))'
+          'id, post_type, category, description, urgency, status, is_from_whatsapp, is_ai_voice, target_volunteers, accepted_helper_id, author_id, whatsapp_sender_name, whatsapp_sender_phone, created_at, author:profiles!solidary_posts_author_id_fkey(full_name, phone, home_location), solidary_comments(id, author_id), volunteers(id, user_id, role_note, created_at, user:profiles!volunteers_user_id_fkey(full_name))'
         )
         .order('created_at', { ascending: false })
         .limit(100);
@@ -93,6 +94,11 @@ export function useSolidaryFeed(enabled: boolean) {
           contactPhone: row.is_from_whatsapp ? row.whatsapp_sender_phone : author?.phone ?? null,
           coordinates: point ? { latitude: point.lat, longitude: point.lng } : null,
           commentsCount: Array.isArray(row.solidary_comments) ? row.solidary_comments.length : 0,
+          commenterIds: Array.isArray(row.solidary_comments)
+            ? row.solidary_comments
+                .map((c) => (c as { author_id?: string | null }).author_id)
+                .filter((id): id is string => Boolean(id))
+            : [],
           volunteers: Array.isArray(row.volunteers)
             ? row.volunteers.map((v) => ({
                 id: v.id,

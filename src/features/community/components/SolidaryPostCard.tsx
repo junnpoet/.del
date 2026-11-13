@@ -168,17 +168,11 @@ export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolve
         {canResolve && !isResolved && (
           <TouchableOpacity
             accessibilityRole="button"
+            accessibilityLabel={t('post.markResolved')}
             onPress={() => onMarkResolved(post)}
-            className="min-h-[48px] items-center justify-center rounded-2xl border border-primary bg-neutral-surface px-3.5 flex-row"
+            className="w-12 h-12 items-center justify-center rounded-2xl border border-primary bg-neutral-surface"
           >
-            <CheckCircle2 size={16} color="#1E5E45" />
-            <Text
-              numberOfLines={1}
-              className="text-primary-dark ml-1.5"
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
-            >
-              {t('post.markResolved')}
-            </Text>
+            <CheckCircle2 size={20} color="#1E5E45" />
           </TouchableOpacity>
         )}
       </View>

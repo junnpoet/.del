@@ -170,17 +170,11 @@ export function CareVolunteerCard({
         {canResolve && !isResolved && (
           <TouchableOpacity
             accessibilityRole="button"
+            accessibilityLabel={t('post.markResolved')}
             onPress={() => onMarkResolved(post)}
-            className="min-h-[48px] px-3.5 bg-neutral-surface border border-primary rounded-2xl flex-row items-center justify-center"
+            className="w-12 h-12 bg-neutral-surface border border-primary rounded-2xl items-center justify-center"
           >
-            <CheckCircle2 size={16} color="#1E5E45" />
-            <Text
-              numberOfLines={1}
-              className="text-primary-dark ml-1.5"
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
-            >
-              {t('post.markResolved')}
-            </Text>
+            <CheckCircle2 size={20} color="#1E5E45" />
           </TouchableOpacity>
         )}
       </View>
