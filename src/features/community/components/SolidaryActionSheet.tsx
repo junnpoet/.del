@@ -130,14 +130,16 @@ export function SolidaryActionSheet({
 
   const windowHeight = Dimensions.get('window').height;
   const isKeyboardOpen = keyboardHeight > 0;
+  const androidKeyboardLift =
+    Platform.OS === 'android' && isKeyboardOpen
+      ? keyboardHeight + Math.max(insets.bottom + 16, 48)
+      : 0;
   const maxSheetHeight = isKeyboardOpen
-    ? Math.max(220, windowHeight - keyboardHeight - insets.top - 28)
+    ? Math.max(200, windowHeight - (Platform.OS === 'android' ? androidKeyboardLift : keyboardHeight) - insets.top - 16)
     : Math.round(windowHeight * 0.84);
   const commentsMaxHeight = isKeyboardOpen
-    ? Math.max(72, maxSheetHeight - 260)
+    ? Math.max(64, maxSheetHeight - 260)
     : Math.min(250, Math.round(windowHeight * 0.32));
-  const androidKeyboardLift =
-    Platform.OS === 'android' && isKeyboardOpen ? keyboardHeight + 12 : 0;
 
   return (
     <Modal visible={Boolean(post)} animationType="none" transparent onRequestClose={handleClose}>
