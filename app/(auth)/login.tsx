@@ -35,6 +35,7 @@ export default function LoginScreen() {
   const [otpSent, setOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRequestingOtp, setIsRequestingOtp] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   const scrollViewRef = useRef<ScrollViewInstance>(null);
   const activeField = useRef<string | null>(null);
@@ -58,11 +59,13 @@ export default function LoginScreen() {
 
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {
+      setIsKeyboardOpen(true);
       if (activeField.current) {
         scrollToField(activeField.current);
       }
     });
     const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      setIsKeyboardOpen(false);
       activeField.current = null;
       scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     });
@@ -145,28 +148,33 @@ export default function LoginScreen() {
       >
         <ScrollView
           ref={scrollViewRef}
-          contentContainerClassName="p-6 justify-center flex-grow"
-          contentContainerStyle={{ paddingBottom: 220, flexGrow: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            paddingHorizontal: 24,
+            paddingTop: 8,
+            paddingBottom: isKeyboardOpen ? 120 : 32,
+          }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           automaticallyAdjustKeyboardInsets={true}
           showsVerticalScrollIndicator={false}
         >
-          <View className="mb-6 items-center">
+          <View className="mb-4 items-center">
             <Image
               source={require('../../assets/images/logo-with-text.png')}
-              style={{ width: 180, height: 180 }}
+              style={{ width: 156, height: 156 }}
               resizeMode="contain"
             />
             <Text
-              className="text-neutral-textMuted -mt-4 text-center"
+              className="text-neutral-textMuted -mt-3 text-center"
               style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
             >
               {t('brand.subtitle')}
             </Text>
           </View>
 
-          <Card className="p-5 mb-6">
+          <Card className="p-5 mb-5">
             <Text
               className="text-neutral-textMain mb-4"
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 20 }}
