@@ -1,5 +1,3 @@
-import { GoogleGenAI, Type } from '@google/genai';
-
 export interface ParsedVoicePost {
   tipo: 'PRESTAMO' | 'DONACION' | 'TRUEQUE' | 'VOLUNTARIADO' | 'AYUDA';
   categoria: string;
@@ -12,6 +10,8 @@ const GEMINI_FLASH_MODELS = [
   'gemini-2.0-flash',
   'gemini-flash-latest',
 ] as const;
+
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 const ALLOWED_POST_TYPES: ReadonlySet<ParsedVoicePost['tipo']> = new Set([
   'PRESTAMO',
@@ -72,55 +72,76 @@ export async function processVoiceToPost(audioBase64: string, mimeType: string =
   }
 
   const normalizedMimeType = normalizeAudioMimeType(mimeType);
-  const ai = new GoogleGenAI({ apiKey });
   let lastError: unknown;
 
   for (const model of GEMINI_FLASH_MODELS) {
     try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { inlineData: { data: audioBase64, mimeType: normalizedMimeType } },
+      const response = await fetch(
+        `${GEMINI_API_BASE}/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(15000),
+          body: JSON.stringify({
+            contents: [
               {
-                text: `Analiza esta nota de voz vecinal en audio para la plataforma barrial Sumayni.
+                role: 'user',
+                parts: [
+                  { inlineData: { data: audioBase64, mimeType: normalizedMimeType } },
+                  {
+                    text: `Analiza esta nota de voz vecinal en audio para la plataforma barrial Sumayni.
 Extrae la intención solidaria clasificándola con exactitud:
 - tipo: PRESTAMO, DONACION, TRUEQUE, VOLUNTARIADO o AYUDA.
 - categoria: rubro breve (ej. Salud, Herramientas, Alimentos, Cuidado, Mascotas).
 - urgencia: BAJA, MEDIA, o ALTA_CRITICA.
 - resumen: síntesis clara y concisa en una o dos oraciones en tercera persona.`,
+                  },
+                ],
               },
             ],
-          },
-        ],
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              tipo: {
-                type: Type.STRING,
-                enum: ['PRESTAMO', 'DONACION', 'TRUEQUE', 'VOLUNTARIADO', 'AYUDA'],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: 'OBJECT',
+                properties: {
+                  tipo: {
+                    type: 'STRING',
+                    enum: ['PRESTAMO', 'DONACION', 'TRUEQUE', 'VOLUNTARIADO', 'AYUDA'],
+                  },
+                  categoria: { type: 'STRING' },
+                  urgencia: {
+                    type: 'STRING',
+                    enum: ['BAJA', 'MEDIA', 'ALTA_CRITICA'],
+                  },
+                  resumen: { type: 'STRING' },
+                },
+                required: ['tipo', 'categoria', 'urgencia', 'resumen'],
               },
-              categoria: { type: Type.STRING },
-              urgencia: {
-                type: Type.STRING,
-                enum: ['BAJA', 'MEDIA', 'ALTA_CRITICA'],
-              },
-              resumen: { type: Type.STRING },
             },
-            required: ['tipo', 'categoria', 'urgencia', 'resumen'],
-          },
-        },
-      });
+          }),
+        }
+      );
 
-      if (!response.text) {
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => '');
+        throw new Error(`Gemini HTTP ${response.status} (${model}): ${errBody.slice(0, 240)}`);
+      }
+
+      const payload = (await response.json()) as {
+        candidates?: Array<{
+          content?: { parts?: Array<{ text?: string }> };
+        }>;
+      };
+      const rawText = payload.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text ?? '')
+        .join('')
+        .trim();
+
+      if (!rawText) {
         throw new Error(`Gemini API returned empty response (${model})`);
       }
 
-      return parseGeminiJson(response.text);
+      return parseGeminiJson(rawText);
     } catch (err) {
       lastError = err;
       console.warn(`[gemini] model ${model} failed, trying fallback:`, err);
