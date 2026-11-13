@@ -93,19 +93,18 @@ function buildLeafletHtml(initialPayloadJson: string): string {
         attributionControl: false
       }).setView([initial.center.latitude, initial.center.longitude], initial.zoom || 15);
 
-      var carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        subdomains: 'abcd'
-      });
       var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19
       });
-      carto.on('tileerror', function () {
-        if (!map.hasLayer(osm)) {
-          osm.addTo(map);
+      var arcgis = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19
+      });
+      osm.on('tileerror', function () {
+        if (!map.hasLayer(arcgis)) {
+          arcgis.addTo(map);
         }
       });
-      carto.addTo(map);
+      osm.addTo(map);
 
       var layerGroup = L.layerGroup().addTo(map);
 
@@ -238,7 +237,7 @@ export function LeafletMap({
       <WebView
         ref={webViewRef as any}
         originWhitelist={['*']}
-        source={{ html: initialHtmlRef.current }}
+        source={{ html: initialHtmlRef.current, baseUrl: 'https://sumayni.app' }}
         javaScriptEnabled
         domStorageEnabled
         scrollEnabled={false}
