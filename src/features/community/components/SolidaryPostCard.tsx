@@ -5,14 +5,13 @@ import {
   Clock,
   MessageCircle,
   Mic,
-  Share2,
   Smartphone,
 } from 'lucide-react-native';
 import { Card } from '../../../components/ui/Card';
 import { useI18n } from '../../../i18n';
 import { POST_STATUS_META, postStatusKey, postTypeKey } from '../constants';
 import type { SolidaryPost } from '../hooks/useSolidaryFeed';
-import { shareViaWhatsapp, timeAgo } from '../utils';
+import { timeAgo } from '../utils';
 
 interface Props {
   post: SolidaryPost;
@@ -29,16 +28,6 @@ export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolve
   const category = tCategory(post.category);
   const statusMeta = POST_STATUS_META[post.status];
   const isResolved = post.status === 'RESOLVED';
-
-  const handleDiffuse = () => {
-    void shareViaWhatsapp(
-      t('post.diffuseText', {
-        type: t(postTypeKey(post.postType)),
-        category,
-        description: post.description,
-      })
-    );
-  };
 
   return (
     <Card className={`mb-3 p-4 ${isResolved ? 'opacity-80' : ''}`}>
@@ -104,26 +93,19 @@ export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolve
         {post.description}
       </Text>
 
-      <View className="pt-2.5 border-t border-neutral-border/50 flex-row flex-wrap gap-2">
+      <View className="pt-2.5 border-t border-neutral-border/50 flex-row items-center gap-2">
         <TouchableOpacity
           accessibilityRole="button"
           onPress={() => onCoordinate(post)}
-          className="flex-1 min-w-[150px] min-h-[48px] px-3.5 bg-primary rounded-xl flex-row items-center justify-center"
+          className="flex-1 min-h-[48px] px-3 bg-primary rounded-xl flex-row items-center justify-center"
         >
-          <MessageCircle size={17} color="#FFFFFF" />
-          <Text className="text-white ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}>
+          <MessageCircle size={16} color="#FFFFFF" />
+          <Text
+            numberOfLines={1}
+            className="text-white ml-1.5"
+            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12.5 }}
+          >
             {t('post.coordinate', { n: post.commentsCount })}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          accessibilityRole="button"
-          onPress={handleDiffuse}
-          className="min-h-[48px] px-3.5 bg-neutral-mutedBg rounded-xl flex-row items-center justify-center"
-        >
-          <Share2 size={16} color="#1A1D20" />
-          <Text className="text-neutral-textMain ml-1.5" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}>
-            {t('post.diffuse')}
           </Text>
         </TouchableOpacity>
 
@@ -131,10 +113,14 @@ export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolve
           <TouchableOpacity
             accessibilityRole="button"
             onPress={() => onMarkResolved(post)}
-            className="min-h-[48px] px-3.5 bg-neutral-surface border border-primary rounded-xl flex-row items-center justify-center"
+            className="min-h-[48px] px-3 bg-neutral-surface border border-primary rounded-xl flex-row items-center justify-center"
           >
             <CheckCircle2 size={16} color="#1E5E45" />
-            <Text className="text-primary-dark ml-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}>
+            <Text
+              numberOfLines={1}
+              className="text-primary-dark ml-1.5"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12.5 }}
+            >
               {t('post.markResolved')}
             </Text>
           </TouchableOpacity>
