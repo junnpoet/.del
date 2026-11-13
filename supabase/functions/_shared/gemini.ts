@@ -14,6 +14,12 @@ const GEMINI_FLASH_MODELS = [
 ] as const;
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const GROQ_API_BASE = 'https://api.groq.com/openai/v1';
+const GROQ_CHAT_MODELS = [
+  'qwen/qwen3-32b',
+  'llama-3.3-70b-versatile',
+  'llama-3.1-8b-instant',
+] as const;
 
 const ALLOWED_POST_TYPES: ReadonlySet<ParsedVoicePost['tipo']> = new Set([
   'PRESTAMO',
@@ -40,8 +46,29 @@ function normalizeAudioMimeType(mimeType?: string): string {
   return base;
 }
 
-function parseGeminiJson(rawText: string): ParsedVoicePost {
+function mimeTypeToExtension(mimeType: string): string {
+  if (mimeType === 'audio/wav') return 'wav';
+  if (mimeType === 'audio/ogg') return 'ogg';
+  if (mimeType === 'audio/webm') return 'webm';
+  if (mimeType === 'audio/mpeg') return 'mp3';
+  if (mimeType === 'audio/aac') return 'aac';
+  if (mimeType === 'audio/flac') return 'flac';
+  if (mimeType === 'audio/mp4') return 'mp4';
+  return 'm4a';
+}
+
+function base64ToUint8Array(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+function parseStructuredPostJson(rawText: string): ParsedVoicePost {
   const cleaned = rawText
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
     .trim()
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```$/i, '')
@@ -50,7 +77,7 @@ function parseGeminiJson(rawText: string): ParsedVoicePost {
   const parsed = JSON.parse(cleaned) as Partial<ParsedVoicePost>;
   const resumen = typeof parsed.resumen === 'string' ? parsed.resumen.trim() : '';
   if (!resumen) {
-    throw new Error('Gemini API response missing resumen');
+    throw new Error('Model response missing resumen');
   }
 
   const tipo = ALLOWED_POST_TYPES.has(parsed.tipo as ParsedVoicePost['tipo'])
@@ -67,14 +94,112 @@ function parseGeminiJson(rawText: string): ParsedVoicePost {
   return { tipo, categoria, urgencia, resumen };
 }
 
-export async function processVoiceToPost(audioBase64: string, mimeType: string = 'audio/ogg'): Promise<ParsedVoicePost> {
-  const apiKey = Deno.env.get('GEMINI_API_KEY');
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY environment variable is not set');
+async function processVoiceWithGroq(
+  audioBase64: string,
+  normalizedMimeType: string,
+  groqKey: string
+): Promise<ParsedVoicePost> {
+  const bytes = base64ToUint8Array(audioBase64);
+  const audioCopy = new Uint8Array(bytes.byteLength);
+  audioCopy.set(bytes);
+  const ext = mimeTypeToExtension(normalizedMimeType);
+  const form = new FormData();
+  form.append('file', new Blob([audioCopy], { type: normalizedMimeType }), `voice.${ext}`);
+  form.append('model', 'whisper-large-v3-turbo');
+  form.append('language', 'es');
+  form.append('response_format', 'json');
+
+  const sttRes = await fetch(`${GROQ_API_BASE}/audio/transcriptions`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${groqKey}` },
+    signal: AbortSignal.timeout(15000),
+    body: form,
+  });
+
+  if (!sttRes.ok) {
+    const errBody = await sttRes.text().catch(() => '');
+    throw new Error(`Groq Whisper HTTP ${sttRes.status}: ${errBody.slice(0, 240)}`);
   }
 
+  const sttJson = (await sttRes.json()) as { text?: string };
+  const transcript = typeof sttJson.text === 'string' ? sttJson.text.trim() : '';
+  if (!transcript) {
+    throw new Error('Groq Whisper returned empty transcript');
+  }
+
+  for (const model of GROQ_CHAT_MODELS) {
+    try {
+      const chatRes = await fetch(`${GROQ_API_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${groqKey}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(15000),
+        body: JSON.stringify({
+          model,
+          temperature: 0.2,
+          response_format: { type: 'json_object' },
+          messages: [
+            {
+              role: 'system',
+              content:
+                'Eres el asistente de la plataforma barrial Sumayni. Responde únicamente con un objeto JSON válido con las claves: tipo (PRESTAMO, DONACION, TRUEQUE, VOLUNTARIADO o AYUDA), categoria (rubro breve), urgencia (BAJA, MEDIA o ALTA_CRITICA) y resumen (síntesis clara en 1 o 2 oraciones).',
+            },
+            {
+              role: 'user',
+              content: `Transcripción de nota de voz vecinal:\n"${transcript}"`,
+            },
+          ],
+        }),
+      });
+
+      if (!chatRes.ok) {
+        const errBody = await chatRes.text().catch(() => '');
+        throw new Error(`Groq Chat HTTP ${chatRes.status} (${model}): ${errBody.slice(0, 240)}`);
+      }
+
+      const chatJson = (await chatRes.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      const content = chatJson.choices?.[0]?.message?.content?.trim() ?? '';
+      if (!content) {
+        throw new Error(`Groq Chat empty response (${model})`);
+      }
+
+      return parseStructuredPostJson(content);
+    } catch (err) {
+      console.warn(`[groq] model ${model} failed, trying fallback:`, err);
+    }
+  }
+
+  return {
+    tipo: 'AYUDA',
+    categoria: 'General',
+    urgencia: 'MEDIA',
+    resumen: transcript,
+  };
+}
+
+export async function processVoiceToPost(audioBase64: string, mimeType: string = 'audio/ogg'): Promise<ParsedVoicePost> {
   const normalizedMimeType = normalizeAudioMimeType(mimeType);
+  const groqKey = Deno.env.get('GROQ_API_KEY');
+  const apiKey = Deno.env.get('GEMINI_API_KEY');
   let lastError: unknown;
+
+  if (groqKey) {
+    try {
+      return await processVoiceWithGroq(audioBase64, normalizedMimeType, groqKey);
+    } catch (err) {
+      lastError = err;
+      console.warn('[voice] Groq failed, trying Gemini fallback:', err);
+    }
+  }
+
+  if (!apiKey) {
+    if (lastError instanceof Error) throw lastError;
+    throw new Error('Neither GROQ_API_KEY nor GEMINI_API_KEY environment variable is set');
+  }
 
   for (const model of GEMINI_FLASH_MODELS) {
     try {
@@ -146,7 +271,7 @@ Extrae la intención solidaria clasificándola con exactitud:
         throw new Error(`Gemini API returned empty response (${model})`);
       }
 
-      return parseGeminiJson(rawText);
+      return parseStructuredPostJson(rawText);
     } catch (err) {
       lastError = err;
       console.warn(`[gemini] model ${model} failed, trying fallback:`, err);
