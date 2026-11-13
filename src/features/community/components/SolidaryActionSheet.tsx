@@ -131,8 +131,12 @@ export function SolidaryActionSheet({
   const windowHeight = Dimensions.get('window').height;
   const maxSheetHeight =
     keyboardHeight > 0
-      ? Math.max(260, windowHeight - keyboardHeight - insets.top - 24)
-      : Math.round(windowHeight * 0.86);
+      ? Math.max(240, windowHeight - keyboardHeight - insets.top - 16)
+      : Math.round(windowHeight * 0.84);
+  const commentsMaxHeight =
+    keyboardHeight > 0
+      ? Math.max(88, maxSheetHeight - 250)
+      : Math.min(250, Math.round(windowHeight * 0.32));
   const androidKeyboardLift = Platform.OS === 'android' ? keyboardHeight : 0;
 
   return (
@@ -184,116 +188,119 @@ export function SolidaryActionSheet({
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            ref={scrollRef}
-            style={{ flexShrink: 1 }}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            {pointPosts.length > 1 && onSelectPointPost && (
-              <View className="mb-3">
-                <Text
-                  className="text-neutral-textMuted mb-1.5"
-                  style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}
-                >
-                  Publicaciones en este hogar ({pointPosts.length})
-                </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 8 }}
-                >
-                  {pointPosts.map((item) => {
-                    const active = item.id === post.id;
-                    return (
-                      <TouchableOpacity
-                        key={item.id}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: active }}
-                        onPress={() => onSelectPointPost(item)}
-                        className={`rounded-xl border px-3 py-2 ${
-                          active
-                            ? 'border-emerald-300 bg-emerald-50'
-                            : 'border-neutral-border bg-neutral-surface'
-                        }`}
+          {pointPosts.length > 1 && onSelectPointPost && (
+            <View className="mb-2.5">
+              <Text
+                className="text-neutral-textMuted mb-1.5"
+                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}
+              >
+                Publicaciones en este hogar ({pointPosts.length})
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 8 }}
+              >
+                {pointPosts.map((item) => {
+                  const active = item.id === post.id;
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: active }}
+                      onPress={() => onSelectPointPost(item)}
+                      className={`rounded-xl border px-3 py-2 ${
+                        active
+                          ? 'border-emerald-300 bg-emerald-50'
+                          : 'border-neutral-border bg-neutral-surface'
+                      }`}
+                    >
+                      <Text
+                        numberOfLines={1}
+                        className={active ? 'text-[#065F46]' : 'text-neutral-textMain'}
+                        style={{
+                          fontFamily: active ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
+                          fontSize: 12.5,
+                        }}
                       >
-                        <Text
-                          numberOfLines={1}
-                          className={active ? 'text-[#065F46]' : 'text-neutral-textMain'}
-                          style={{
-                            fontFamily: active ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
-                            fontSize: 12.5,
-                          }}
-                        >
-                          {t(postTypeKey(item.postType))} · {tCategory(item.category)}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            )}
+                        {t(postTypeKey(item.postType))} · {tCategory(item.category)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
 
-            <View className="bg-neutral-surface border border-neutral-border rounded-2xl p-3.5 mb-3">
-              <View className="flex-row flex-wrap items-center gap-1.5 mb-2">
-                <View className="px-2.5 py-1 rounded-lg" style={{ backgroundColor: statusMeta.tint }}>
-                  <Text style={{ color: statusMeta.color, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}>
-                    {t(postStatusKey(post.status))}
+          <View className="bg-neutral-surface border border-neutral-border rounded-2xl p-3 mb-2.5">
+            <View className="flex-row flex-wrap items-center gap-1.5 mb-1.5">
+              <View className="px-2.5 py-1 rounded-lg" style={{ backgroundColor: statusMeta.tint }}>
+                <Text style={{ color: statusMeta.color, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}>
+                  {t(postStatusKey(post.status))}
+                </Text>
+              </View>
+              {post.isFromWhatsapp && (
+                <View className="flex-row items-center px-2.5 py-1 rounded-lg bg-[#E7F6EC]">
+                  <Smartphone size={13} color="#075E54" />
+                  <Text className="ml-1 text-[#075E54]" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}>
+                    {t('post.whatsappBadge')}
                   </Text>
                 </View>
-                {post.isFromWhatsapp && (
-                  <View className="flex-row items-center px-2.5 py-1 rounded-lg bg-[#E7F6EC]">
-                    <Smartphone size={13} color="#075E54" />
-                    <Text className="ml-1 text-[#075E54]" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}>
-                      {t('post.whatsappBadge')}
-                    </Text>
-                  </View>
-                )}
-                {post.isAiVoice && (
-                  <View className="flex-row items-center px-2.5 py-1 rounded-lg bg-sun-tint">
-                    <Mic size={13} color="#B45309" />
-                    <Text className="ml-1 text-sun-dark" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}>
-                      {t('post.aiVoiceBadge')}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              <Text
-                className="text-neutral-textMain leading-5"
-                style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14 }}
-              >
-                {post.description}
-              </Text>
-
-              {post.isFromWhatsapp && post.contactPhone && (
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={() =>
-                    openWhatsapp(
-                      post.contactPhone,
-                      t('post.greeting', {
-                        name: post.authorName ?? t('post.anonymous'),
-                        category: tCategory(post.category),
-                      })
-                    )
-                  }
-                  className="mt-3 min-h-[48px] bg-[#075E54] rounded-xl flex-row items-center justify-center px-4"
-                >
-                  <MessageCircle size={18} color="#FFFFFF" />
-                  <Text className="text-white ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}>
-                    {t('sheet.replyWhatsapp')}
+              )}
+              {post.isAiVoice && (
+                <View className="flex-row items-center px-2.5 py-1 rounded-lg bg-sun-tint">
+                  <Mic size={13} color="#B45309" />
+                  <Text className="ml-1 text-sun-dark" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}>
+                    {t('post.aiVoiceBadge')}
                   </Text>
-                </TouchableOpacity>
+                </View>
               )}
             </View>
 
             <Text
-              className="text-neutral-textMain mb-2"
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 }}
+              numberOfLines={keyboardHeight > 0 ? 2 : undefined}
+              className="text-neutral-textMain leading-5"
+              style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13.5 }}
             >
-              {t('sheet.commentsTitle', { n: items.length })}
+              {post.description}
             </Text>
+
+            {post.isFromWhatsapp && post.contactPhone && keyboardHeight === 0 && (
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() =>
+                  openWhatsapp(
+                    post.contactPhone,
+                    t('post.greeting', {
+                      name: post.authorName ?? t('post.anonymous'),
+                      category: tCategory(post.category),
+                    })
+                  )
+                }
+                className="mt-2.5 min-h-[44px] bg-[#075E54] rounded-xl flex-row items-center justify-center px-4"
+              >
+                <MessageCircle size={18} color="#FFFFFF" />
+                <Text className="text-white ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}>
+                  {t('sheet.replyWhatsapp')}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <Text
+            className="text-neutral-textMain mb-2"
+            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14.5 }}
+          >
+            {t('sheet.commentsTitle', { n: items.length })}
+          </Text>
+
+          <ScrollView
+            ref={scrollRef}
+            style={{ maxHeight: commentsMaxHeight }}
+            showsVerticalScrollIndicator
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled
+          >
 
             {comments.isLoading ? (
               <View className="py-6 items-center">
