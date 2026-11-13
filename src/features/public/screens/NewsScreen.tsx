@@ -138,52 +138,52 @@ export default function NewsScreen() {
   }, [combinedData, onlyEmergency, sector]);
 
   return (
-    <View className="flex-1 bg-neutral-background">
+    <View className={`flex-1 ${zoneEmergency ? 'bg-emergency-background' : 'bg-neutral-background'}`}>
       <Header title={t('news.title')} subtitle={t('news.subtitle')} />
 
-      {zoneEmergency && !onlyEmergency && (
+      {zoneEmergency && (
         <TouchableOpacity
           accessibilityRole="button"
           activeOpacity={0.88}
           onPress={() => {
             setSector(ALL_SECTORS);
-            setOnlyEmergency(true);
+            setOnlyEmergency((prev) => !prev);
           }}
-          className="mx-5 mt-3 flex-row items-center justify-between rounded-2xl border border-red-200 bg-[#FEE2E2] px-3.5 py-2.5"
+          className={`mx-5 mt-3 flex-row items-center justify-between rounded-2xl border px-3.5 py-2.5 ${
+            onlyEmergency
+              ? 'border-red-500 bg-red-600'
+              : 'border-red-400/50 bg-[#FEE2E2]'
+          }`}
         >
           <View className="flex-1 flex-row items-center pr-2">
-            <AlertTriangle size={16} color="#DC2626" />
+            <AlertTriangle size={16} color={onlyEmergency ? '#FFFFFF' : '#DC2626'} />
             <Text
               numberOfLines={1}
-              className="ml-2 text-[#991B1B]"
+              className={`ml-2 ${onlyEmergency ? 'text-white' : 'text-[#991B1B]'}`}
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12.5 }}
             >
-              Emergencia activa ({zoneEmergency.event_type}) en tu zona
+              {onlyEmergency
+                ? `Mostrando emergencias (${zoneEmergency.event_type})`
+                : `Emergencia activa (${zoneEmergency.event_type}) en tu zona`}
             </Text>
           </View>
           <Text
-            className="text-[#DC2626]"
+            className={onlyEmergency ? 'text-white' : 'text-[#DC2626]'}
             style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 12 }}
           >
-            Filtrar
+            {onlyEmergency ? 'Ver todas' : 'Filtrar'}
           </Text>
         </TouchableOpacity>
       )}
 
-      <View className="py-3">
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
-        >
-          <Chip
-            key={EMERGENCY_FILTER}
-            label="Emergencia"
-            isActive={onlyEmergency}
-            onPress={() => setOnlyEmergency((prev) => !prev)}
-          />
-          {sectors.length > 2 &&
-            sectors.map((s) => (
+      {sectors.length > 2 && (
+        <View className="py-3">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+          >
+            {sectors.map((s) => (
               <Chip
                 key={s}
                 label={s === ALL_SECTORS ? t('common.all') : s}
@@ -194,8 +194,9 @@ export default function NewsScreen() {
                 }}
               />
             ))}
-        </ScrollView>
-      </View>
+          </ScrollView>
+        </View>
+      )}
 
       {isLoading ? (
         <View className="flex-1 items-center justify-center">

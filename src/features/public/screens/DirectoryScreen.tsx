@@ -46,6 +46,7 @@ import { usePublicI18n } from '../i18n';
 import { useAuth } from '../../../services/auth';
 import { supabase } from '../../../services/supabase';
 import { EmergencyBanner } from '../../emergency/components/EmergencyBanner';
+import { useZoneEmergency } from '../../emergency/hooks/useEmergencyRealtime';
 import { LISTING_TYPES, SERVICE_CATEGORIES } from '../../../constants/categories';
 import type { ListingType } from '../../../types';
 
@@ -217,6 +218,7 @@ export default function DirectoryScreen() {
   }, [filter]);
 
   const directory = useDirectory(radius);
+  const { zoneEmergency } = useZoneEmergency();
   const { t } = useI18n();
   const { tp, tpCategory } = usePublicI18n();
 
@@ -364,7 +366,7 @@ export default function DirectoryScreen() {
   );
 
   return (
-    <View className="flex-1 bg-neutral-background">
+    <View className={`flex-1 ${zoneEmergency ? 'bg-emergency-background' : 'bg-neutral-background'}`}>
       <Header
         title={t('directory.title')}
         subtitle={t('directory.subtitle')}

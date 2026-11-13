@@ -4,23 +4,26 @@ import { Store, Users, User, Newspaper } from 'lucide-react-native';
 import { View, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../../src/i18n';
+import { useZoneEmergency } from '../../src/features/emergency/hooks/useEmergencyRealtime';
 
 export default function MainLayout() {
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
+  const { zoneEmergency } = useZoneEmergency();
+  const isEmergency = Boolean(zoneEmergency);
   const bottomPadding = Math.max(insets.bottom, 10);
 
   return (
-    <View className="flex-1 bg-neutral-background">
+    <View className={`flex-1 ${isEmergency ? 'bg-emergency-background' : 'bg-neutral-background'}`}>
       <Tabs
         detachInactiveScreens={false}
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#1A1D20',
-          tabBarInactiveTintColor: '#9EA3AE',
+          tabBarActiveTintColor: isEmergency ? '#FCA5A5' : '#1A1D20',
+          tabBarInactiveTintColor: isEmergency ? '#9CA3AF' : '#9EA3AE',
           tabBarStyle: {
-            backgroundColor: '#FFFFFF',
-            borderTopColor: '#F0F2F5',
+            backgroundColor: isEmergency ? '#121316' : '#FFFFFF',
+            borderTopColor: isEmergency ? 'rgba(220,38,38,0.45)' : '#F0F2F5',
             borderTopWidth: 1,
             height: 56 + bottomPadding,
             paddingBottom: bottomPadding,

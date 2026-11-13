@@ -236,7 +236,7 @@ export default function SolidaryFeedScreen() {
 
   /* ---------- Miembro activo o dirigente ---------- */
   return (
-    <View className="flex-1 bg-neutral-background">
+    <View className={`flex-1 ${zoneEmergency ? 'bg-emergency-background' : 'bg-neutral-background'}`}>
       <Header title={t('community.title')} subtitle={t('community.subtitle')} rightAction={headerActions} />
 
       {isLeader && pendingRequests > 0 && (

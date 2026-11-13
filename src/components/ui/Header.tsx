@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { AlertTriangle, ChevronLeft } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../../i18n';
+import { useZoneEmergency } from '../../features/emergency/hooks/useEmergencyRealtime';
 
 export interface HeaderProps {
   title: string;
@@ -27,6 +28,8 @@ export const Header: React.FC<HeaderProps> = ({
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
+  const { zoneEmergency } = useZoneEmergency();
+  const effectiveEmergency = isEmergency || Boolean(zoneEmergency);
 
   const handleBack = () => {
     if (onBack) {
@@ -36,12 +39,12 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const bgStyles = isEmergency
-    ? 'bg-emergency-background'
+  const bgStyles = effectiveEmergency
+    ? 'bg-emergency-background border-b border-red-600/50'
     : 'bg-neutral-surface border-b border-neutral-border/60';
 
-  const titleStyles = isEmergency ? 'text-white' : 'text-neutral-textMain';
-  const subtitleStyles = isEmergency
+  const titleStyles = effectiveEmergency ? 'text-white' : 'text-neutral-textMain';
+  const subtitleStyles = effectiveEmergency
     ? 'text-emergency-warning'
     : 'text-neutral-textMuted';
 
@@ -59,13 +62,13 @@ export const Header: React.FC<HeaderProps> = ({
               onPress={handleBack}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               className={`h-10 w-10 rounded-2xl items-center justify-center mr-3 ${
-                isEmergency ? 'bg-white/15' : 'bg-neutral-mutedBg'
+                effectiveEmergency ? 'bg-white/15' : 'bg-neutral-mutedBg'
               }`}
             >
               <ChevronLeft
                 size={22}
                 strokeWidth={2.2}
-                color={isEmergency ? '#FFFFFF' : '#1A1D20'}
+                color={effectiveEmergency ? '#FFFFFF' : '#1A1D20'}
               />
             </TouchableOpacity>
           )}
@@ -100,6 +103,18 @@ export const Header: React.FC<HeaderProps> = ({
 
         {rightAction && <View className="ml-3">{rightAction}</View>}
       </View>
+
+      {zoneEmergency && (
+        <View className="mt-1.5 flex-row items-center rounded-xl bg-red-600/25 px-2.5 py-1 self-start">
+          <AlertTriangle size={12} color="#FCA5A5" />
+          <Text
+            className="ml-1.5 uppercase tracking-wider text-red-200"
+            style={{ fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 10.5 }}
+          >
+            Modo Emergencia · {zoneEmergency.event_type}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
