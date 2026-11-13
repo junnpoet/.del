@@ -307,6 +307,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string | null
           full_name: string
           group_id: string | null
@@ -319,6 +320,7 @@ export type Database = {
           role: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string | null
           full_name: string
           group_id?: string | null
@@ -331,6 +333,7 @@ export type Database = {
           role?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string | null
           full_name?: string
           group_id?: string | null
@@ -769,6 +772,7 @@ export type Database = {
           description: string
           distance_meters: number
           listing_type: string
+          provider_avatar_url: string | null
           provider_id: string
           provider_lat: number
           provider_lng: number

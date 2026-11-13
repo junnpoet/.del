@@ -31,6 +31,7 @@ export interface SolidaryPost {
   authorId: string | null;
   /** null si la RLS oculta al autor: la UI muestra "Vecino/a del sector" en el idioma activo. */
   authorName: string | null;
+  authorAvatarUrl: string | null;
   contactPhone: string | null;
   coordinates: { latitude: number; longitude: number } | null;
   commentsCount: number;
@@ -66,7 +67,7 @@ export function useSolidaryFeed(enabled: boolean) {
       let query = supabase
         .from('solidary_posts')
         .select(
-          'id, post_type, category, description, urgency, status, is_from_whatsapp, is_ai_voice, target_volunteers, accepted_helper_id, author_id, whatsapp_sender_name, whatsapp_sender_phone, created_at, author:profiles!solidary_posts_author_id_fkey(full_name, phone, home_location), solidary_comments(id, author_id), volunteers(id, user_id, role_note, created_at, user:profiles!volunteers_user_id_fkey(full_name))'
+          'id, post_type, category, description, urgency, status, is_from_whatsapp, is_ai_voice, target_volunteers, accepted_helper_id, author_id, whatsapp_sender_name, whatsapp_sender_phone, created_at, author:profiles!solidary_posts_author_id_fkey(full_name, phone, home_location, avatar_url), solidary_comments(id, author_id), volunteers(id, user_id, role_note, created_at, user:profiles!volunteers_user_id_fkey(full_name))'
         )
         .order('created_at', { ascending: false })
         .limit(100);
@@ -91,6 +92,7 @@ export function useSolidaryFeed(enabled: boolean) {
           acceptedHelperId: row.accepted_helper_id ?? null,
           authorId: row.author_id,
           authorName: (row.is_from_whatsapp ? row.whatsapp_sender_name : author?.full_name) ?? null,
+          authorAvatarUrl: row.is_from_whatsapp ? null : author?.avatar_url ?? null,
           contactPhone: row.is_from_whatsapp ? row.whatsapp_sender_phone : author?.phone ?? null,
           coordinates: point ? { latitude: point.lat, longitude: point.lng } : null,
           commentsCount: Array.isArray(row.solidary_comments) ? row.solidary_comments.length : 0,

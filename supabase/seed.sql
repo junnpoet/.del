@@ -142,7 +142,7 @@ INSERT INTO auth.users (
 );
 
 -- 3. Perfiles en Urb. Bellamar (Nuevo Chimbote)
-INSERT INTO public.profiles (id, full_name, phone, home_address, home_location, role, is_vulnerable) VALUES
+INSERT INTO public.profiles (id, full_name, phone, home_address, home_location, role, is_vulnerable, avatar_url) VALUES
 (
   '01258287-49a3-49ed-a9e0-31467b283664',
   'Juan López',
@@ -150,7 +150,8 @@ INSERT INTO public.profiles (id, full_name, phone, home_address, home_location, 
   'Calle 23 Mz. Ñ - Lt. 9, Urbanización Bellamar',
   ST_GeogFromText('SRID=4326;POINT(-78.51696742469132 -9.114307544880225)'),
   'dirigente',
-  FALSE
+  FALSE,
+  'https://randomuser.me/api/portraits/men/32.jpg'
 ),
 (
   '844c76b1-bf8f-40ee-b5a0-4cae771889c4',
@@ -159,7 +160,8 @@ INSERT INTO public.profiles (id, full_name, phone, home_address, home_location, 
   'Sector II, Calle Los Laureles Mz. F - Lt. 11, Urbanización Bellamar',
   ST_GeogFromText('SRID=4326;POINT(-78.51215 -9.11085)'),
   'vecino',
-  FALSE
+  FALSE,
+  'https://randomuser.me/api/portraits/men/45.jpg'
 ),
 (
   '98e3b806-7a3f-4fd9-89d6-8476504fe800',
@@ -168,7 +170,8 @@ INSERT INTO public.profiles (id, full_name, phone, home_address, home_location, 
   'Av. Pacífico Mz. K - Lt. 12, Urbanización Bellamar',
   ST_GeogFromText('SRID=4326;POINT(-78.51758 -9.11492)'),
   'vecino',
-  FALSE
+  FALSE,
+  'https://randomuser.me/api/portraits/men/22.jpg'
 ),
 (
   '1d6d874a-0cb0-4c64-a3c8-0e2ac0bed653',
@@ -177,7 +180,8 @@ INSERT INTO public.profiles (id, full_name, phone, home_address, home_location, 
   'Calle 24 Mz. O - Lt. 6, Urbanización Bellamar',
   ST_GeogFromText('SRID=4326;POINT(-78.51618 -9.11542)'),
   'vecino',
-  TRUE
+  TRUE,
+  'https://randomuser.me/api/portraits/men/68.jpg'
 ),
 (
   'e75da8d4-4505-4087-bd7d-9c637e6fa608',
@@ -186,7 +190,8 @@ INSERT INTO public.profiles (id, full_name, phone, home_address, home_location, 
   'Jr. Los Cipreses Mz. L - Lt. 3, Urbanización Bellamar',
   ST_GeogFromText('SRID=4326;POINT(-78.51768 -9.11332)'),
   'vecino',
-  FALSE
+  FALSE,
+  'https://randomuser.me/api/portraits/men/54.jpg'
 )
 ON CONFLICT (id) DO UPDATE SET
   full_name = EXCLUDED.full_name,
@@ -194,7 +199,8 @@ ON CONFLICT (id) DO UPDATE SET
   home_address = EXCLUDED.home_address,
   home_location = EXCLUDED.home_location,
   role = EXCLUDED.role,
-  is_vulnerable = EXCLUDED.is_vulnerable;
+  is_vulnerable = EXCLUDED.is_vulnerable,
+  avatar_url = EXCLUDED.avatar_url;
 
 -- 4. Junta Vecinal Urb. Bellamar (liderada por Juan López)
 INSERT INTO public.neighborhood_groups (id, name, sector_name, leader_id, boundary) VALUES (

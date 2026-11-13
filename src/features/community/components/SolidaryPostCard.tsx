@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, View, Text, TouchableOpacity } from 'react-native';
 import {
   CheckCircle2,
   Clock,
@@ -38,6 +38,13 @@ const POST_TYPE_ICONS: Record<PostType, typeof LifeBuoy> = {
 /** Tarjeta de publicación solidaria alineada con el estilo visual del directorio. */
 export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolved, onEdit }: Props) {
   const { t, tCategory } = useI18n();
+  const [avatarError, setAvatarError] = useState(false);
+  const avatarUrl = (post as SolidaryPost & { authorAvatarUrl?: string | null }).authorAvatarUrl ?? null;
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [avatarUrl]);
+
   const name = post.authorName ?? t('post.anonymous');
   const category = tCategory(post.category);
   const statusMeta = POST_STATUS_META[post.status];
@@ -84,18 +91,27 @@ export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolve
       {/* Bloque Avatar + Título + Autor */}
       <View className="flex-row items-start">
         <View
-          className="h-12 w-12 items-center justify-center rounded-2xl"
+          className="h-12 w-12 items-center justify-center rounded-2xl overflow-hidden"
           style={{ backgroundColor: typeMeta.bg }}
         >
-          <Text
-            style={{
-              fontFamily: 'PlusJakartaSans_700Bold',
-              fontSize: 18,
-              color: typeMeta.color,
-            }}
-          >
-            {name.charAt(0).toUpperCase()}
-          </Text>
+          {avatarUrl && !avatarError ? (
+            <Image
+              source={{ uri: avatarUrl }}
+              className="h-12 w-12 rounded-2xl"
+              resizeMode="cover"
+              onError={() => setAvatarError(true)}
+            />
+          ) : (
+            <Text
+              style={{
+                fontFamily: 'PlusJakartaSans_700Bold',
+                fontSize: 18,
+                color: typeMeta.color,
+              }}
+            >
+              {name.charAt(0).toUpperCase()}
+            </Text>
+          )}
         </View>
         <View className="ml-3 flex-1">
           <Text

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
+  Image,
   ScrollView,
   TouchableOpacity,
   Switch,
@@ -50,6 +51,7 @@ export default function ProfileScreen() {
   const membership = useMembership();
   const [accessibleMode, setAccessibleMode] = useState(false);
   const [emergencyInfoOpen, setEmergencyInfoOpen] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   const { zoneEmergency } = useZoneEmergency();
   const isLeader = profile?.role === 'dirigente';
   const isPadrino = profile?.role === 'padrino';
@@ -57,6 +59,9 @@ export default function ProfileScreen() {
   // Con sesión se muestran los datos reales de Supabase; sin sesión, la persona demo.
   const displayName = profile?.full_name ?? currentUser.name;
   const displayAddress = profile?.home_address ?? currentUser.homeAddress;
+  const avatarUrl = profile
+    ? ((profile as { avatar_url?: string | null }).avatar_url ?? null)
+    : (currentUser.avatarUrl ?? null);
   const role = (profile ? profile.role ?? 'vecino' : currentUser.role) as 'vecino' | 'dirigente' | 'padrino';
   const isVulnerable = profile ? Boolean(profile.is_vulnerable) : currentUser.isVulnerable;
   const membershipStatus: MembershipStatus = !profile
@@ -79,6 +84,10 @@ export default function ProfileScreen() {
   useEffect(() => {
     isAccessibleModeEnabled().then(setAccessibleMode);
   }, []);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [avatarUrl]);
 
   // SPEC-04 §2.4: al activar el Modo Accesible la app cambia a la vista simple.
   const toggleAccessibleMode = async (value: boolean) => {
@@ -122,8 +131,17 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 112 }}>
         {/* Active User Card */}
         <Card className="p-4 mb-3 flex-row items-center shadow-sm">
-          <View className="w-14 h-14 rounded-full bg-neutral-mutedBg items-center justify-center mr-3.5">
-            {getPersonaIcon(avatarIcon, '#1E5E45')}
+          <View className="w-14 h-14 rounded-full bg-neutral-mutedBg items-center justify-center mr-3.5 overflow-hidden">
+            {avatarUrl && !avatarError ? (
+              <Image
+                source={{ uri: avatarUrl }}
+                className="w-14 h-14 rounded-full"
+                resizeMode="cover"
+                onError={() => setAvatarError(true)}
+              />
+            ) : (
+              getPersonaIcon(avatarIcon, '#1E5E45')
+            )}
           </View>
           <View className="flex-1">
             <Text

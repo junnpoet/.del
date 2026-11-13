@@ -1,5 +1,5 @@
-import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import {
   Flag,
   Heart,
@@ -19,7 +19,9 @@ import { useI18n } from '../../../i18n';
 import { usePublicI18n } from '../i18n';
 import { normalizeListingType } from '../hooks/useDirectory';
 
-type NearbyService = Database['public']['Functions']['get_nearby_services']['Returns'][number];
+type NearbyService = Database['public']['Functions']['get_nearby_services']['Returns'][number] & {
+  provider_avatar_url?: string | null;
+};
 
 export const LISTING_TYPE_META: Record<
   ListingType,
@@ -55,6 +57,12 @@ export function ServiceCard({
 }: ServiceCardProps) {
   const { t } = useI18n();
   const { tp, tpCategory } = usePublicI18n();
+  const [avatarError, setAvatarError] = useState(false);
+
+  const avatarUrl = service.provider_avatar_url ?? null;
+  useEffect(() => {
+    setAvatarError(false);
+  }, [avatarUrl]);
 
   const listingType = normalizeListingType(service.listing_type);
   const meta = LISTING_TYPE_META[listingType];
@@ -130,18 +138,27 @@ export function ServiceCard({
 
       <View className="flex-row items-start">
         <View
-          className="h-12 w-12 items-center justify-center rounded-2xl"
+          className="h-12 w-12 items-center justify-center rounded-2xl overflow-hidden"
           style={{ backgroundColor: meta.bg }}
         >
-          <Text
-            style={{
-              fontFamily: 'PlusJakartaSans_700Bold',
-              fontSize: 18,
-              color: meta.color,
-            }}
-          >
-            {service.provider_name.charAt(0).toUpperCase()}
-          </Text>
+          {avatarUrl && !avatarError ? (
+            <Image
+              source={{ uri: avatarUrl }}
+              className="h-12 w-12 rounded-2xl"
+              resizeMode="cover"
+              onError={() => setAvatarError(true)}
+            />
+          ) : (
+            <Text
+              style={{
+                fontFamily: 'PlusJakartaSans_700Bold',
+                fontSize: 18,
+                color: meta.color,
+              }}
+            >
+              {service.provider_name.charAt(0).toUpperCase()}
+            </Text>
+          )}
         </View>
         <View className="ml-3 flex-1">
           <Text

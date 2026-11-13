@@ -15,6 +15,7 @@ export interface DemoUser {
   isVulnerable: boolean;
   accessibleMode: boolean;
   avatarIcon: string;
+  avatarUrl?: string | null;
   description: string;
 }
 
@@ -290,6 +291,7 @@ export const DEMO_PERSONAS: DemoUser[] = [
     isVulnerable: false,
     accessibleMode: false,
     avatarIcon: 'user',
+    avatarUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
     description: 'Explora oficios a pie en la capa pública y puede solicitar unirse a la Junta Vecinal.',
   },
   {
@@ -304,6 +306,7 @@ export const DEMO_PERSONAS: DemoUser[] = [
     isVulnerable: false,
     accessibleMode: false,
     avatarIcon: 'wrench',
+    avatarUrl: 'https://randomuser.me/api/portraits/men/45.jpg',
     description: 'Aparece en el mapa público con Visto Bueno Vecinal y es miembro activo del sector.',
   },
   {
@@ -318,6 +321,7 @@ export const DEMO_PERSONAS: DemoUser[] = [
     isVulnerable: true,
     accessibleMode: true,
     avatarIcon: 'heart',
+    avatarUrl: 'https://randomuser.me/api/portraits/men/68.jpg',
     description: 'Cuenta con interfaz adaptativa gigante, botón central SOS de 2s y asistencia por voz.',
   },
   {
@@ -332,6 +336,7 @@ export const DEMO_PERSONAS: DemoUser[] = [
     isVulnerable: false,
     accessibleMode: false,
     avatarIcon: 'shield',
+    avatarUrl: 'https://randomuser.me/api/portraits/women/65.jpg',
     description: 'Valida solicitudes de ingreso a la capa privada y coordina la red preventiva del sector.',
   },
 ];
