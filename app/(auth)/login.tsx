@@ -18,6 +18,7 @@ import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { Card } from '../../src/components/ui/Card';
 import { useAuth } from '../../src/services/auth';
+import { isAccessibleModeEnabled } from '../../src/features/accessible-mode/storage';
 import { useI18n } from '../../src/i18n';
 import { LanguageMenuButton } from '../../src/i18n/LanguageToggle';
 
@@ -79,7 +80,8 @@ export default function LoginScreen() {
     setIsLoading(true);
     try {
       await signIn(phone, password);
-      router.replace('/(main)');
+      const accessible = await isAccessibleModeEnabled();
+      router.replace(accessible ? '/accessible' : '/(main)');
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
       const invalid = /invalid login credentials/i.test(message);
@@ -120,7 +122,8 @@ export default function LoginScreen() {
     setIsLoading(true);
     try {
       await signInWithOtp(phone, otpCode);
-      router.replace('/(main)');
+      const accessible = await isAccessibleModeEnabled();
+      router.replace(accessible ? '/accessible' : '/(main)');
     } catch (err) {
       console.error('OTP error', err);
       Alert.alert(t('common.error'), t('login.otpInvalid'));

@@ -6,10 +6,15 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import type { Session } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { queryClient } from './queryClient';
 import { parseGeoPoint } from './geo';
+import {
+  setActiveAccessibleModeUser,
+  shouldDefaultToAccessibleMode,
+  syncAccessibleModeForUser,
+} from '../features/accessible-mode/storage';
 
 export interface AuthProfile {
   id: string;
@@ -22,6 +27,7 @@ export interface AuthProfile {
   group_id: string | null;
   lat: number | null;
   lng: number | null;
+  avatar_url?: string | null;
 }
 
 export interface SignUpInput {
@@ -69,7 +75,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 async function fetchProfile(userId: string): Promise<AuthProfile | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, phone, home_address, role, is_vulnerable, group_id, home_location')
+    .select('id, full_name, phone, home_address, role, is_vulnerable, group_id, home_location, avatar_url')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw error;
@@ -85,6 +91,7 @@ async function fetchProfile(userId: string): Promise<AuthProfile | null> {
     group_id: data.group_id,
     lat: point?.lat ?? null,
     lng: point?.lng ?? null,
+    avatar_url: data.avatar_url ?? null,
   };
 }
 
@@ -94,46 +101,78 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const userId = session?.user.id ?? null;
 
+  const syncProfileAndAccessibleMode = useCallback(
+    async (targetUserId: string, authUser?: User | null) => {
+      let loadedProfile: AuthProfile | null = null;
+      try {
+        loadedProfile = await fetchProfile(targetUserId);
+        setProfile(loadedProfile);
+      } catch (err) {
+        console.warn('No se pudo cargar el perfil', err);
+      }
+      await syncAccessibleModeForUser(
+        targetUserId,
+        shouldDefaultToAccessibleMode(loadedProfile, authUser)
+      );
+      return loadedProfile;
+    },
+    []
+  );
+
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (!mounted) return;
       setSession(data.session);
-      setLoading(false);
+      if (data.session?.user.id) {
+        await syncProfileAndAccessibleMode(
+          data.session.user.id,
+          data.session.user
+        );
+      } else {
+        setActiveAccessibleModeUser(null);
+      }
+      if (mounted) setLoading(false);
     });
     const { data } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);
+      if (!next?.user.id) {
+        setActiveAccessibleModeUser(null);
+      }
     });
     return () => {
       mounted = false;
       data.subscription.unsubscribe();
     };
-  }, []);
+  }, [syncProfileAndAccessibleMode]);
 
   const refreshProfile = useCallback(async () => {
     if (!userId) {
       setProfile(null);
+      setActiveAccessibleModeUser(null);
       return;
     }
-    try {
-      setProfile(await fetchProfile(userId));
-    } catch (err) {
-      console.warn('No se pudo cargar el perfil', err);
-    }
-  }, [userId]);
+    await syncProfileAndAccessibleMode(userId, session?.user ?? null);
+  }, [userId, session?.user, syncProfileAndAccessibleMode]);
 
   useEffect(() => {
     refreshProfile();
   }, [refreshProfile]);
 
-  const signIn = useCallback(async (phoneOrEmail: string, password: string) => {
-    const email = phoneToAuthEmail(phoneOrEmail);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
-  }, []);
+  const signIn = useCallback(
+    async (phoneOrEmail: string, password: string) => {
+      const email = phoneToAuthEmail(phoneOrEmail);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      if (data.user) {
+        await syncProfileAndAccessibleMode(data.user.id, data.user);
+      }
+    },
+    [syncProfileAndAccessibleMode]
+  );
 
   const requestOtp = useCallback(async (phone: string): Promise<RequestOtpResult> => {
     const nationalDigits = normalizeNationalPhone(phone);
@@ -160,15 +199,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
-  const signInWithOtp = useCallback(async (phone: string, token: string) => {
-    const email = phoneToAuthEmail(phone);
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token: token.trim(),
-      type: 'magiclink',
-    });
-    if (error) throw error;
-  }, []);
+  const signInWithOtp = useCallback(
+    async (phone: string, token: string) => {
+      const email = phoneToAuthEmail(phone);
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: token.trim(),
+        type: 'magiclink',
+      });
+      if (error) throw error;
+      if (data.user) {
+        await syncProfileAndAccessibleMode(data.user.id, data.user);
+      }
+    },
+    [syncProfileAndAccessibleMode]
+  );
 
   const signUp = useCallback(async (input: SignUpInput) => {
     const nationalDigits = normalizeNationalPhone(input.phone);
@@ -207,6 +252,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
     queryClient.clear();
     setProfile(null);
+    setActiveAccessibleModeUser(null);
   }, []);
 
   const value = useMemo(
