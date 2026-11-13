@@ -107,21 +107,54 @@ function NativeMap({
     );
   }
 
-  const mapMarkers: LeafletMarkerItem[] = services
-    .map((service): LeafletMarkerItem | null => {
-      const coordinate = locations[service.service_id];
-      if (!coordinate) return null;
-      const listingType = normalizeListingType(service.listing_type);
-      return {
-        id: service.service_id,
-        latitude: coordinate.latitude,
-        longitude: coordinate.longitude,
-        color: LISTING_TYPE_META[listingType].color,
-        title: service.title,
-        subtitle: `${service.provider_name} · ${Math.round(service.distance_meters)} m`,
-      };
-    })
-    .filter((item): item is LeafletMarkerItem => item !== null);
+  const groupedByHome = new Map<string, { coord: { latitude: number; longitude: number }; items: NearbyService[] }>();
+  for (const service of services) {
+    const coordinate = locations[service.service_id];
+    if (!coordinate) continue;
+    const key = `${coordinate.latitude.toFixed(5)},${coordinate.longitude.toFixed(5)}`;
+    const existing = groupedByHome.get(key);
+    if (existing) {
+      existing.items.push(service);
+    } else {
+      groupedByHome.set(key, { coord: coordinate, items: [service] });
+    }
+  }
+
+  const mapMarkers: LeafletMarkerItem[] = Array.from(groupedByHome.values()).map(({ coord, items }) => {
+    const primary = items[0];
+    const uniqueTypes = Array.from(new Set(items.map((item) => normalizeListingType(item.listing_type))));
+    const colors = uniqueTypes.map((typeKey) => LISTING_TYPE_META[typeKey].color);
+    const primaryType = uniqueTypes[0];
+    const iconType =
+      uniqueTypes.length > 1
+        ? 'multi'
+        : primaryType === 'PRODUCTO'
+        ? 'producto'
+        : primaryType === 'AUXILIO'
+        ? 'auxilio'
+        : 'servicio';
+
+    return {
+      id: primary.service_id,
+      latitude: coord.latitude,
+      longitude: coord.longitude,
+      color: colors[0],
+      colors,
+      iconType,
+      count: items.length,
+      title: items.length > 1 ? `${primary.provider_name} (${items.length} ofertas)` : primary.title,
+      subtitle: `${primary.provider_name} · ${Math.round(primary.distance_meters)} m`,
+    };
+  });
+
+  const selectedCoord = selectedService ? locations[selectedService.service_id] : undefined;
+  const selectedHomeKey = selectedCoord
+    ? `${selectedCoord.latitude.toFixed(5)},${selectedCoord.longitude.toFixed(5)}`
+    : null;
+  const selectedHomeItems = selectedHomeKey ? groupedByHome.get(selectedHomeKey)?.items ?? [] : [];
+  const selectedHomeIndex = selectedService
+    ? selectedHomeItems.findIndex((s) => s.service_id === selectedService.service_id)
+    : -1;
 
   const selectedType = selectedService
     ? normalizeListingType(selectedService.listing_type)
@@ -140,7 +173,18 @@ function NativeMap({
         markers={mapMarkers}
         onMarkerPress={(id) => {
           const found = services.find((service) => service.service_id === id);
-          if (found) onSelectMarker(found);
+          if (!found) return;
+          const coord = locations[found.service_id];
+          if (coord && selectedService) {
+            const key = `${coord.latitude.toFixed(5)},${coord.longitude.toFixed(5)}`;
+            const group = groupedByHome.get(key)?.items ?? [];
+            const currentIdx = group.findIndex((s) => s.service_id === selectedService.service_id);
+            if (currentIdx >= 0 && group.length > 1) {
+              onSelectMarker(group[(currentIdx + 1) % group.length]);
+              return;
+            }
+          }
+          onSelectMarker(found);
         }}
       />
 
@@ -148,21 +192,41 @@ function NativeMap({
       {selectedService && selectedMeta && selectedType && SelectedIcon && (
         <View className="absolute bottom-24 left-4 right-4 rounded-3xl border border-neutral-border bg-neutral-surface p-4 shadow-xl">
           <View className="flex-row items-center justify-between">
-            <View
-              className="flex-row items-center rounded-full px-3 py-1"
-              style={{ backgroundColor: selectedMeta.bg }}
-            >
-              <SelectedIcon size={14} color={selectedMeta.color} />
-              <Text
-                className="ml-1.5"
-                style={{
-                  fontFamily: 'PlusJakartaSans_700Bold',
-                  fontSize: 12,
-                  color: selectedMeta.color,
-                }}
+            <View className="flex-row items-center gap-2">
+              <View
+                className="flex-row items-center rounded-full px-3 py-1"
+                style={{ backgroundColor: selectedMeta.bg }}
               >
-                {tp(`public.type.${selectedType}`)}
-              </Text>
+                <SelectedIcon size={14} color={selectedMeta.color} />
+                <Text
+                  className="ml-1.5"
+                  style={{
+                    fontFamily: 'PlusJakartaSans_700Bold',
+                    fontSize: 12,
+                    color: selectedMeta.color,
+                  }}
+                >
+                  {tp(`public.type.${selectedType}`)}
+                </Text>
+              </View>
+
+              {selectedHomeItems.length > 1 && (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => {
+                    const nextIdx = (selectedHomeIndex + 1) % selectedHomeItems.length;
+                    onSelectMarker(selectedHomeItems[nextIdx]);
+                  }}
+                  className="rounded-full border border-neutral-border bg-neutral-mutedBg px-2.5 py-1"
+                >
+                  <Text
+                    className="text-neutral-textMain"
+                    style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11.5 }}
+                  >
+                    {selectedHomeIndex + 1}/{selectedHomeItems.length} · Siguiente
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             <View className="flex-row items-center gap-1">

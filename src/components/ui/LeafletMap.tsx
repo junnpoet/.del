@@ -6,6 +6,9 @@ export interface LeafletMarkerItem {
   latitude: number;
   longitude: number;
   color: string;
+  colors?: string[];
+  iconType?: 'servicio' | 'producto' | 'auxilio' | 'multi';
+  count?: number;
   title: string;
   subtitle?: string;
   badgeText?: string;
@@ -47,12 +50,59 @@ function buildLeafletHtml(initialPayloadJson: string): string {
       background: #E8F0EC;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
+    .sumayni-pin-wrap {
+      position: relative;
+      width: 32px;
+      height: 38px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
     .sumayni-pin {
-      width: 24px;
-      height: 24px;
+      width: 30px;
+      height: 30px;
       border-radius: 9999px;
-      border: 3px solid #FFFFFF;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.28);
+      border: 2.5px solid #FFFFFF;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sumayni-pin-tail {
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 7px solid #FFFFFF;
+      margin-top: -2px;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.22));
+    }
+    .sumayni-pin-core {
+      width: 17px;
+      height: 17px;
+      border-radius: 9999px;
+      background: #FFFFFF;
+      color: #111827;
+      font-size: 10px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.18);
+    }
+    .sumayni-pin-count {
+      position: absolute;
+      top: -4px;
+      right: -3px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 9999px;
+      background: #111827;
+      border: 1.5px solid #FFFFFF;
+      color: #FFFFFF;
+      font-size: 9px;
+      font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -68,12 +118,15 @@ function buildLeafletHtml(initialPayloadJson: string): string {
       box-shadow: 0 2px 6px rgba(0,0,0,0.28);
     }
     .sumayni-home {
-      width: 20px;
-      height: 20px;
+      width: 36px;
+      height: 36px;
       border-radius: 9999px;
       background: #1E5E45;
       border: 3px solid #FFFFFF;
-      box-shadow: 0 0 0 4px rgba(30, 94, 69, 0.22);
+      box-shadow: 0 0 0 6px rgba(30, 94, 69, 0.22), 0 3px 8px rgba(0,0,0,0.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .leaflet-popup-content {
       margin: 8px 12px;
@@ -134,11 +187,12 @@ function buildLeafletHtml(initialPayloadJson: string): string {
         }
 
         if (payload.showHomePin) {
+          var homeSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>';
           var homeIcon = L.divIcon({
             className: '',
-            html: '<div class="sumayni-home"></div>',
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
+            html: '<div class="sumayni-home">' + homeSvg + '</div>',
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
           });
           var homeMarker = L.marker([lat, lng], { icon: homeIcon }).addTo(layerGroup);
           if (payload.homeTitle) {
@@ -149,16 +203,60 @@ function buildLeafletHtml(initialPayloadJson: string): string {
           }
         }
 
+        function getPinIconSvg(iconType) {
+          if (iconType === 'servicio') {
+            return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>';
+          }
+          if (iconType === 'producto') {
+            return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>';
+          }
+          if (iconType === 'auxilio') {
+            return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>';
+          }
+          return '<svg width="13" height="13" viewBox="0 0 24 24" fill="#FFFFFF"><circle cx="12" cy="12" r="5"/></svg>';
+        }
+
+        function buildConicGradient(colors) {
+          var step = 100 / colors.length;
+          var stops = colors.map(function (c, idx) {
+            return escapeHtml(c) + ' ' + (idx * step).toFixed(1) + '% ' + ((idx + 1) * step).toFixed(1) + '%';
+          });
+          return 'conic-gradient(' + stops.join(', ') + ')';
+        }
+
         (payload.markers || []).forEach(function (m) {
-          var html = m.badgeText
-            ? '<div class="sumayni-badge-pin" style="background:' + escapeHtml(m.color) + '">' + escapeHtml(m.badgeText) + '</div>'
-            : '<div class="sumayni-pin" style="background:' + escapeHtml(m.color) + '"></div>';
+          var html;
+          var iconSize;
+          var iconAnchor;
+
+          if (m.badgeText) {
+            html = '<div class="sumayni-badge-pin" style="background:' + escapeHtml(m.color) + '">' + escapeHtml(m.badgeText) + '</div>';
+            iconSize = null;
+            iconAnchor = [40, 14];
+          } else {
+            var hasMultiColors = Array.isArray(m.colors) && m.colors.length > 1;
+            var bgStyle = hasMultiColors ? buildConicGradient(m.colors) : escapeHtml(m.color);
+            var inner = hasMultiColors
+              ? '<div class="sumayni-pin-core">' + (m.count || m.colors.length) + '</div>'
+              : getPinIconSvg(m.iconType);
+            var countBadge = !hasMultiColors && m.count && m.count > 1
+              ? '<div class="sumayni-pin-count">' + m.count + '</div>'
+              : '';
+            html =
+              '<div class="sumayni-pin-wrap">' +
+                '<div class="sumayni-pin" style="background:' + bgStyle + '">' + inner + '</div>' +
+                '<div class="sumayni-pin-tail"></div>' +
+                countBadge +
+              '</div>';
+            iconSize = [32, 38];
+            iconAnchor = [16, 36];
+          }
 
           var icon = L.divIcon({
             className: '',
             html: html,
-            iconSize: m.badgeText ? null : [24, 24],
-            iconAnchor: m.badgeText ? [40, 14] : [12, 12]
+            iconSize: iconSize,
+            iconAnchor: iconAnchor
           });
 
           var marker = L.marker([m.latitude, m.longitude], { icon: icon }).addTo(layerGroup);
