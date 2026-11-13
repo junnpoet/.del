@@ -64,7 +64,7 @@ export function NeighborhoodMap({ posts = [], careAssignments, center, webHint }
                   post.postType === 'AYUDA' ? 'bg-emergency-alert' : 'bg-primary'
                 }`}
               >
-                <Text className="text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}>
+                <Text className="text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}>
                   {t(postTypeKey(post.postType))}
                 </Text>
               </View>
@@ -88,7 +88,7 @@ export function NeighborhoodMap({ posts = [], careAssignments, center, webHint }
                   style={{ backgroundColor: meta.color }}
                 >
                   <Heart size={12} color="#FFFFFF" fill="#FFFFFF" />
-                  <Text className="text-white ml-1" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}>
+                  <Text className="text-white ml-1" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}>
                     {label}
                   </Text>
                 </View>

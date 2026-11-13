@@ -42,9 +42,10 @@ export function CareAssignmentCard({
             </Text>
           </View>
         </View>
-        <View className="px-2.5 py-1 rounded-full" style={{ backgroundColor: meta.tint }}>
+        <View className="flex-row items-center px-2.5 py-1 rounded-full" style={{ backgroundColor: meta.tint }}>
+          <View className="w-2.5 h-2.5 rounded-full mr-1.5" style={{ backgroundColor: meta.color }} />
           <Text style={{ color: meta.color, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}>
-            {meta.emoji} {t(careStatusKey(assignment.status))}
+            {t(careStatusKey(assignment.status))}
           </Text>
         </View>
       </View>
@@ -82,7 +83,7 @@ export function CareAssignmentCard({
           accessibilityRole="button"
           onPress={() => onRegisterVisit(assignment)}
           disabled={busy}
-          className="flex-1 min-w-[180px] min-h-[44px] bg-primary rounded-xl flex-row items-center justify-center px-3"
+          className="flex-1 min-w-[180px] min-h-[48px] bg-primary rounded-xl flex-row items-center justify-center px-3"
         >
           {busy ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
@@ -99,7 +100,7 @@ export function CareAssignmentCard({
           accessibilityRole="button"
           accessibilityLabel={t('care.callA11y', { name: assignment.vulnerable.name })}
           onPress={() => callPhone(assignment.vulnerable.phone)}
-          className="min-h-[44px] px-3.5 bg-neutral-mutedBg rounded-xl flex-row items-center justify-center"
+          className="min-h-[48px] px-3.5 bg-neutral-mutedBg rounded-xl flex-row items-center justify-center"
         >
           <Phone size={16} color="#1A1D20" />
           <Text className="text-neutral-textMain ml-1.5" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}>
@@ -110,7 +111,7 @@ export function CareAssignmentCard({
           <TouchableOpacity
             accessibilityRole="button"
             onPress={() => onRequestFollowUp(assignment)}
-            className="min-h-[44px] px-3.5 bg-sun-tint rounded-xl items-center justify-center"
+            className="min-h-[48px] px-3.5 bg-sun-tint rounded-xl items-center justify-center"
           >
             <Text className="text-sun-dark" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}>
               {t('care.requestFollowUp')}
@@ -121,7 +122,7 @@ export function CareAssignmentCard({
           <TouchableOpacity
             accessibilityRole="button"
             onPress={() => onRemove(assignment)}
-            className="min-h-[44px] px-3.5 bg-neutral-surface border border-neutral-border rounded-xl items-center justify-center"
+            className="min-h-[48px] px-3.5 bg-neutral-surface border border-neutral-border rounded-xl items-center justify-center"
           >
             <Text className="text-neutral-textMuted" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}>
               {t('common.remove')}

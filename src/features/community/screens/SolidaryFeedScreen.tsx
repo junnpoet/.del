@@ -9,6 +9,7 @@ import {
   Lock,
   LogIn,
   Map as MapIcon,
+  Megaphone,
   ShieldCheck,
 } from 'lucide-react-native';
 import { Header } from '../../../components/ui/Header';
@@ -16,15 +17,35 @@ import { Chip } from '../../../components/ui/Chip';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { useI18n, type TranslationKey } from '../../../i18n';
-import { FEED_FILTERS, CARE_STATUS_META, careStatusKey, type FeedFilter } from '../constants';
+import {
+  CARE_STATUS_META,
+  careStatusKey,
+  FEED_FILTERS,
+  feedFilterKey,
+  isCareVolunteerPost,
+  matchesFeedFilter,
+  type FeedFilter,
+} from '../constants';
 import { useMembership } from '../hooks/useMembership';
-import { useSolidaryFeed } from '../hooks/useSolidaryFeed';
+import {
+  type SolidaryPost,
+  useSolidaryFeed,
+  useToggleVolunteer,
+  useUpdatePostStatus,
+} from '../hooks/useSolidaryFeed';
 import { useCareNetwork } from '../hooks/useCareNetwork';
 import { useJoinRequests } from '../hooks/useLeaderDashboard';
 import { SolidaryPostCard } from '../components/SolidaryPostCard';
+import { CommunityActionCard } from '../components/CommunityActionCard';
+import { CareVolunteerCard } from '../components/CareVolunteerCard';
+import { SolidaryActionSheet } from '../components/SolidaryActionSheet';
+import {
+  NeighborhoodNewsModal,
+  useNeighborhoodNewsUnread,
+} from '../components/NeighborhoodNewsModal';
 import { NeighborhoodMap } from '../components/NeighborhoodMap';
 import { StateMessage } from '../components/StateMessage';
-import { errorMessage, showMessage } from '../utils';
+import { confirmAction, errorMessage, showMessage } from '../utils';
 import type { CareStatus } from '../../../types';
 
 const BENEFITS: TranslationKey[] = ['community.benefit1', 'community.benefit2', 'community.benefit3'];
@@ -39,8 +60,13 @@ export default function SolidaryFeedScreen() {
 
   const [view, setView] = useState<'feed' | 'map'>('feed');
   const [filter, setFilter] = useState<FeedFilter>('TODOS');
+  const [newsOpen, setNewsOpen] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   const feed = useSolidaryFeed(isMember);
+  const updatePostStatus = useUpdatePostStatus();
+  const toggleVolunteer = useToggleVolunteer();
+  const { unreadCount, markAllRead } = useNeighborhoodNewsUnread();
   const care = useCareNetwork(isMember);
   const { requests } = useJoinRequests(isLeader);
   const canSeeCareLayer = isLeader || isPadrino || care.assignments.length > 0;
@@ -49,8 +75,38 @@ export default function SolidaryFeedScreen() {
   // Filtrado en memoria: cambiar de chip no recarga ni vuelve a consultar.
   const posts = useMemo(() => {
     const all = feed.data ?? [];
-    return filter === 'TODOS' ? all : all.filter((post) => post.postType === filter);
+    return all.filter((post) => matchesFeedFilter(post.postType, filter));
   }, [feed.data, filter]);
+
+  const selectedPost = useMemo(
+    () => (selectedPostId ? (feed.data ?? []).find((p) => p.id === selectedPostId) ?? null : null),
+    [feed.data, selectedPostId]
+  );
+
+  const handleOpenNews = () => {
+    setNewsOpen(true);
+    markAllRead();
+  };
+
+  const handleMarkResolved = async (post: SolidaryPost) => {
+    const ok = await confirmAction(
+      t('post.markResolvedConfirmTitle'),
+      t('post.markResolvedConfirmBody'),
+      t('post.markResolved')
+    );
+    if (!ok) return;
+    updatePostStatus.mutate(
+      { postId: post.id, status: 'RESOLVED' },
+      { onError: (err) => showMessage(t('common.error'), errorMessage(err)) }
+    );
+  };
+
+  const handleToggleVolunteer = (post: SolidaryPost, isJoined: boolean, roleNote?: string) => {
+    toggleVolunteer.mutate(
+      { postId: post.id, isJoined, roleNote },
+      { onError: (err) => showMessage(t('minka.toggleFailed'), errorMessage(err)) }
+    );
+  };
 
   const center =
     profile?.lat !== null && profile?.lat !== undefined && profile?.lng !== null && profile?.lng !== undefined
@@ -67,13 +123,13 @@ export default function SolidaryFeedScreen() {
   };
 
   const headerActions = isMember ? (
-    <View className="flex-row">
+    <View className="flex-row items-center">
       {canSeeCareLayer && (
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel={t('care.title')}
           onPress={() => router.push('/care-network')}
-          className="h-10 w-10 rounded-2xl bg-neutral-mutedBg items-center justify-center"
+          className="min-h-[48px] min-w-[48px] rounded-2xl bg-neutral-mutedBg items-center justify-center"
         >
           <HeartHandshake size={20} color="#1E5E45" />
         </TouchableOpacity>
@@ -83,11 +139,26 @@ export default function SolidaryFeedScreen() {
           accessibilityRole="button"
           accessibilityLabel={t('leader.title')}
           onPress={() => router.push('/leader-dashboard')}
-          className="h-10 w-10 rounded-2xl bg-primary items-center justify-center ml-2"
+          className="min-h-[48px] min-w-[48px] rounded-2xl bg-primary items-center justify-center ml-2"
         >
           <ShieldCheck size={20} color="#FFFFFF" />
         </TouchableOpacity>
       )}
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={t('feed.newsButtonA11y')}
+        onPress={handleOpenNews}
+        className="min-h-[48px] min-w-[48px] rounded-2xl bg-neutral-mutedBg items-center justify-center ml-2 relative"
+      >
+        <Megaphone size={20} color="#1E5E45" />
+        {unreadCount > 0 && (
+          <View className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-emergency-alert items-center justify-center">
+            <Text className="text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}>
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
     </View>
   ) : undefined;
 
@@ -208,7 +279,7 @@ export default function SolidaryFeedScreen() {
                 accessibilityRole="tab"
                 accessibilityState={{ selected: active }}
                 onPress={() => setView(key)}
-                className={`flex-1 flex-row items-center justify-center min-h-[40px] rounded-xl ${
+                className={`flex-1 flex-row items-center justify-center min-h-[48px] rounded-xl ${
                   active ? 'bg-neutral-surface' : ''
                 }`}
               >
@@ -233,7 +304,7 @@ export default function SolidaryFeedScreen() {
             {FEED_FILTERS.map((value) => (
               <Chip
                 key={value}
-                label={t(`filter.${value}`)}
+                label={t(feedFilterKey(value))}
                 isActive={filter === value}
                 onPress={() => setFilter(value)}
               />
@@ -262,9 +333,48 @@ export default function SolidaryFeedScreen() {
                 message={t('community.emptyBody')}
               />
             ) : (
-              posts.map((post) => (
-                <SolidaryPostCard key={post.id} post={post} isOwnPost={post.authorId === profile?.id} />
-              ))
+              posts.map((post) => {
+                const canResolve = Boolean(isLeader || (profile?.id && post.authorId === profile.id));
+                if (post.postType === 'VOLUNTARIADO') {
+                  return (
+                    <CommunityActionCard
+                      key={post.id}
+                      post={post}
+                      currentUserId={profile?.id ?? null}
+                      canResolve={canResolve}
+                      onCoordinate={(item) => setSelectedPostId(item.id)}
+                      onToggleVolunteer={(item, joined) => handleToggleVolunteer(item, joined)}
+                      onMarkResolved={handleMarkResolved}
+                      busyVolunteer={toggleVolunteer.isPending}
+                    />
+                  );
+                }
+                if (isCareVolunteerPost(post.postType, post.category)) {
+                  return (
+                    <CareVolunteerCard
+                      key={post.id}
+                      post={post}
+                      currentUserId={profile?.id ?? null}
+                      canResolve={canResolve}
+                      onCoordinate={(item) => setSelectedPostId(item.id)}
+                      onToggleVolunteer={(item, joined) =>
+                        handleToggleVolunteer(item, joined, t('yanapay.roleNote'))
+                      }
+                      onMarkResolved={handleMarkResolved}
+                      busyVolunteer={toggleVolunteer.isPending}
+                    />
+                  );
+                }
+                return (
+                  <SolidaryPostCard
+                    key={post.id}
+                    post={post}
+                    canResolve={canResolve}
+                    onCoordinate={(item) => setSelectedPostId(item.id)}
+                    onMarkResolved={handleMarkResolved}
+                  />
+                );
+              })
             )}
           </ScrollView>
         ) : (
@@ -285,13 +395,18 @@ export default function SolidaryFeedScreen() {
                 </Text>
                 <View className="flex-row items-center justify-between mt-1.5">
                   {(Object.keys(CARE_STATUS_META) as CareStatus[]).map((status) => (
-                    <Text
-                      key={status}
-                      className="text-neutral-textMuted"
-                      style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
-                    >
-                      {CARE_STATUS_META[status].emoji} {t(careStatusKey(status))}
-                    </Text>
+                    <View key={status} className="flex-row items-center">
+                      <View
+                        className="w-2.5 h-2.5 rounded-full mr-1.5"
+                        style={{ backgroundColor: CARE_STATUS_META[status].color }}
+                      />
+                      <Text
+                        className="text-neutral-textMuted"
+                        style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}
+                      >
+                        {t(careStatusKey(status))}
+                      </Text>
+                    </View>
                   ))}
                 </View>
               </View>
@@ -299,6 +414,13 @@ export default function SolidaryFeedScreen() {
           </View>
         )}
       </View>
+
+      <NeighborhoodNewsModal visible={newsOpen} onClose={() => setNewsOpen(false)} />
+      <SolidaryActionSheet
+        post={selectedPost}
+        currentUserId={profile?.id ?? null}
+        onClose={() => setSelectedPostId(null)}
+      />
     </View>
   );
 }

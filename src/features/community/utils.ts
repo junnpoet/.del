@@ -52,6 +52,11 @@ export async function openWhatsapp(phone: string | null | undefined, text: strin
   await Linking.openURL(`https://wa.me/${number}?text=${encodeURIComponent(text)}`);
 }
 
+/** Comparte un texto formateado por WhatsApp sin destinatario fijo (Difundir). */
+export async function shareViaWhatsapp(text: string) {
+  await Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`);
+}
+
 export async function callPhone(phone: string | null | undefined) {
   if (!phone) {
     showMessage(tr('post.noPhoneTitle'), tr('post.noPhone'));

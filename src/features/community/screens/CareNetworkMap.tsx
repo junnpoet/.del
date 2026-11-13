@@ -91,9 +91,12 @@ export default function CareNetworkMap() {
                     <Text style={{ color: meta.color, fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 22 }}>
                       {counts[status]}
                     </Text>
-                    <Text style={{ color: meta.color, fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}>
-                      {meta.emoji} {t(careStatusKey(status))}
-                    </Text>
+                    <View className="flex-row items-center mt-0.5">
+                      <View className="w-2.5 h-2.5 rounded-full mr-1.5" style={{ backgroundColor: meta.color }} />
+                      <Text style={{ color: meta.color, fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}>
+                        {t(careStatusKey(status))}
+                      </Text>
+                    </View>
                   </View>
                 );
               })}

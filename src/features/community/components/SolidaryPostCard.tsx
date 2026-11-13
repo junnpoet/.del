@@ -1,44 +1,50 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Clock, HandHeart, MessageCircle, Smartphone } from 'lucide-react-native';
+import {
+  CheckCircle2,
+  Clock,
+  MessageCircle,
+  Mic,
+  Share2,
+  Smartphone,
+} from 'lucide-react-native';
 import { Card } from '../../../components/ui/Card';
 import { useI18n } from '../../../i18n';
-import { postTypeKey } from '../constants';
+import { POST_STATUS_META, postStatusKey, postTypeKey } from '../constants';
 import type { SolidaryPost } from '../hooks/useSolidaryFeed';
-import { callPhone, confirmAction, openWhatsapp, timeAgo } from '../utils';
+import { shareViaWhatsapp, timeAgo } from '../utils';
 
 interface Props {
   post: SolidaryPost;
-  isOwnPost: boolean;
+  canResolve: boolean;
+  onCoordinate: (post: SolidaryPost) => void;
+  onMarkResolved: (post: SolidaryPost) => void;
 }
 
-/** Tarjeta de publicación solidaria (SPEC-04 §2.1). */
-export function SolidaryPostCard({ post, isOwnPost }: Props) {
+/** Tarjeta de publicación solidaria con ciclo de vida completo (SPEC-04 §2.2). */
+export function SolidaryPostCard({ post, canResolve, onCoordinate, onMarkResolved }: Props) {
   const { t, tCategory } = useI18n();
   const isHelp = post.postType === 'AYUDA';
   const name = post.authorName ?? t('post.anonymous');
   const category = tCategory(post.category);
-  const greeting = t('post.greeting', { name, category });
+  const statusMeta = POST_STATUS_META[post.status];
+  const isResolved = post.status === 'RESOLVED';
 
-  const handleOfferHelp = async () => {
-    const viaWhatsapp = await confirmAction(
-      t('help.offer'),
-      t('post.howContact', { name }),
-      t('post.viaWhatsapp')
+  const handleDiffuse = () => {
+    void shareViaWhatsapp(
+      t('post.diffuseText', {
+        type: t(postTypeKey(post.postType)),
+        category,
+        description: post.description,
+      })
     );
-    if (viaWhatsapp) {
-      await openWhatsapp(post.contactPhone, greeting);
-    } else if (post.contactPhone) {
-      const call = await confirmAction(t('common.call'), t('post.callQuestion', { name }), t('common.call'));
-      if (call) await callPhone(post.contactPhone);
-    }
   };
 
   return (
-    <Card className="mb-3 p-4">
+    <Card className={`mb-3 p-4 ${isResolved ? 'opacity-80' : ''}`}>
       <View className="flex-row items-center justify-between mb-2">
-        <View className="flex-row items-center flex-1 flex-wrap">
-          <View className={`px-2.5 py-1 rounded-xl mr-2 ${isHelp ? 'bg-emergency-tint' : 'bg-neutral-mutedBg'}`}>
+        <View className="flex-row items-center flex-1 flex-wrap gap-1.5">
+          <View className={`px-2.5 py-1 rounded-xl ${isHelp ? 'bg-emergency-tint' : 'bg-neutral-mutedBg'}`}>
             <Text
               className={isHelp ? 'text-emergency-alert' : 'text-neutral-textMain'}
               style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
@@ -46,22 +52,40 @@ export function SolidaryPostCard({ post, isOwnPost }: Props) {
               {t(postTypeKey(post.postType))}
             </Text>
           </View>
+
+          <View className="px-2.5 py-1 rounded-xl" style={{ backgroundColor: statusMeta.tint }}>
+            <Text style={{ color: statusMeta.color, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}>
+              {t(postStatusKey(post.status))}
+            </Text>
+          </View>
+
           {post.urgency === 'ALTA_CRITICA' && (
-            <View className="px-2 py-0.5 rounded-lg bg-emergency-alert mr-2">
-              <Text className="text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11 }}>
+            <View className="px-2.5 py-1 rounded-lg bg-emergency-alert">
+              <Text className="text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}>
                 {t('post.urgent')}
               </Text>
             </View>
           )}
+
           {post.isFromWhatsapp && (
-            <View className="flex-row items-center px-2 py-0.5 rounded-lg bg-[#DCF8C6]">
-              <Smartphone size={12} color="#128C7E" />
-              <Text className="ml-1 text-[#075E54]" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11 }}>
-                {t('post.fromWhatsapp')}
+            <View className="flex-row items-center px-2.5 py-1 rounded-lg bg-[#DCF8C6]">
+              <Smartphone size={13} color="#075E54" />
+              <Text className="ml-1 text-[#075E54]" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}>
+                {t('post.whatsappBadge')}
+              </Text>
+            </View>
+          )}
+
+          {post.isAiVoice && (
+            <View className="flex-row items-center px-2.5 py-1 rounded-lg bg-sun-tint">
+              <Mic size={13} color="#B45309" />
+              <Text className="ml-1 text-sun-dark" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}>
+                {t('post.aiVoiceBadge')}
               </Text>
             </View>
           )}
         </View>
+
         <View className="flex-row items-center ml-2">
           <Clock size={13} color="#9EA3AE" />
           <Text className="text-neutral-textLight ml-1" style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 }}>
@@ -80,35 +104,42 @@ export function SolidaryPostCard({ post, isOwnPost }: Props) {
         {post.description}
       </Text>
 
-      {!isOwnPost && (
-        <View className="pt-2.5 border-t border-neutral-border/50">
-          {post.isFromWhatsapp ? (
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={t('post.whatsappA11y', { name })}
-              onPress={() => openWhatsapp(post.contactPhone, greeting)}
-              className="min-h-[44px] px-4 bg-[#25D366] rounded-xl flex-row items-center justify-center"
-            >
-              <MessageCircle size={17} color="#FFFFFF" />
-              <Text className="text-white ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}>
-                🟢 {t('help.whatsapp')}
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={t('post.offerA11y', { name })}
-              onPress={handleOfferHelp}
-              className="min-h-[44px] px-4 bg-primary rounded-xl flex-row items-center justify-center"
-            >
-              <HandHeart size={17} color="#FFFFFF" />
-              <Text className="text-white ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}>
-                {t('help.offer')}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
+      <View className="pt-2.5 border-t border-neutral-border/50 flex-row flex-wrap gap-2">
+        <TouchableOpacity
+          accessibilityRole="button"
+          onPress={() => onCoordinate(post)}
+          className="flex-1 min-w-[150px] min-h-[48px] px-3.5 bg-primary rounded-xl flex-row items-center justify-center"
+        >
+          <MessageCircle size={17} color="#FFFFFF" />
+          <Text className="text-white ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}>
+            {t('post.coordinate', { n: post.commentsCount })}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          accessibilityRole="button"
+          onPress={handleDiffuse}
+          className="min-h-[48px] px-3.5 bg-neutral-mutedBg rounded-xl flex-row items-center justify-center"
+        >
+          <Share2 size={16} color="#1A1D20" />
+          <Text className="text-neutral-textMain ml-1.5" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}>
+            {t('post.diffuse')}
+          </Text>
+        </TouchableOpacity>
+
+        {canResolve && !isResolved && (
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={() => onMarkResolved(post)}
+            className="min-h-[48px] px-3.5 bg-neutral-surface border border-primary rounded-xl flex-row items-center justify-center"
+          >
+            <CheckCircle2 size={16} color="#1E5E45" />
+            <Text className="text-primary-dark ml-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}>
+              {t('post.markResolved')}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </Card>
   );
 }

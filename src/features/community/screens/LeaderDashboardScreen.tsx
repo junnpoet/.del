@@ -55,7 +55,7 @@ function Badge({ label, color, bg, icon }: { label: string; color: string; bg: s
   return (
     <View className="flex-row items-center px-2 py-0.5 rounded-lg mr-1.5 mb-1" style={{ backgroundColor: bg }}>
       {icon}
-      <Text style={{ color, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11, marginLeft: icon ? 4 : 0 }}>
+      <Text style={{ color, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12, marginLeft: icon ? 4 : 0 }}>
         {label}
       </Text>
     </View>
@@ -279,7 +279,7 @@ export default function LeaderDashboardScreen() {
                         accessibilityRole="button"
                         disabled={busy}
                         onPress={() => approve(req.id, req.full_name)}
-                        className="flex-1 bg-primary rounded-xl flex-row items-center justify-center min-h-[44px]"
+                        className="flex-1 bg-primary rounded-xl flex-row items-center justify-center min-h-[48px]"
                       >
                         {busy ? (
                           <ActivityIndicator color="#FFFFFF" size="small" />
@@ -297,7 +297,7 @@ export default function LeaderDashboardScreen() {
                         accessibilityLabel={t('leader.requests.rejectTitle')}
                         disabled={busy}
                         onPress={() => reject(req.id, req.full_name)}
-                        className="px-4 bg-neutral-mutedBg rounded-xl flex-row items-center justify-center min-h-[44px]"
+                        className="px-4 bg-neutral-mutedBg rounded-xl flex-row items-center justify-center min-h-[48px]"
                       >
                         <X size={16} color="#6C727A" />
                         <Text className="text-neutral-textMuted ml-1" style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}>
