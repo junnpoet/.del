@@ -445,6 +445,7 @@ export type Database = {
           created_at: string | null
           description: string
           id: string
+          listing_type: string
           provider_id: string
           rating_average: number | null
           reviews_count: number | null
@@ -455,6 +456,7 @@ export type Database = {
           created_at?: string | null
           description: string
           id?: string
+          listing_type?: string
           provider_id: string
           rating_average?: number | null
           reviews_count?: number | null
@@ -465,6 +467,7 @@ export type Database = {
           created_at?: string | null
           description?: string
           id?: string
+          listing_type?: string
           provider_id?: string
           rating_average?: number | null
           reviews_count?: number | null
@@ -480,50 +483,114 @@ export type Database = {
           },
         ]
       }
+      solidary_comments: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          content: string
+          created_at: string | null
+          id: string
+          is_accepted: boolean
+          post_id: string
+          whatsapp_sender_phone: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          is_accepted?: boolean
+          post_id: string
+          whatsapp_sender_phone?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_accepted?: boolean
+          post_id?: string
+          whatsapp_sender_phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solidary_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solidary_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "solidary_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       solidary_posts: {
         Row: {
+          accepted_helper_id: string | null
           author_id: string | null
           category: string
           created_at: string | null
           description: string
           group_id: string | null
           id: string
+          is_ai_voice: boolean
           is_from_whatsapp: boolean | null
           post_type: string
           status: string | null
+          target_volunteers: number | null
           urgency: string | null
           whatsapp_sender_name: string | null
           whatsapp_sender_phone: string | null
         }
         Insert: {
+          accepted_helper_id?: string | null
           author_id?: string | null
           category: string
           created_at?: string | null
           description: string
           group_id?: string | null
           id?: string
+          is_ai_voice?: boolean
           is_from_whatsapp?: boolean | null
           post_type: string
           status?: string | null
+          target_volunteers?: number | null
           urgency?: string | null
           whatsapp_sender_name?: string | null
           whatsapp_sender_phone?: string | null
         }
         Update: {
+          accepted_helper_id?: string | null
           author_id?: string | null
           category?: string
           created_at?: string | null
           description?: string
           group_id?: string | null
           id?: string
+          is_ai_voice?: boolean
           is_from_whatsapp?: boolean | null
           post_type?: string
           status?: string | null
+          target_volunteers?: number | null
           urgency?: string | null
           whatsapp_sender_name?: string | null
           whatsapp_sender_phone?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "solidary_posts_accepted_helper_id_fkey"
+            columns: ["accepted_helper_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "solidary_posts_author_id_fkey"
             columns: ["author_id"]
@@ -621,6 +688,45 @@ export type Database = {
           },
         ]
       }
+      volunteers: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          role_note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          role_note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          role_note?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "volunteers_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "solidary_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "volunteers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -645,8 +751,12 @@ export type Database = {
         }
         Returns: {
           category: string
+          description: string
           distance_meters: number
+          listing_type: string
           provider_id: string
+          provider_lat: number
+          provider_lng: number
           provider_name: string
           rating_avg: number
           reviews_total: number

@@ -18,17 +18,13 @@ import { useI18n } from '../../i18n';
 import { useAuth } from '../../services/auth';
 import { supabase } from '../../services/supabase';
 import type { PostType } from '../../types';
+import {
+  CATEGORIES_BY_PUBLISH_TYPE,
+  SOLIDARY_POST_TYPE_BY_CATEGORY,
+} from '../../constants/categories';
 import { useCreateSolidaryPost } from '../../features/community/hooks/useSolidaryFeed';
 import { DIRECTORY_QUERY_KEY } from '../../features/public/hooks/useDirectory';
 import { errorMessage, showMessage } from '../../features/community/utils';
-
-/** Categoría del aporte solidario → post_type de solidary_posts (CHECK de la SPEC-02). */
-const SOLIDARY_POST_TYPE: Record<string, PostType> = {
-  Préstamo: 'PRESTAMO',
-  Donación: 'DONACION',
-  Trueque: 'TRUEQUE',
-  Voluntariado: 'VOLUNTARIADO',
-};
 
 export interface QuickPublishFABProps {
   animatedTranslateY?: Animated.AnimatedInterpolation<number | string> | Animated.Value | number;
@@ -73,11 +69,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
   const [recordedUri, setRecordedUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const categoriesByType = {
-    SERVICIO: ['Gasfitería', 'Electricidad', 'Costura', 'Carpintería', 'Cuidado', 'Clases'],
-    AYUDA: ['Medicinas', 'Herramientas', 'Movilidad', 'Alimentos', 'Compañía'],
-    SOLIDARIO: ['Préstamo', 'Donación', 'Trueque', 'Voluntariado'],
-  };
+  const categoriesByType = CATEGORIES_BY_PUBLISH_TYPE;
 
   const handleOpenMenu = () => {
     setSelectedType(null);
@@ -187,7 +179,7 @@ export const QuickPublishFAB: React.FC<QuickPublishFABProps> = ({
       } else {
         // Ayuda o aporte solidario para el Muro Solidario (tabla solidary_posts, SPEC-04).
         await createSolidaryPost.mutateAsync({
-          postType: selectedType === 'AYUDA' ? 'AYUDA' : SOLIDARY_POST_TYPE[category] ?? 'DONACION',
+          postType: selectedType === 'AYUDA' ? 'AYUDA' : SOLIDARY_POST_TYPE_BY_CATEGORY[category] ?? 'DONACION',
           category,
           description: finalDescription,
         });
