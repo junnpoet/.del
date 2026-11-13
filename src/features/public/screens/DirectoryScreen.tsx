@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
   Modal,
   Platform,
@@ -13,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Flag,
@@ -284,6 +286,19 @@ export default function DirectoryScreen() {
   const [selectedMapService, setSelectedMapService] = useState<NearbyService | null>(null);
   const [reportingService, setReportingService] = useState<NearbyService | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const insets = useSafeAreaInsets();
+  const sheetTranslateY = React.useRef(new Animated.Value(320)).current;
+
+  useEffect(() => {
+    if (filtersOpen) {
+      sheetTranslateY.setValue(320);
+      Animated.timing(sheetTranslateY, {
+        toValue: 0,
+        duration: 220,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [filtersOpen, sheetTranslateY]);
 
   const activeFilterCount =
     (listingTypeFilter !== 'ALL' ? 1 : 0) +
@@ -683,99 +698,110 @@ export default function DirectoryScreen() {
       <Modal
         transparent
         visible={filtersOpen}
-        animationType="slide"
+        animationType="fade"
+        statusBarTranslucent
         onRequestClose={() => setFiltersOpen(false)}
       >
         <Pressable
           className="flex-1 justify-end bg-black/40"
           onPress={() => setFiltersOpen(false)}
         >
-          <Pressable
-            className="rounded-t-3xl bg-neutral-surface px-5 pb-8 pt-5"
-            onPress={(e) => e.stopPropagation()}
+          <Animated.View
+            style={{
+              transform: [{ translateY: sheetTranslateY }],
+              maxHeight: '85%',
+            }}
           >
-            <View className="mb-4 flex-row items-center justify-between">
-              <Text
-                className="text-neutral-textMain"
-                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
-              >
-                Filtros del directorio
-              </Text>
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={() => setFiltersOpen(false)}
-                className="h-10 w-10 items-center justify-center rounded-full bg-neutral-mutedBg"
-              >
-                <X size={18} color="#6C727A" />
-              </TouchableOpacity>
-            </View>
-
-            <Text
-              className="mb-2 text-neutral-textMuted"
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+            <Pressable
+              className="rounded-t-3xl bg-neutral-surface px-5 pt-5"
+              style={{ paddingBottom: Math.max(insets.bottom + 16, 28) }}
+              onPress={(e) => e.stopPropagation()}
             >
-              RADIO CAMINABLE
-            </Text>
-            <View className="mb-4 flex-row flex-wrap gap-2">
-              {RADII.map((item) => (
-                <Chip
-                  key={item.label}
-                  label={item.label}
-                  isActive={radius === item.value}
-                  onPress={() => setRadius(item.value)}
-                />
-              ))}
-            </View>
-
-            <Text
-              className="mb-2 text-neutral-textMuted"
-              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
-            >
-              CATEGORÍA
-            </Text>
-            <View className="mb-5 flex-row flex-wrap gap-1.5">
-              {CATEGORIES.map((item) => (
-                <Chip
-                  key={item}
-                  label={item === 'Todos' ? tp('public.type.ALL') : tpCategory(item)}
-                  isActive={category === item}
-                  onPress={() => setCategory(item)}
-                />
-              ))}
-            </View>
-
-            <View className="flex-row gap-3">
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={() => {
-                  setListingTypeFilter('ALL');
-                  setCategory('Todos');
-                  setRadius(500);
-                  setOnlyFavorites(false);
-                }}
-                className="min-h-[48px] flex-1 items-center justify-center rounded-2xl border border-neutral-border"
-              >
+              <View className="mb-4 flex-row items-center justify-between">
                 <Text
                   className="text-neutral-textMain"
-                  style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
                 >
-                  Limpiar
+                  Filtros del directorio
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={() => setFiltersOpen(false)}
-                className="min-h-[48px] flex-1 items-center justify-center rounded-2xl bg-primary"
-              >
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => setFiltersOpen(false)}
+                  className="h-10 w-10 items-center justify-center rounded-full bg-neutral-mutedBg"
+                >
+                  <X size={18} color="#6C727A" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
                 <Text
-                  className="text-white"
-                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
+                  className="mb-2 text-neutral-textMuted"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
                 >
-                  Ver resultados ({filteredServices.length})
+                  RADIO CAMINABLE
                 </Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
+                <View className="mb-4 flex-row flex-wrap gap-2">
+                  {RADII.map((item) => (
+                    <Chip
+                      key={item.label}
+                      label={item.label}
+                      isActive={radius === item.value}
+                      onPress={() => setRadius(item.value)}
+                    />
+                  ))}
+                </View>
+
+                <Text
+                  className="mb-2 text-neutral-textMuted"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+                >
+                  CATEGORÍA
+                </Text>
+                <View className="mb-5 flex-row flex-wrap gap-1.5">
+                  {CATEGORIES.map((item) => (
+                    <Chip
+                      key={item}
+                      label={item === 'Todos' ? tp('public.type.ALL') : tpCategory(item)}
+                      isActive={category === item}
+                      onPress={() => setCategory(item)}
+                    />
+                  ))}
+                </View>
+              </ScrollView>
+
+              <View className="flex-row gap-3 pt-2">
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setListingTypeFilter('ALL');
+                    setCategory('Todos');
+                    setRadius(500);
+                    setOnlyFavorites(false);
+                  }}
+                  className="min-h-[48px] flex-1 items-center justify-center rounded-2xl border border-neutral-border"
+                >
+                  <Text
+                    className="text-neutral-textMain"
+                    style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
+                  >
+                    Limpiar
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => setFiltersOpen(false)}
+                  className="min-h-[48px] flex-1 items-center justify-center rounded-2xl bg-primary"
+                >
+                  <Text
+                    className="text-white"
+                    style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
+                  >
+                    Ver resultados ({filteredServices.length})
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Animated.View>
         </Pressable>
       </Modal>
     </View>
