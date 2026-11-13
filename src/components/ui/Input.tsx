@@ -15,6 +15,7 @@ export interface InputProps extends TextInputProps {
   helperText?: string;
   onVoiceInput?: () => void;
   isVoiceRecording?: boolean;
+  rightAccessory?: React.ReactNode;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -23,6 +24,7 @@ export const Input: React.FC<InputProps> = ({
   helperText,
   onVoiceInput,
   isVoiceRecording = false,
+  rightAccessory,
   className = '',
   ...props
 }) => {
@@ -77,6 +79,7 @@ export const Input: React.FC<InputProps> = ({
           style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 15 }}
           {...props}
         />
+        {rightAccessory && <View className="ml-2.5">{rightAccessory}</View>}
       </View>
 
       {error ? (

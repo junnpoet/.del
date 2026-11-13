@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   ScrollView,
+  ScrollViewInstance,
   Alert,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -15,7 +17,7 @@ import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { Card } from '../../src/components/ui/Card';
 import { Header } from '../../src/components/ui/Header';
-import { useAuth } from '../../src/services/auth';
+import { normalizeNationalPhone, useAuth } from '../../src/services/auth';
 import { useI18n } from '../../src/i18n';
 
 export default function RegisterScreen() {
@@ -23,8 +25,8 @@ export default function RegisterScreen() {
   const { signUp } = useAuth();
   const { t } = useI18n();
 
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
@@ -32,6 +34,58 @@ export default function RegisterScreen() {
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const scrollViewRef = useRef<ScrollViewInstance>(null);
+  const activeField = useRef<string | null>(null);
+  const stepRef = useRef<1 | 2 | 3>(step);
+
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+
+  const FIELD_SCROLL_OFFSETS: Record<string, { step: 1 | 2 | 3; y: number }> = {
+    fullName: { step: 1, y: 75 },
+    phone: { step: 1, y: 115 },
+    password: { step: 3, y: 170 },
+  };
+
+  const scrollToField = (field: string) => {
+    activeField.current = field;
+    const config = FIELD_SCROLL_OFFSETS[field];
+    if (!config || stepRef.current !== config.step) return;
+    scrollViewRef.current?.scrollTo({
+      y: config.y,
+      animated: true,
+    });
+  };
+
+  const handleFocus = (field: string) => {
+    activeField.current = field;
+    setTimeout(() => {
+      scrollToField(field);
+    }, 150);
+  };
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => {
+      if (activeField.current) {
+        const field = activeField.current;
+        setTimeout(() => {
+          scrollToField(field);
+        }, 120);
+      }
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      activeField.current = null;
+      if (stepRef.current === 1 || stepRef.current === 3) {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      }
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     // Request push notification permissions safely without blocking Expo Go
@@ -51,7 +105,6 @@ export default function RegisterScreen() {
           }
         }
       } catch (err) {
-        // Expo Go on Android restricts remote push token generation; safe to bypass
         console.warn('Push notification token capture bypassed in Expo Go:', err);
       }
     };
@@ -103,37 +156,78 @@ export default function RegisterScreen() {
     }
   };
 
-  const handleRegister = async () => {
+  const handleNextFromStep1 = () => {
     const missing = t('register.missingTitle');
     if (!fullName.trim()) {
       Alert.alert(missing, t('register.missingName'));
       return;
     }
-    if (email.trim() && !email.includes('@')) {
-      Alert.alert(missing, t('register.invalidEmailOptional'));
-      return;
-    }
-    if (password.length < 6) {
-      Alert.alert(missing, t('register.missingPassword'));
-      return;
-    }
-    if (!phone.trim()) {
+    const nationalPhone = normalizeNationalPhone(phone);
+    if (nationalPhone.length !== 9) {
       Alert.alert(missing, t('register.missingPhone'));
+      return;
+    }
+    Keyboard.dismiss();
+    setStep(2);
+    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+  };
+
+  const handleNextFromStep2 = () => {
+    const missing = t('register.missingTitle');
+    if (!coords) {
+      Alert.alert(t('register.locationRequiredTitle'), t('register.locationRequired'));
       return;
     }
     if (!homeAddress.trim()) {
       Alert.alert(missing, t('register.missingAddress'));
       return;
     }
+    Keyboard.dismiss();
+    setStep(3);
+    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+  };
+
+  const handleHeaderBack = () => {
+    Keyboard.dismiss();
+    if (step === 3) {
+      setStep(2);
+    } else if (step === 2) {
+      setStep(1);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleRegister = async () => {
+    const missing = t('register.missingTitle');
+    if (!fullName.trim()) {
+      Alert.alert(missing, t('register.missingName'));
+      setStep(1);
+      return;
+    }
+    if (normalizeNationalPhone(phone).length !== 9) {
+      Alert.alert(missing, t('register.missingPhone'));
+      setStep(1);
+      return;
+    }
     if (!coords) {
       Alert.alert(t('register.locationRequiredTitle'), t('register.locationRequired'));
+      setStep(2);
+      return;
+    }
+    if (!homeAddress.trim()) {
+      Alert.alert(missing, t('register.missingAddress'));
+      setStep(2);
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert(missing, t('register.missingPassword'));
       return;
     }
 
     setIsSubmitting(true);
     try {
       await signUp({
-        email,
         password,
         fullName,
         phone,
@@ -167,7 +261,40 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} className="flex-1 bg-neutral-background">
-      <Header title={t('register.title')} showBack />
+      <Header
+        title={t('register.title')}
+        showBack
+        onBack={handleHeaderBack}
+      />
+
+      {/* Stepper Progress Bar */}
+      <View className="px-5 pt-3 pb-2.5 bg-neutral-surface border-b border-neutral-border/40">
+        <View className="flex-row items-center justify-between mb-2">
+          <Text
+            className="text-neutral-textMuted uppercase tracking-wider"
+            style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11 }}
+          >
+            {step === 1 ? 'Paso 1 de 3' : step === 2 ? 'Paso 2 de 3' : 'Paso 3 de 3'}
+          </Text>
+          <Text
+            className="text-primary font-bold"
+            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
+          >
+            {step === 1 ? '1. Identidad' : step === 2 ? '2. Domicilio' : '3. Seguridad'}
+          </Text>
+        </View>
+        <View className="flex-row h-1.5 bg-neutral-mutedBg rounded-full overflow-hidden gap-1.5">
+          <View
+            className={`flex-1 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-neutral-border/40'}`}
+          />
+          <View
+            className={`flex-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-neutral-border/40'}`}
+          />
+          <View
+            className={`flex-1 rounded-full ${step >= 3 ? 'bg-primary' : 'bg-neutral-border/40'}`}
+          />
+        </View>
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -175,132 +302,250 @@ export default function RegisterScreen() {
         className="flex-1"
       >
         <ScrollView
-          contentContainerClassName="p-4"
-          contentContainerStyle={{ paddingBottom: 160 }}
+          ref={scrollViewRef}
+          contentContainerStyle={{ padding: 16, paddingBottom: 320, flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           automaticallyAdjustKeyboardInsets={true}
           showsVerticalScrollIndicator={false}
         >
-          <View className="bg-neutral-mutedBg p-3.5 rounded-2xl mb-4">
-          <Text
-            className="text-neutral-textMuted leading-5"
-            style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
-          >
-            {t('register.intro')}
-          </Text>
-        </View>
-
-        <Card className="p-4 mb-4">
-          <Input
-            label={t('register.fullName')}
-            placeholder={t('register.fullNamePlaceholder')}
-            value={fullName}
-            onChangeText={setFullName}
-          />
-
-          <Input
-            label={t('register.emailOptional')}
-            placeholder={t('register.emailOptionalPlaceholder')}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            value={email}
-            onChangeText={setEmail}
-          />
-
-          <Input
-            label={t('register.password')}
-            placeholder={t('register.passwordPlaceholder')}
-            secureTextEntry
-            autoCapitalize="none"
-            value={password}
-            onChangeText={setPassword}
-          />
-
-          <Input
-            label={t('register.phone')}
-            placeholder={t('register.phonePlaceholder')}
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={setPhone}
-          />
-
-          <Input
-            label={t('register.address')}
-            placeholder={t('register.addressPlaceholder')}
-            value={homeAddress}
-            onChangeText={setHomeAddress}
-          />
-
-          {/* GPS Location Pinning */}
-          <View className="mb-4">
-            <Text
-              className="text-neutral-textMain mb-1.5"
-              style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
-            >
-              {t('register.gps')}
-            </Text>
-
-            <TouchableOpacity
-              onPress={handleCaptureLocation}
-              disabled={isLocating}
-              className={`p-3.5 rounded-2xl flex-row items-center justify-between min-h-[56px] ${
-                coords
-                  ? 'bg-neutral-surface border border-neutral-border shadow-xs'
-                  : 'bg-neutral-mutedBg'
-              }`}
-            >
-              <View className="flex-row items-center flex-1 mr-2">
-                <View
-                  className={`w-10 h-10 rounded-xl items-center justify-center ${
-                    coords ? 'bg-primary' : 'bg-neutral-surface'
-                  }`}
+          {/* STEP 1: IDENTIDAD */}
+          {step === 1 && (
+            <Card className="p-5 mb-4">
+              <View className="mb-4">
+                <Text
+                  className="text-neutral-textMain"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
                 >
-                  <Navigation
-                    size={18}
-                    color={coords ? '#FFFFFF' : '#6C727A'}
-                    strokeWidth={2.2}
-                  />
-                </View>
-                <View className="ml-3 flex-1">
-                  <Text
-                    className={
-                      coords ? 'text-neutral-textMain' : 'text-neutral-textMain'
-                    }
-                    style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
-                  >
-                    {coords ? t('register.gpsSet') : t('register.gpsCta')}
-                  </Text>
-                  <Text
-                    className="text-neutral-textLight mt-0.5"
-                    style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 12 }}
-                  >
-                    {coords
-                      ? `Lat: ${coords.latitude.toFixed(4)}, Lng: ${coords.longitude.toFixed(4)}`
-                      : t('register.gpsHint')}
-                  </Text>
-                </View>
+                  Datos Personales
+                </Text>
+                <Text
+                  className="text-neutral-textMuted mt-1 leading-5"
+                  style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
+                >
+                  Tu nombre y WhatsApp permitirán a tus vecinos identificarte y contactarte en el barrio.
+                </Text>
               </View>
 
-              {coords ? (
-                <CheckCircle size={20} color="#1E5E45" strokeWidth={2.2} />
-              ) : (
-                <MapPin size={18} color="#9EA3AE" strokeWidth={2} />
-              )}
-            </TouchableOpacity>
-          </View>
+              <Input
+                label={t('register.fullName')}
+                placeholder={t('register.fullNamePlaceholder')}
+                value={fullName}
+                onChangeText={setFullName}
+                autoCapitalize="words"
+                returnKeyType="next"
+                onFocus={() => handleFocus('fullName')}
+              />
 
-          <Button
-            title={t('register.submit')}
-            variant="primary"
-            onPress={handleRegister}
-            isLoading={isSubmitting}
-            className="mt-1"
-          />
-        </Card>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  </SafeAreaView>
-);
+              <Input
+                label={t('register.phone')}
+                placeholder={t('register.phonePlaceholder')}
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+                returnKeyType="done"
+                onFocus={() => handleFocus('phone')}
+              />
+
+              <Button
+                title="Continuar a Domicilio"
+                variant="primary"
+                onPress={handleNextFromStep1}
+                className="mt-2"
+              />
+            </Card>
+          )}
+
+          {/* STEP 2: DOMICILIO Y SECTOR */}
+          {step === 2 && (
+            <Card className="p-5 mb-4">
+              <View className="mb-4">
+                <Text
+                  className="text-neutral-textMain"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
+                >
+                  Domicilio y Sector
+                </Text>
+                <Text
+                  className="text-neutral-textMuted mt-1 leading-5"
+                  style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
+                >
+                  Vinculamos tu cuenta al sector vecinal para alertas de emergencia y reciprocidad comunitaria.
+                </Text>
+              </View>
+
+              {/* GPS Location Pinning */}
+              <View className="mb-4">
+                <Text
+                  className="text-neutral-textMain mb-1.5"
+                  style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
+                >
+                  {t('register.gps')}
+                </Text>
+
+                <TouchableOpacity
+                  onPress={handleCaptureLocation}
+                  disabled={isLocating}
+                  className={`p-3.5 rounded-2xl flex-row items-center justify-between min-h-[56px] ${
+                    coords
+                      ? 'bg-neutral-surface border border-neutral-border shadow-xs'
+                      : 'bg-neutral-mutedBg'
+                  }`}
+                >
+                  <View className="flex-row items-center flex-1 mr-2">
+                    <View
+                      className={`w-10 h-10 rounded-xl items-center justify-center ${
+                        coords ? 'bg-primary' : 'bg-neutral-surface'
+                      }`}
+                    >
+                      <Navigation
+                        size={18}
+                        color={coords ? '#FFFFFF' : '#6C727A'}
+                        strokeWidth={2.2}
+                      />
+                    </View>
+                    <View className="ml-3 flex-1">
+                      <Text
+                        className="text-neutral-textMain"
+                        style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }}
+                      >
+                        {coords ? t('register.gpsSet') : t('register.gpsCta')}
+                      </Text>
+                      <Text
+                        className="text-neutral-textLight mt-0.5"
+                        style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 12 }}
+                      >
+                        {coords
+                          ? `Lat: ${coords.latitude.toFixed(4)}, Lng: ${coords.longitude.toFixed(4)}`
+                          : t('register.gpsHint')}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {coords ? (
+                    <CheckCircle size={20} color="#1E5E45" strokeWidth={2.2} />
+                  ) : (
+                    <MapPin size={18} color="#9EA3AE" strokeWidth={2} />
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              <Input
+                label={t('register.address')}
+                placeholder={t('register.addressPlaceholder')}
+                value={homeAddress}
+                onChangeText={setHomeAddress}
+                returnKeyType="done"
+              />
+
+              <Button
+                title="Continuar a Seguridad"
+                variant="primary"
+                onPress={handleNextFromStep2}
+                className="mt-2"
+              />
+
+              <TouchableOpacity
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setStep(1);
+                }}
+                className="mt-3 py-2 items-center min-h-[44px] justify-center"
+              >
+                <Text
+                  className="text-neutral-textMuted"
+                  style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
+                >
+                  Volver a datos personales
+                </Text>
+              </TouchableOpacity>
+            </Card>
+          )}
+
+          {/* STEP 3: SEGURIDAD Y RESUMEN */}
+          {step === 3 && (
+            <Card className="p-5 mb-4">
+              <View className="mb-4">
+                <Text
+                  className="text-neutral-textMain"
+                  style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18 }}
+                >
+                  Clave de Acceso
+                </Text>
+                <Text
+                  className="text-neutral-textMuted mt-1 leading-5"
+                  style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13 }}
+                >
+                  Crea una contraseña segura para proteger la cuenta de tu hogar.
+                </Text>
+              </View>
+
+              {/* Resumen del registro */}
+              <View className="bg-neutral-mutedBg p-3.5 rounded-2xl mb-4 border border-neutral-border/50">
+                <Text
+                  className="text-neutral-textMain mb-1.5"
+                  style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
+                >
+                  Resumen de tu cuenta
+                </Text>
+                <Text
+                  className="text-neutral-textMuted text-xs"
+                  style={{ fontFamily: 'PlusJakartaSans_400Regular' }}
+                >
+                  Titular: <Text className="text-neutral-textMain font-semibold">{fullName}</Text>
+                </Text>
+                <Text
+                  className="text-neutral-textMuted text-xs mt-1"
+                  style={{ fontFamily: 'PlusJakartaSans_400Regular' }}
+                >
+                  WhatsApp: <Text className="text-neutral-textMain font-semibold">{phone}</Text>
+                </Text>
+                <Text
+                  className="text-neutral-textMuted text-xs mt-1"
+                  style={{ fontFamily: 'PlusJakartaSans_400Regular' }}
+                  numberOfLines={1}
+                >
+                  Domicilio: <Text className="text-neutral-textMain font-semibold">{homeAddress}</Text>
+                </Text>
+              </View>
+
+              <Input
+                label={t('register.password')}
+                placeholder={t('register.passwordPlaceholder')}
+                secureTextEntry
+                autoCapitalize="none"
+                value={password}
+                onChangeText={setPassword}
+                returnKeyType="done"
+                onFocus={() => handleFocus('password')}
+              />
+
+              <Button
+                title={t('register.submit')}
+                variant="primary"
+                onPress={handleRegister}
+                isLoading={isSubmitting}
+                className="mt-2"
+              />
+
+              <TouchableOpacity
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setStep(2);
+                }}
+                className="mt-3 py-2 items-center min-h-[44px] justify-center"
+              >
+                <Text
+                  className="text-neutral-textMuted"
+                  style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 }}
+                >
+                  Volver a domicilio
+                </Text>
+              </TouchableOpacity>
+            </Card>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
 }
