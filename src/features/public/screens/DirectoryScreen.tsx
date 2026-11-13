@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -11,31 +11,47 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Home, List, Map as MapIcon, MapPin, Search } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  Flag,
+  Heart,
+  Home,
+  List,
+  Map as MapIcon,
+  MapPin,
+  MessageCircle,
+  MessageSquare,
+  Search,
+  ShieldCheck,
+  Star,
+  X,
+} from 'lucide-react-native';
 import { Header } from '../../../components/ui/Header';
 import { Chip } from '../../../components/ui/Chip';
-import { useDirectory } from '../hooks/useDirectory';
-import { ServiceCard } from '../components/ServiceCard';
+import {
+  normalizeListingType,
+  useDirectory,
+  type NearbyService,
+} from '../hooks/useDirectory';
+import { LISTING_TYPE_META, ServiceCard } from '../components/ServiceCard';
+import { ReportModal } from '../components/ReportModal';
 import { useI18n } from '../../../i18n';
+import { usePublicI18n } from '../i18n';
 import { useAuth } from '../../../services/auth';
 import { supabase } from '../../../services/supabase';
 import { EmergencyBanner } from '../../emergency/components/EmergencyBanner';
+import { LISTING_TYPES, SERVICE_CATEGORIES } from '../../../constants/categories';
+import type { ListingType } from '../../../types';
 
-const CATEGORIES = [
-  'Todos',
-  'Gasfitería',
-  'Electricidad',
-  'Cerrajería',
-  'Carpintería',
-  'Paseador de mascotas',
-  'Clases',
-];
+const CATEGORIES = ['Todos', ...SERVICE_CATEGORIES] as const;
+
 const RADII = [
   { label: '300m', value: 300 },
   { label: '500m', value: 500 },
   { label: '1 km', value: 1000 },
 ];
+
+type TypeFilter = 'ALL' | ListingType;
 
 function NativeMap({
   latitude,
@@ -43,16 +59,30 @@ function NativeMap({
   radius,
   services,
   locations,
-  onSelectService,
+  selectedService,
+  onSelectMarker,
+  onClosePreview,
+  onConsult,
+  onReport,
+  isFavorite,
+  onToggleFavorite,
 }: {
   latitude: number;
   longitude: number;
   radius: number;
-  services: ReturnType<typeof useDirectory>['services'];
-  locations: ReturnType<typeof useDirectory>['locations'];
-  onSelectService: (service: ReturnType<typeof useDirectory>['services'][number]) => void;
+  services: NearbyService[];
+  locations: Record<string, { latitude: number; longitude: number }>;
+  selectedService: NearbyService | null;
+  onSelectMarker: (service: NearbyService) => void;
+  onClosePreview: () => void;
+  onConsult: (service: NearbyService) => void;
+  onReport: (service: NearbyService) => void;
+  isFavorite: (serviceId: string) => boolean;
+  onToggleFavorite: (serviceId: string) => void;
 }) {
   const { t } = useI18n();
+  const { tp, tpCategory } = usePublicI18n();
+
   if (Platform.OS === 'web') {
     return (
       <View className="flex-1 items-center justify-center bg-[#E8F0EC] px-8">
@@ -77,77 +107,236 @@ function NativeMap({
   const MapView = maps.default;
   const radiusDelta = radius === 300 ? 0.006 : radius === 500 ? 0.01 : 0.018;
 
+  const selectedType = selectedService
+    ? normalizeListingType(selectedService.listing_type)
+    : null;
+  const selectedMeta = selectedType ? LISTING_TYPE_META[selectedType] : null;
+  const SelectedIcon = selectedMeta?.Icon;
+
   return (
-    <MapView
-      style={{ flex: 1 }}
-      initialRegion={{
-        latitude,
-        longitude,
-        latitudeDelta: radiusDelta,
-        longitudeDelta: radiusDelta,
-      }}
-      showsUserLocation={false}
-      customMapStyle={require('../../../theme/cleanMapStyle').CLEAN_NEIGHBORHOOD_MAP_STYLE}
-    >
-      {/* Home Pin (Primary Green) */}
-      <maps.Marker
-        coordinate={{ latitude, longitude }}
-        title={t('directory.yourLocation')}
-        description="Centro de cálculo del radio caminable"
-        pinColor="#1E5E45"
-      />
-      <maps.Circle
-        center={{ latitude, longitude }}
-        radius={radius}
-        strokeColor="#1E5E45"
-        fillColor="rgba(30, 94, 69, 0.12)"
-      />
-      {services.map((service) => {
-        const coordinate = locations[service.service_id];
-        if (!coordinate) return null;
-        return (
-          <maps.Marker
-            key={service.service_id}
-            coordinate={coordinate}
-            title={service.title}
-            description={`${service.provider_name} · ${Math.round(service.distance_meters)} m`}
-            pinColor="#D97706"
-            onCalloutPress={() => onSelectService(service)}
-          />
-        );
-      })}
-    </MapView>
+    <View className="flex-1 relative">
+      <MapView
+        style={{ flex: 1 }}
+        initialRegion={{
+          latitude,
+          longitude,
+          latitudeDelta: radiusDelta,
+          longitudeDelta: radiusDelta,
+        }}
+        showsUserLocation={false}
+        customMapStyle={require('../../../theme/cleanMapStyle').CLEAN_NEIGHBORHOOD_MAP_STYLE}
+      >
+        {/* Home Pin */}
+        <maps.Marker
+          coordinate={{ latitude, longitude }}
+          title={tp('public.homePinTitle')}
+          description={tp('public.homePinDesc')}
+          pinColor="#1E5E45"
+        />
+        <maps.Circle
+          center={{ latitude, longitude }}
+          radius={radius}
+          strokeColor="#1E5E45"
+          fillColor="rgba(30, 94, 69, 0.12)"
+        />
+        {services.map((service) => {
+          const coordinate = locations[service.service_id];
+          if (!coordinate) return null;
+          const listingType = normalizeListingType(service.listing_type);
+          const pinColor = LISTING_TYPE_META[listingType].color;
+          return (
+            <maps.Marker
+              key={service.service_id}
+              coordinate={coordinate}
+              title={service.title}
+              description={`${service.provider_name} · ${Math.round(service.distance_meters)} m`}
+              pinColor={pinColor}
+              onPress={() => onSelectMarker(service)}
+              onCalloutPress={() => onConsult(service)}
+            />
+          );
+        })}
+      </MapView>
+
+      {/* Map Floating Preview Card */}
+      {selectedService && selectedMeta && selectedType && SelectedIcon && (
+        <View className="absolute bottom-24 left-4 right-4 rounded-3xl border border-neutral-border bg-neutral-surface p-4 shadow-xl">
+          <View className="flex-row items-center justify-between">
+            <View
+              className="flex-row items-center rounded-full px-3 py-1"
+              style={{ backgroundColor: selectedMeta.bg }}
+            >
+              <SelectedIcon size={14} color={selectedMeta.color} />
+              <Text
+                className="ml-1.5"
+                style={{
+                  fontFamily: 'PlusJakartaSans_700Bold',
+                  fontSize: 12,
+                  color: selectedMeta.color,
+                }}
+              >
+                {tp(`public.type.${selectedType}`)}
+              </Text>
+            </View>
+
+            <View className="flex-row items-center gap-1">
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={tp('public.reportA11y', {
+                  name: selectedService.provider_name,
+                })}
+                onPress={() => onReport(selectedService)}
+                className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
+              >
+                <Flag size={18} color="#6C727A" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isFavorite(selectedService.service_id)
+                    ? t('service.favRemove')
+                    : t('service.favAdd')
+                }
+                onPress={() => onToggleFavorite(selectedService.service_id)}
+                className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
+              >
+                <Heart
+                  size={18}
+                  color={isFavorite(selectedService.service_id) ? '#D90429' : '#6C727A'}
+                  fill={isFavorite(selectedService.service_id) ? '#D90429' : 'none'}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={tp('public.mapClosePreview')}
+                onPress={onClosePreview}
+                className="h-12 w-12 items-center justify-center rounded-2xl bg-neutral-mutedBg"
+              >
+                <X size={18} color="#6C727A" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <Text
+            numberOfLines={1}
+            className="mt-2 text-neutral-textMain"
+            style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 }}
+          >
+            {selectedService.title}
+          </Text>
+          <Text
+            numberOfLines={1}
+            className="mt-0.5 text-neutral-textMuted"
+            style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
+          >
+            {selectedService.provider_name} · {tpCategory(selectedService.category)}
+          </Text>
+
+          <View className="mt-2.5 flex-row flex-wrap items-center">
+            <View className="mr-3 flex-row items-center">
+              <ShieldCheck size={15} color="#1E5E45" />
+              <Text
+                className="ml-1 text-primary"
+                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}
+              >
+                {t('service.seal')}
+              </Text>
+            </View>
+            <View className="mr-3 flex-row items-center">
+              <Star size={14} color="#EAB308" fill="#EAB308" />
+              <Text
+                className="ml-1 text-neutral-textMain"
+                style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 }}
+              >
+                {selectedService.rating_avg?.toFixed(1) ?? '0.0'} ({selectedService.reviews_total ?? 0})
+              </Text>
+            </View>
+            <View className="flex-row items-center">
+              <MapPin size={14} color="#6C727A" />
+              <Text
+                className="ml-1 text-neutral-textMuted"
+                style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 }}
+              >
+                {t('service.distance', { n: Math.round(selectedService.distance_meters) })}
+              </Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('service.consultA11y', {
+              name: selectedService.provider_name,
+            })}
+            onPress={() => onConsult(selectedService)}
+            className="mt-3 min-h-[48px] flex-row items-center justify-center rounded-2xl bg-primary px-4"
+          >
+            <MessageCircle size={18} color="#FFFFFF" />
+            <Text
+              className="ml-2 text-white"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 }}
+            >
+              {t('service.consult')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
   );
 }
 
 export default function DirectoryScreen() {
   const router = useRouter();
+  const { filter } = useLocalSearchParams<{ filter?: string }>();
   const { session } = useAuth();
   const [radius, setRadius] = useState(500);
+  const [listingTypeFilter, setListingTypeFilter] = useState<TypeFilter>('ALL');
   const [category, setCategory] = useState('Todos');
+  const [onlyFavorites, setOnlyFavorites] = useState(filter === 'favorites');
   const [query, setQuery] = useState('');
   const [view, setView] = useState<'list' | 'map'>('list');
   const [openingChatId, setOpeningChatId] = useState<string | null>(null);
+  const [selectedMapService, setSelectedMapService] = useState<NearbyService | null>(null);
+  const [reportingService, setReportingService] = useState<NearbyService | null>(null);
+
+  useEffect(() => {
+    if (filter === 'favorites') {
+      setOnlyFavorites(true);
+    }
+  }, [filter]);
 
   const directory = useDirectory(radius);
-  const { t, tCategory } = useI18n();
+  const { t } = useI18n();
+  const { tp, tpCategory } = usePublicI18n();
 
   const filteredServices = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return directory.services.filter((service) => {
+      const normalizedType = normalizeListingType(service.listing_type);
+      const matchesType =
+        listingTypeFilter === 'ALL' || normalizedType === listingTypeFilter;
       const matchesCategory = category === 'Todos' || service.category === category;
+      const matchesFavorite =
+        !onlyFavorites || directory.favorites.includes(service.service_id);
       const matchesQuery =
         !normalizedQuery ||
         service.title.toLowerCase().includes(normalizedQuery) ||
         service.category.toLowerCase().includes(normalizedQuery) ||
+        (service.description ?? '').toLowerCase().includes(normalizedQuery) ||
         service.provider_name.toLowerCase().includes(normalizedQuery);
-      return matchesCategory && matchesQuery;
+      return matchesType && matchesCategory && matchesFavorite && matchesQuery;
     });
-  }, [category, directory.services, query]);
+  }, [
+    category,
+    directory.favorites,
+    directory.services,
+    listingTypeFilter,
+    onlyFavorites,
+    query,
+  ]);
 
-  const handleConsult = async (
-    service: ReturnType<typeof useDirectory>['services'][number]
-  ) => {
+  const handleConsult = async (service: NearbyService) => {
+    if (openingChatId) return;
+
     if (!session?.user?.id) {
       Alert.alert(
         'Inicia sesión',
@@ -161,14 +350,20 @@ export default function DirectoryScreen() {
     }
 
     if (session.user.id === service.provider_id) {
-      Alert.alert('Tu propio oficio', 'Este es tu propio anuncio de servicio.');
+      Alert.alert(
+        'Tu propia publicación',
+        'Puedes responder a tus vecinos desde la bandeja de Mensajes.',
+        [
+          { text: tp('public.inboxButton'), onPress: () => router.push('/chat') },
+          { text: 'Cerrar', style: 'cancel' },
+        ]
+      );
       return;
     }
 
     try {
       setOpeningChatId(service.service_id);
 
-      // Check if conversation already exists
       const { data: existing, error: searchError } = await supabase
         .from('chat_conversations')
         .select('id')
@@ -183,7 +378,6 @@ export default function DirectoryScreen() {
         return;
       }
 
-      // Create new conversation
       const { data: created, error: createError } = await supabase
         .from('chat_conversations')
         .insert({
@@ -244,8 +438,9 @@ export default function DirectoryScreen() {
     <View className="flex-1 bg-neutral-background">
       <Header title={t('directory.title')} subtitle={t('directory.subtitle')} />
       <EmergencyBanner />
-      <View className="border-b border-neutral-border/60 bg-neutral-surface px-4 pb-2 pt-3">
-        <View className="flex-row items-center rounded-2xl bg-neutral-mutedBg px-3 min-h-[44px]">
+      <View className="border-b border-neutral-border/60 bg-neutral-surface px-4 pb-2.5 pt-3">
+        {/* Search bar */}
+        <View className="min-h-[48px] flex-row items-center rounded-2xl bg-neutral-mutedBg px-3">
           <Search size={18} color="#6C727A" />
           <TextInput
             accessibilityLabel={t('directory.search')}
@@ -254,10 +449,75 @@ export default function DirectoryScreen() {
             placeholderTextColor="#9EA3AE"
             value={query}
             onChangeText={setQuery}
-            style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13 }}
+            style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 14 }}
           />
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3">
+
+        {/* Tricolor Listing Type Filters */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="mt-2.5"
+          contentContainerStyle={{ gap: 8 }}
+        >
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ selected: listingTypeFilter === 'ALL' }}
+            onPress={() => setListingTypeFilter('ALL')}
+            className={`min-h-[48px] flex-row items-center rounded-2xl border px-3.5 ${
+              listingTypeFilter === 'ALL'
+                ? 'border-neutral-textMain bg-neutral-textMain'
+                : 'border-neutral-border bg-neutral-surface'
+            }`}
+          >
+            <Text
+              className={
+                listingTypeFilter === 'ALL' ? 'text-white' : 'text-neutral-textMain'
+              }
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
+            >
+              {tp('public.type.ALL')}
+            </Text>
+          </TouchableOpacity>
+
+          {LISTING_TYPES.map((typeKey) => {
+            const active = listingTypeFilter === typeKey;
+            const meta = LISTING_TYPE_META[typeKey];
+            const Icon = meta.Icon;
+            return (
+              <TouchableOpacity
+                key={typeKey}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                onPress={() => setListingTypeFilter(typeKey)}
+                className="min-h-[48px] flex-row items-center rounded-2xl border px-3.5"
+                style={{
+                  borderColor: active ? meta.color : '#E5E7EB',
+                  backgroundColor: active ? meta.color : meta.bg,
+                }}
+              >
+                <Icon size={15} color={active ? '#FFFFFF' : meta.color} />
+                <Text
+                  className="ml-1.5"
+                  style={{
+                    fontFamily: 'PlusJakartaSans_700Bold',
+                    fontSize: 13,
+                    color: active ? '#FFFFFF' : meta.color,
+                  }}
+                >
+                  {tp(`public.type.${typeKey}`)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* Radii + Favorites Chip */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="mt-2"
+        >
           {RADII.map((item) => (
             <Chip
               key={item.label}
@@ -266,25 +526,49 @@ export default function DirectoryScreen() {
               onPress={() => setRadius(item.value)}
             />
           ))}
+          <Chip
+            label={`${tp('public.favoritesChip')} (${directory.favorites.length})`}
+            isActive={onlyFavorites}
+            onPress={() => setOnlyFavorites((prev) => !prev)}
+          />
         </ScrollView>
+
+        {/* Categories */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {CATEGORIES.map((item) => (
             <Chip
               key={item}
-              label={tCategory(item)}
+              label={item === 'Todos' ? tp('public.type.ALL') : tpCategory(item)}
               isActive={category === item}
               onPress={() => setCategory(item)}
             />
           ))}
         </ScrollView>
-        <View className="mt-1 flex-row justify-end">
+
+        {/* Toolbar: Inbox button + List/Map toggle */}
+        <View className="mt-1.5 flex-row items-center justify-between">
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={tp('public.inboxA11y')}
+            onPress={() => router.push('/chat')}
+            className="min-h-[48px] flex-row items-center rounded-2xl border border-primary/25 bg-[#EDF5F1] px-3.5"
+          >
+            <MessageSquare size={17} color="#1E5E45" />
+            <Text
+              className="ml-2 text-primary"
+              style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 }}
+            >
+              {tp('public.inboxButton')}
+            </Text>
+          </TouchableOpacity>
+
           <View className="flex-row rounded-xl bg-neutral-mutedBg p-1">
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel={t('directory.viewList')}
               accessibilityState={{ selected: view === 'list' }}
               onPress={() => setView('list')}
-              className={`h-10 w-11 items-center justify-center rounded-lg ${
+              className={`h-12 w-12 items-center justify-center rounded-lg ${
                 view === 'list' ? 'bg-white' : ''
               }`}
             >
@@ -295,7 +579,7 @@ export default function DirectoryScreen() {
               accessibilityLabel={t('directory.viewMap')}
               accessibilityState={{ selected: view === 'map' }}
               onPress={() => setView('map')}
-              className={`h-10 w-11 items-center justify-center rounded-lg ${
+              className={`h-12 w-12 items-center justify-center rounded-lg ${
                 view === 'map' ? 'bg-white' : ''
               }`}
             >
@@ -312,7 +596,13 @@ export default function DirectoryScreen() {
           radius={radius}
           services={filteredServices}
           locations={directory.locations}
-          onSelectService={handleConsult}
+          selectedService={selectedMapService}
+          onSelectMarker={(svc) => setSelectedMapService(svc)}
+          onClosePreview={() => setSelectedMapService(null)}
+          onConsult={handleConsult}
+          onReport={(svc) => setReportingService(svc)}
+          isFavorite={directory.isFavorite}
+          onToggleFavorite={directory.toggleFavorite}
         />
       ) : (
         <FlatList
@@ -324,6 +614,7 @@ export default function DirectoryScreen() {
               isFavorite={directory.favorites.includes(item.service_id)}
               onToggleFavorite={() => directory.toggleFavorite(item.service_id)}
               onConsult={() => handleConsult(item)}
+              onReport={() => setReportingService(item)}
               isTogglingFavorite={directory.isTogglingFavorite}
             />
           )}
@@ -347,6 +638,16 @@ export default function DirectoryScreen() {
               </Text>
             </View>
           }
+        />
+      )}
+
+      {reportingService && (
+        <ReportModal
+          visible={Boolean(reportingService)}
+          onClose={() => setReportingService(null)}
+          serviceId={reportingService.service_id}
+          providerName={reportingService.provider_name}
+          serviceTitle={reportingService.title}
         />
       )}
     </View>

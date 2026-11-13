@@ -28,6 +28,7 @@ import { Card } from '../../src/components/ui/Card';
 import { Button } from '../../src/components/ui/Button';
 import { Header } from '../../src/components/ui/Header';
 import { useDemo, type MembershipStatus } from '../../src/services/demoStore';
+import { useFavorites } from '../../src/features/public/hooks/useFavorites';
 import { useMembership } from '../../src/features/community/hooks/useMembership';
 import { useAuth } from '../../src/services/auth';
 import { LanguageToggle } from '../../src/i18n/LanguageToggle';
@@ -39,7 +40,8 @@ import {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { currentUser, favorites } = useDemo();
+  const { currentUser } = useDemo();
+  const { favorites } = useFavorites();
   const { signOut, profile } = useAuth();
   const { t } = useI18n();
   const membership = useMembership();
@@ -249,10 +251,7 @@ export default function ProfileScreen() {
           <TouchableOpacity
             className="flex-row items-center justify-between p-3.5 border-b border-neutral-border/50 min-h-[48px]"
             onPress={() =>
-              Alert.alert(
-                t('profile.favoritesTitle'),
-                t('profile.favoritesBody', { n: favorites.length })
-              )
+              router.push({ pathname: '/(main)', params: { filter: 'favorites' } })
             }
           >
             <View className="flex-row items-center flex-1 mr-2">
