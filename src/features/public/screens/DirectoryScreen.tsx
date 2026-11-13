@@ -4,6 +4,7 @@ import {
   Alert,
   FlatList,
   Platform,
+  Pressable,
   RefreshControl,
   ScrollView,
   Text,
@@ -569,14 +570,18 @@ export default function DirectoryScreen() {
             const meta = LISTING_TYPE_META[typeKey];
             const Icon = meta.Icon;
             return (
-              <TouchableOpacity
+              <Pressable
                 key={typeKey}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
                 onPress={() =>
                   setListingTypeFilter((prev) => (prev === typeKey ? 'ALL' : typeKey))
                 }
-                className="min-h-[38px] flex-1 flex-row items-center justify-center rounded-full border px-2"
+                android_ripple={{
+                  color: active ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.08)',
+                  borderless: false,
+                }}
+                className="min-h-[38px] flex-1 flex-row items-center justify-center overflow-hidden rounded-full border px-2"
                 style={{
                   borderColor: active ? meta.color : '#E5E7EB',
                   backgroundColor: active ? meta.color : meta.bg,
@@ -594,16 +599,20 @@ export default function DirectoryScreen() {
                 >
                   {tp(`public.type.${typeKey}`)}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
 
-          <TouchableOpacity
+          <Pressable
             accessibilityRole="button"
             accessibilityLabel={tp('public.favoritesChip')}
             accessibilityState={{ selected: onlyFavorites }}
             onPress={() => setOnlyFavorites((prev) => !prev)}
-            className={`min-h-[38px] flex-row items-center justify-center rounded-full border px-2.5 ${
+            android_ripple={{
+              color: onlyFavorites ? 'rgba(217,4,41,0.16)' : 'rgba(0,0,0,0.08)',
+              borderless: false,
+            }}
+            className={`min-h-[38px] flex-row items-center justify-center overflow-hidden rounded-full border px-2.5 ${
               onlyFavorites
                 ? 'border-emergency-alert bg-[#FEE2E2]'
                 : 'border-neutral-border bg-neutral-surface'
@@ -622,7 +631,7 @@ export default function DirectoryScreen() {
             >
               ({directory.favorites.length})
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
