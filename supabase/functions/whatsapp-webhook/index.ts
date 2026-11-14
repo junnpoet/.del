@@ -304,17 +304,65 @@ Deno.serve(async (req: Request) => {
         : fromPhone;
       const supabase = getServiceSupabaseClient();
 
-      // Verificar si el vecino ya está registrado en profiles
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, full_name, group_id, phone, neighborhood_groups(name, sector_name)')
-        .or(`phone.eq.${fromPhone},phone.eq.${nationalPhone}`)
-        .maybeSingle();
+      // Verificar si el vecino ya está registrado en profiles (soporta 51..., 9 dígitos, +51..., espacios/guiones)
+      const phoneVariants = Array.from(
+        new Set([
+          fromPhone,
+          nationalPhone,
+          `+${fromPhone}`,
+          ...(nationalPhone ? [`+51${nationalPhone}`, `51${nationalPhone}`] : []),
+        ].filter(Boolean))
+      );
 
-      // @ts-ignore joined relation
-      const memberGroupName: string = profile?.neighborhood_groups?.name || 'tu comunidad';
-      // @ts-ignore joined relation
-      const memberSectorName: string = profile?.neighborhood_groups?.sector_name || 'tu sector';
+      const { data: exactProfiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, full_name, group_id, phone')
+        .in('phone', phoneVariants)
+        .order('group_id', { ascending: false, nullsFirst: false })
+        .limit(1);
+
+      let profile = exactProfiles?.[0] ?? null;
+
+      if (!profile && nationalPhone.length >= 6) {
+        const tail = nationalPhone.slice(-6);
+        const { data: fuzzyProfiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, group_id, phone')
+          .ilike('phone', `%${tail}%`)
+          .order('group_id', { ascending: false, nullsFirst: false })
+          .limit(5);
+
+        profile =
+          (fuzzyProfiles ?? []).find((row) => {
+            const digits = (row.phone || '').replace(/\D/g, '');
+            const norm = digits.length === 11 && digits.startsWith('51') ? digits.slice(2) : digits;
+            return norm === nationalPhone || digits === fromPhone;
+          }) ?? null;
+      }
+
+      if (profileError) {
+        console.error('[WhatsApp Profile Lookup Error]:', profileError);
+      }
+      console.log('[WhatsApp Profile Lookup]:', {
+        fromPhone,
+        nationalPhone,
+        matchedProfileId: profile?.id ?? null,
+        groupId: profile?.group_id ?? null,
+      });
+
+      let memberGroupName = 'tu comunidad';
+      let memberSectorName = 'tu sector';
+      if (profile?.group_id) {
+        const { data: groupRow } = await supabase
+          .from('neighborhood_groups')
+          .select('name, sector_name')
+          .eq('id', profile.group_id)
+          .maybeSingle();
+        if (groupRow) {
+          memberGroupName = groupRow.name || memberGroupName;
+          memberSectorName = groupRow.sector_name || memberSectorName;
+        }
+      }
       const memberFirstName: string = profile?.full_name?.split(/\s+/)[0] || contactName;
 
       // CASO A: Onboarding y Admisión para vecinos sin grupo asignado

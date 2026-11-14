@@ -38,11 +38,17 @@ export function parseIncomingWebhookPayload(body: any): NormalizedIncomingMessag
       return null;
     }
 
-    // Evolution v2.2+ puede enviar @lid en remoteJid y el número real en remoteJidAlt
-    const preferredJid: string =
-      remoteJid.endsWith('@lid') && typeof evoData.key.remoteJidAlt === 'string'
-        ? evoData.key.remoteJidAlt
-        : remoteJid;
+    // Evolution v2.2+ puede enviar @lid en remoteJid y el número real en remoteJidAlt o senderPn
+    const lidCandidates = [
+      evoData.key.remoteJidAlt,
+      evoData.key.senderPn,
+      evoData.key.participantAlt,
+      evoData.key.participant,
+    ];
+    const altJid = lidCandidates.find(
+      (c): c is string => typeof c === 'string' && c.includes('@') && !c.endsWith('@lid')
+    );
+    const preferredJid: string = remoteJid.endsWith('@lid') && altJid ? altJid : remoteJid;
     const fromPhone = preferredJid.split('@')[0].replace(/\D/g, '');
     if (!fromPhone) return null;
 
