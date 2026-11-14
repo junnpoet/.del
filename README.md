@@ -2,8 +2,6 @@
   <img src="./assets/images/logo-with-text.png" alt="Sumayni" width="280" />
 </p>
 
-<h1 align="center">Sumayni</h1>
-
 <p align="center">
   <strong>Plataforma comunitaria barrial de reciprocidad, oficios de confianza y resiliencia ante emergencias.</strong>
 </p>
